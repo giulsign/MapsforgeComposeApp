@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rendertheme xmlns="http://mapsforge.org/renderTheme"
+    version="5"
+    map-background="#D0E7F9"
+    map-background-outside="#E5E5E5"
+    base-stroke-width="1.0"
+    base-text-size="12.0">
+
+    <!-- Autostrade -->
+    <rule e="way" k="highway" v="motorway">
+        <line stroke="#FF0000" stroke-width="3.0"/>
+    </rule>
+
+    <!-- Strade principali -->
+    <rule e="way" k="highway" v="primary">
+        <line stroke="#FFA500" stroke-width="2.5"/>
+    </rule>
+
+    <!-- Strade secondarie -->
+    <rule e="way" k="highway" v="secondary">
+        <line stroke="#FFFF00" stroke-width="2.0"/>
+    </rule>
+
+    <!-- Strade locali -->
+    <rule e="way" k="highway" v="residential">
+        <line stroke="#FFFFFF" stroke-width="1.5"/>
+    </rule>
+
+    <!-- Acqua -->
+    <rule e="way" k="natural" v="water">
+        <line stroke="#0000FF" stroke-width="2.0"/>
+        <area fill="#A0C8F0"/>
+    </rule>
+
+    <!-- Foreste -->
+    <rule e="way" k="landuse" v="forest">
+        <area fill="#A0E0A0"/>
+    </rule>
+
+</rendertheme>
