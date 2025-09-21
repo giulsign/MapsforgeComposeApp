@@ -1,6 +1,6 @@
 package com.example.mapsforgecomposeapp.ui.theme
 
-import android.app.Activity
+
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +10,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -55,4 +62,25 @@ fun MapsforgeComposeAppTheme(
         typography = Typography,
         content = content
     )
+}
+
+
+//preview
+
+@Composable
+fun MapsforgeMapPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Anteprima mappa qui")
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun MapScreenPreview() {
+    MapsforgeMapPlaceholder()
 }

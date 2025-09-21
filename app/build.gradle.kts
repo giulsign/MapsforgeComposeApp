@@ -52,6 +52,12 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.compose.ui:ui-test-manifest")
+    implementation("androidx.compose.ui:ui-test-junit4")
+    implementation("androidx.compose.runtime:runtime")
+    implementation("androidx.compose.runtime:runtime-livedata")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.ui:ui")
 
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
