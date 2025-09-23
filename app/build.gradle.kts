@@ -79,4 +79,6 @@ dependencies {
     implementation("org.mapsforge:mapsforge-themes:0.25.0")
 
     implementation("com.caverock:androidsvg:1.4")
+
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }

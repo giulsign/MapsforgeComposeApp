@@ -1,220 +1,9 @@
-/**package com.example.mapsforgecomposeapp
-
-import org.mapsforge.map.android.util.AndroidUtil
-import android.content.Context
-import android.os.Environment
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.AndroidView
-import org.mapsforge.core.model.LatLong
-import org.mapsforge.map.android.graphics.AndroidGraphicFactory
-import org.mapsforge.map.android.view.MapView
-import org.mapsforge.map.reader.MapFile
-import org.mapsforge.map.layer.cache.TileCache
-import org.mapsforge.map.layer.renderer.TileRendererLayer
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-
-
-@Composable
-fun MapsforgeMapComposable(
-    context: Context,
-    modifier: Modifier = Modifier
-) {
-    if (LocalInspectionMode.current) {
-        // In preview mostri solo un placeholder
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.Gray),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Anteprima mappa")
-        }
-    } else {
-        // CODICE ORIGINALE → gira solo a runtime
-        AndroidView(
-            factory = {
-                AndroidGraphicFactory.createInstance(context.applicationContext)
-
-                val mapView = MapView(context).apply {
-                    mapScaleBar.isVisible = true
-                    setBuiltInZoomControls(true)
-                    setZoomLevelMin(2.toByte())
-                    setZoomLevelMax(20.toByte())
-                }
-
-                val mapFile = MapFile(
-                    Environment.getExternalStorageDirectory()
-                        .resolve("maps/italy.map")
-                )
-
-                val tileCache: TileCache = AndroidUtil.createTileCache(
-                    context,
-                    "mapcache",
-                    mapView.model.displayModel.tileSize,
-                    1f,
-                    mapView.model.frameBufferModel.overdrawFactor
-                )
-
-                val renderer = TileRendererLayer(
-                    tileCache,
-                    mapFile,
-                    mapView.model.mapViewPosition,
-                    AndroidGraphicFactory.INSTANCE
-                ).apply {
-                    setXmlRenderTheme(AssetsRenderTheme(context))
-                }
-
-                mapView.layerManager.layers.add(renderer)
-
-                mapView.model.mapViewPosition.setCenter(LatLong(45.4642, 9.19))
-                mapView.model.mapViewPosition.setZoomLevel(12.toByte())
-
-                mapView
-            },
-            modifier = modifier
-        )
-    }
-}**/
-
-
-
-/**
 package com.example.mapsforgecomposeapp
 
-import org.mapsforge.map.android.util.AndroidUtil
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Environment
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.AndroidView
-import org.mapsforge.core.model.LatLong
-import org.mapsforge.map.android.graphics.AndroidGraphicFactory
-import org.mapsforge.map.android.view.MapView
-import org.mapsforge.map.reader.MapFile
-import org.mapsforge.map.layer.cache.TileCache
-import org.mapsforge.map.layer.renderer.TileRendererLayer
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-
-@Composable
-fun MapsforgeMapComposable(
-    context: Context,
-    modifier: Modifier = Modifier
-) {
-    var permissionGranted by remember { mutableStateOf(false) }
-
-    // Launcher per chiedere permessi runtime
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        permissionGranted = granted
-    }
-
-    // Controllo permessi all'avvio
-    LaunchedEffect(Unit) {
-        if (android.os.Build.VERSION.SDK_INT < 33) {
-            // Android 12 e inferiori
-            permissionGranted = PackageManager.PERMISSION_GRANTED ==
-                    androidx.core.content.ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.READ_EXTERNAL_STORAGE
-                    )
-            if (!permissionGranted) {
-                launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        } else {
-            // Android 13+: normalmente si usa Scoped Storage, ma per file generici chiediamo permesso legacy
-            permissionGranted = true
-        }
-    }
-
-    if (LocalInspectionMode.current) {
-        // Preview
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.Gray),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Anteprima mappa")
-        }
-    } else if (permissionGranted) {
-        // Runtime
-        AndroidView(
-            factory = {
-                AndroidGraphicFactory.createInstance(context.applicationContext)
-
-                val mapView = MapView(context).apply {
-                    mapScaleBar.isVisible = true
-                    setBuiltInZoomControls(true)
-                    setZoomLevelMin(2.toByte())
-                    setZoomLevelMax(20.toByte())
-                }
-
-                val mapFile = MapFile(
-                    Environment.getExternalStorageDirectory()
-                        .resolve("maps/italy.map")
-                )
-
-                val tileCache: TileCache = AndroidUtil.createTileCache(
-                    context,
-                    "mapcache",
-                    mapView.model.displayModel.tileSize,
-                    1f,
-                    mapView.model.frameBufferModel.overdrawFactor
-                )
-
-                val renderer = TileRendererLayer(
-                    tileCache,
-                    mapFile,
-                    mapView.model.mapViewPosition,
-                    AndroidGraphicFactory.INSTANCE
-                ).apply {
-                    setXmlRenderTheme(AssetsRenderTheme(context))
-                }
-
-                mapView.layerManager.layers.add(renderer)
-
-                mapView.model.mapViewPosition.setCenter(LatLong(45.4642, 9.19))
-                mapView.model.mapViewPosition.setZoomLevel(12.toByte())
-
-                mapView
-            },
-            modifier = modifier
-        )
-    } else {
-        // Messaggio se permesso negato
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.LightGray),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Permesso di lettura memoria negato")
-        }
-    }
-}**/
-
-package com.example.mapsforgecomposeapp
-
-import android.content.Context
-import android.net.Uri
-import android.os.Environment
+import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -227,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import org.mapsforge.core.model.LatLong
 import org.mapsforge.map.android.graphics.AndroidGraphicFactory
 import org.mapsforge.map.android.util.AndroidUtil
@@ -234,30 +26,89 @@ import org.mapsforge.map.android.view.MapView
 import org.mapsforge.map.layer.cache.TileCache
 import org.mapsforge.map.layer.renderer.TileRendererLayer
 import org.mapsforge.map.reader.MapFile
+import org.mapsforge.map.layer.overlay.Marker
 import java.io.File
+
+/** copia direttamente italy.map nella cartella di destinazione **/
+
+private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
+    val destFile = File(context.getExternalFilesDir("maps"), mapFileName)
+
+    if (!destFile.exists()) {
+        destFile.parentFile?.mkdirs()
+        context.assets.open("maps/$mapFileName").use { input ->
+            destFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+    }
+    return destFile
+}
+
 
 @Composable
 fun MapsforgeMapComposable(
     context: Context,
     modifier: Modifier = Modifier,
-    mapFileName: String = "italy.map", // nome file nella cartella app-specific
-    useFilePicker: Boolean = false     // se true, l’utente può scegliere il file
+    mapFileName: String = "italy.map"
 ) {
-    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    // Stato posizione utente
+    var userLocation by remember { mutableStateOf<Location?>(null) }
+    var hasLocationPermission by remember { mutableStateOf(false) }
+    var mapViewRef by remember { mutableStateOf<MapView?>(null) }
 
-    // Launcher per aprire file picker (opzionale)
-    val pickerLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        selectedUri = uri
+    val fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
+
+    // Launcher per chiedere permessi
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasLocationPermission = granted
+        if (granted) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    userLocation = location
+                }
+            }
+        }
     }
 
+    var userMarker: Marker? by remember { mutableStateOf(null) }
+
+    // Funzione helper per creare il marker rosso
+    fun createRedMarker(context: Context, latLong: LatLong): Marker {
+        val drawable =
+            ContextCompat.getDrawable(context, android.R.drawable.presence_online) // pallino rosso
+        val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+        return Marker(latLong, bitmap, 0, -bitmap.height / 2)
+    }
+
+    // Controlla i permessi al primo avvio
+    LaunchedEffect(Unit) {
+        when {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                hasLocationPermission = true
+                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    if (location != null) {
+                        userLocation = location
+                    }
+                }
+            }
+
+            else -> {
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+    }
+
+    // Preview layout in Android Studio
     if (LocalInspectionMode.current) {
-        // Preview
         Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.Gray),
+            modifier = modifier.fillMaxSize().background(Color.Gray),
             contentAlignment = Alignment.Center
         ) {
             Text("Anteprima mappa")
@@ -265,43 +116,20 @@ fun MapsforgeMapComposable(
         return
     }
 
-    // Determina il percorso del file
-    val mapFile: File? = if (useFilePicker && selectedUri != null) {
-        // Se utente ha scelto il file
-        File(selectedUri!!.path ?: "")
-    } else {
-        // File in directory app-specific: non servono permessi runtime
-        File(context.getExternalFilesDir("maps"), mapFileName)
-    }
-
-    if (useFilePicker && selectedUri == null) {
-        // Mostra bottone per aprire il file picker
+    // Verifica file mappa
+    /**val mapFile = File(context.getExternalFilesDir("maps"), mapFileName) **/
+    val mapFile = copyMapFileIfNeeded(context, mapFileName) /** indica la posizione del file mappa da copiare **/
+    if (!mapFile.exists()) {
         Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.LightGray),
+            modifier = modifier.fillMaxSize().background(Color.LightGray),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.material3.Button(onClick = { pickerLauncher.launch(arrayOf("*/*")) }) {
-                Text("Seleziona file mappa")
-            }
+            Text("File mappa non trovato: ${mapFile.absolutePath}")
         }
         return
     }
 
-    if (mapFile == null || !mapFile.exists()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.LightGray),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("File mappa non trovato: ${mapFile?.absolutePath ?: "null"}")
-        }
-        return
-    }
-
-    // Carica la mappa con MapsForge
+    // Crea e mostra MapView
     AndroidView(
         factory = {
             AndroidGraphicFactory.createInstance(context.applicationContext)
@@ -313,7 +141,6 @@ fun MapsforgeMapComposable(
             }
 
             val mapFileReader = MapFile(mapFile)
-
             val tileCache: TileCache = AndroidUtil.createTileCache(
                 context,
                 "mapcache",
@@ -330,15 +157,38 @@ fun MapsforgeMapComposable(
             ).apply {
                 setXmlRenderTheme(AssetsRenderTheme(context))
             }
-
             mapView.layerManager.layers.add(renderer)
-            mapView.model.mapViewPosition.setCenter(LatLong(45.4642, 9.19))
-            mapView.model.mapViewPosition.setZoomLevel(12.toByte())
 
+            // Posizione iniziale: fallback Milano
+            val startLatLong = LatLong(45.4642, 9.19)
+            mapView.model.mapViewPosition.setCenter(startLatLong)
+            mapView.model.mapViewPosition.setZoomLevel(10.toByte())
+
+            mapViewRef = mapView
             mapView
         },
         modifier = modifier
     )
-}
 
-/** ultima vesione da debuggare su device**/
+    // Quando la posizione dell’utente cambia → ricentra + aggiorna marker
+    LaunchedEffect(userLocation) {
+        userLocation?.let { loc ->
+            val latLong = LatLong(loc.latitude, loc.longitude)
+
+            // Se marker non esiste → crealo
+            if (userMarker == null && mapViewRef != null) {
+                userMarker = createRedMarker(context, latLong)
+                mapViewRef?.layerManager?.layers?.add(userMarker)
+            } else {
+                // aggiorna marker esistente
+                userMarker?.latLong = latLong
+            }
+
+            // Ricentra la mappa
+            mapViewRef?.model?.mapViewPosition?.apply {
+                setCenter(latLong)
+                setZoomLevel(15.toByte())
+            }
+        }
+    }
+}
