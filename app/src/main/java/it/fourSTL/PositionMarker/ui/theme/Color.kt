@@ -1,4 +1,4 @@
-package com.example.mapsforgecomposeapp.ui.theme
+package it.fourSTL.PositionMarker.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

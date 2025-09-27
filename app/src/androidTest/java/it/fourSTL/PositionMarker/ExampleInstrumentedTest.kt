@@ -1,4 +1,4 @@
-package com.example.mapsforgecomposeapp
+package it.fourSTL.PositionMarker
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

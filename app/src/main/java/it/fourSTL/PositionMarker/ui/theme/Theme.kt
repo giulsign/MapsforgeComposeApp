@@ -1,4 +1,4 @@
-package com.example.mapsforgecomposeapp.ui.theme
+package it.fourSTL.PositionMarker.ui.theme
 
 
 import android.os.Build
@@ -41,7 +41,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun MapsforgeComposeAppTheme(
+fun fourSTLPositionMarkerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
@@ -68,7 +68,7 @@ fun MapsforgeComposeAppTheme(
 //preview
 
 @Composable
-fun MapsforgeMapPlaceholder(modifier: Modifier = Modifier) {
+fun fourSTLPositionMarkerPlaceholder(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -82,5 +82,5 @@ fun MapsforgeMapPlaceholder(modifier: Modifier = Modifier) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun MapScreenPreview() {
-    MapsforgeMapPlaceholder()
+    fourSTLPositionMarkerPlaceholder()
 }

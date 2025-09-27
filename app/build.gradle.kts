@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "it.example.mapsforgecompose"
+    namespace = "it.fourSTL.PositionMarker"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "it.example.mapsforgecompose"
+        applicationId = "it.fourSTL.PositionMarker"
         minSdk = 27
         targetSdk = 35
         versionCode = 1

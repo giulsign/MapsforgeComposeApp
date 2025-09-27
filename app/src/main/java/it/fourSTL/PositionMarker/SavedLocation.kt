@@ -1,4 +1,4 @@
-package com.example.mapsforgecomposeapp
+package it.fourSTL.PositionMarker
 
 import android.content.Context
 import org.json.JSONArray

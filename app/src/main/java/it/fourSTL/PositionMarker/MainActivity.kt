@@ -51,7 +51,7 @@ fun MapScreenPreview() {
 
 **/ //fine backup - pulsante centra in posizione, pulsanti zomm e bordo
 
-package com.example.mapsforgecomposeapp
+package it.fourSTL.PositionMarker
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    MapsforgeMapComposable(context = this)
+                    fourSTLPositionMarkerComposable(context = this)
                 }
             }
         }
@@ -98,5 +98,5 @@ class MainActivity : ComponentActivity() {
 fun MapScreenPreview() {
     // In preview non hai un vero Context → workaround con LocalContext
     val context = LocalContext.current
-    MapsforgeMapComposable(context = context)
+    fourSTLPositionMarkerComposable(context = context)
 }

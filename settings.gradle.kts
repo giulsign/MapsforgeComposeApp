@@ -18,5 +18,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MapsforgeComposeApp"
+rootProject.name = "fourSTLPositionMarker"
 include(":app")

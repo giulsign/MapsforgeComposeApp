@@ -533,9 +533,10 @@ fun MapsforgeMapComposable(
 **/ //fine backup - pulsante centra in posizione, pulsanti zomm e bordo + pulsante save in json + pulsante chiusura
 // pulsante cancella dati json + pulsante esportazione json(insviluppo)
 
-package com.example.mapsforgecomposeapp
+package it.fourSTL.PositionMarker
 
 import android.Manifest
+import android.R
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -550,7 +551,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -659,7 +659,7 @@ fun saveLocationToJson(context: Context, location: Location) {
 
 
 @Composable
-fun MapsforgeMapComposable(
+fun fourSTLPositionMarkerComposable(
     context: Context,
     modifier: Modifier = Modifier,
     mapFileName: String = "italy.map"
@@ -697,7 +697,7 @@ fun MapsforgeMapComposable(
     // Funzione helper per creare il marker rosso
     fun createRedMarker(context: Context, latLong: LatLong): Marker {
         val drawable =
-            ContextCompat.getDrawable(context, android.R.drawable.presence_online) // pallino rosso
+            ContextCompat.getDrawable(context, R.drawable.presence_online) // pallino rosso
         val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
         return Marker(latLong, bitmap, 0, -bitmap.height / 2)
     }
@@ -988,27 +988,27 @@ fun MapsforgeMapComposable(
 
         // Dialogo di conferma cancella punti salvati
         if (showConfirmDialog) {
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { showConfirmDialog = false },
                 confirmButton = {
-                    androidx.compose.material3.TextButton(
+                    TextButton(
                         onClick = {
                             clearSavedLocations(context)
                             showTable = true
                             showConfirmDialog = false
                         }
                     ) {
-                        androidx.compose.material3.Text("Conferma")
+                        Text("Conferma")
                     }
                 },
                 dismissButton = {
-                    androidx.compose.material3.TextButton(onClick = { showConfirmDialog = false }) {
-                        androidx.compose.material3.Text("Annulla")
+                    TextButton(onClick = { showConfirmDialog = false }) {
+                        Text("Annulla")
                     }
                 },
-                title = { androidx.compose.material3.Text("Conferma eliminazione") },
+                title = { Text("Conferma eliminazione") },
                 text = {
-                    androidx.compose.material3.Text(
+                    Text(
                         "Vuoi davvero cancellare tutti i punti salvati? Questa azione non può essere annullata."
                     )
                 }

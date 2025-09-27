@@ -1,4 +1,4 @@
-package com.example.mapsforgecomposeapp
+package it.fourSTL.PositionMarker
 
 import org.junit.Test
 
