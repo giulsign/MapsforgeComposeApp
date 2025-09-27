@@ -58,6 +58,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
 
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -81,4 +82,6 @@ dependencies {
     implementation("com.caverock:androidsvg:1.4")
 
     implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    //implementation("org.apache.poi:poi-ooxml:5.2.3")
 }
