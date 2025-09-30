@@ -3,8 +3,9 @@
 
 package it.fourSTL.PositionMarker
 
+import it.fourSTL.PositionMarker.R
 import android.Manifest
-import android.R
+//import android.R
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -56,6 +57,8 @@ import android.os.Environment
 import android.widget.Toast
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import org.mapsforge.core.model.LatLong as MapsforgeLatLong
+import androidx.core.content.res.ResourcesCompat
 import java.util.*
 
 
@@ -74,8 +77,55 @@ private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
     return destFile
 }
 
+// Mostra la posizione di partenza sulla mappa a richiesta
+fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android.view.MapView) {
+    val file = File(context.filesDir, "auto_locations.json")
 
-// Logica per aggiungere ID sequenziale al file json
+    if (!file.exists() || file.length() == 0L) {
+        Toast.makeText(context, "⚠️ Nessun punto salvato trovato.", Toast.LENGTH_LONG).show()
+        return
+    }
+
+    try {
+        val jsonArray = JSONArray(file.readText())
+        if (jsonArray.length() == 0) {
+            Toast.makeText(context, "⚠️ Nessun punto valido nel file JSON.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        // Recupera il primo punto salvato
+        val locationJson = jsonArray.getJSONObject(0)
+        val latitude = locationJson.getDouble("latitude")
+        val longitude = locationJson.getDouble("longitude")
+        val date = locationJson.getString("date")
+        val hour = locationJson.getString("hour")
+
+        // Coordinate Mapsforge (long, lat)
+        val geoPoint = LatLong(latitude, longitude)
+
+        // Carica un'icona per il marker (es. da drawable)
+        val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker, null)
+        val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+
+        val marker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
+
+        // Layer dei marker
+        val layer = map.layerManager.layers
+        layer.add(marker)
+
+        // Centra e zooma la mappa sul punto
+        map.model.mapViewPosition.setCenter(geoPoint)
+        //map.model.mapViewPosition.setZoomLevel(17.toByte())
+
+        Toast.makeText(context, "📍 Punto di partenza visualizzato sulla mappa", Toast.LENGTH_LONG).show()
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "❌ Errore nella lettura del punto salvato.", Toast.LENGTH_LONG).show()
+    }
+}
+
+        // Logica per aggiungere ID sequenziale al file json
 fun getNextId(context: Context): Int {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     val nextId = prefs.getInt("last_id", 0) + 1
@@ -142,42 +192,7 @@ fun saveLocationToJson(context: Context, location: Location) {
 }
 
 
-// Funzione che salva una posizione auto o punto partenza su file JSON separato
-/*fun saveLocationToJsonAuto(context: Context, location: Location) {
-
-    val pointId = getNextId(context)  // 👈 prende l’ID progressivo salvato
-
-    val file = File(context.filesDir, "auto_locations.json")
-
-    // Crea l'oggetto JSON per questa posizione
-    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        .format(Date())
-    val hour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault())
-        .format(Date()) // con decimi di secondo
-    val locationJson = JSONObject().apply {
-        put("id", pointId)
-        put("latitude", location.latitude)
-        put("longitude", location.longitude)
-        put("altitude", location.altitude)
-        put("date", date)
-        put("hour", hour)
-    }
-
-    val jsonArray: JSONArray = if (file.exists() && file.length() > 0) {
-        // Leggi contenuto esistente
-        JSONArray(file.readText())
-    } else {
-        JSONArray()
-    }
-
-    // Aggiungi il nuovo punto
-    jsonArray.put(locationJson)
-
-    // Sovrascrivi il file con la nuova lista
-    file.writeText(jsonArray.toString(2)) // 2 = indentazione leggibile
-
-    Toast.makeText(context, "Nuovo punto di partenza aggiunto alla tabella JSON", Toast.LENGTH_LONG).show()
-}*/
+// Salva la posizione di partenza su file JSON e non consente la sovrascrittura
 fun saveLocationToJsonAuto(context: Context, location: Location) {
     val file = File(context.filesDir, "auto_locations.json")
 
@@ -284,7 +299,8 @@ fun fourSTLPositionMarkerComposable(
     var showConfirmMessage by remember { mutableStateOf(false) }     // messaggio finale dopo cancellazione punti
     var showConfirmMessageAuto by remember { mutableStateOf(false) } // messaggio finale dopo cancellazione auto
     var showGpsDialog by remember { mutableStateOf(false) }          // avviso GPS assente
-
+    var carMarker: Marker? by remember { mutableStateOf(null) }
+    var showCarMarker by remember { mutableStateOf(false) }
 
     // Lista delle posizioni salvate
     var savedLocations by remember { mutableStateOf(listOf<String>()) }
@@ -423,7 +439,11 @@ fun fourSTLPositionMarkerComposable(
                 // Posizione iniziale: fallback Milano
                 val startLatLong = LatLong(45.4642, 9.19)
                 mapView.model.mapViewPosition.setCenter(startLatLong)
-                mapView.model.mapViewPosition.setZoomLevel(10.toByte())
+                //mapView.model.mapViewPosition.setZoomLevel(10.toByte())
+
+                userMarker = createRedMarker(context, startLatLong)
+                mapView.layerManager.layers.add(userMarker)
+
 
                 mapViewRef = mapView
                 mapView
@@ -438,7 +458,7 @@ fun fourSTLPositionMarkerComposable(
                     val latLong = LatLong(loc.latitude, loc.longitude)
                     mapViewRef?.model?.mapViewPosition?.apply {
                         setCenter(latLong)
-                        //setZoomLevel(15.toByte())
+                        setZoomLevel(15.toByte())
                     }
                 }
             },
@@ -644,7 +664,7 @@ fun fourSTLPositionMarkerComposable(
                 }
                 mapViewRef?.model?.mapViewPosition?.apply {
                     setCenter(latLong)
-                    setZoomLevel(15.toByte())
+                    //setZoomLevel(15.toByte())
                 }
             }
         }
@@ -677,31 +697,66 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
-        // Visualizzazione tabella posizioni auto salvate
+        // Pulsante per visualizzare/nascondere punto auto salvato
         FloatingActionButton(
-            onClick = { showTableAuto = true },
+            onClick = {
+                mapViewRef?.let { map ->
+                    if (!showCarMarker) {
+                        // ✅ Mostra punto auto
+                        val file = File(context.filesDir, "auto_locations.json")
+                        if (file.exists() && file.length() > 0) {
+                            try {
+                                val jsonArray = JSONArray(file.readText())
+                                if (jsonArray.length() > 0) {
+                                    val locationJson = jsonArray.getJSONObject(0)
+                                    val latitude = locationJson.getDouble("latitude")
+                                    val longitude = locationJson.getDouble("longitude")
+
+                                    val geoPoint = LatLong(latitude, longitude)
+
+                                    val drawable = ResourcesCompat.getDrawable(
+                                        context.resources,
+                                        R.drawable.ic_marker,
+                                        null
+                                    )
+                                    val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+
+                                    carMarker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
+                                    map.layerManager.layers.add(carMarker)
+
+                                    // centra e zoomma
+                                    map.model.mapViewPosition.setCenter(geoPoint)
+                                    //map.model.mapViewPosition.setZoomLevel(17.toByte())
+
+                                    showCarMarker = true
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "❌ Errore lettura punto auto", Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "⚠️ Nessun punto auto salvato.", Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        // ❌ Nascondi marker auto
+                        carMarker?.let { marker ->
+                            map.layerManager.layers.remove(marker)
+                        }
+                        carMarker = null
+                        showCarMarker = false
+                    }
+                }
+            },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(horizontal = 30.dp, vertical = 325.dp)
                 .zIndex(2f)
-        ) {
-            Icon(Icons.Filled.Search, contentDescription = "Show Start Points")
+        ) {Text("Start")
+            /*Icon(
+                imageVector = Icons.Default.DirectionsCar,
+                contentDescription = if (showCarMarker) "Nascondi punto auto" else "Mostra punto auto"
+            )*/
         }
-        if (showTableAuto) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .background(Color.White)
-                    .padding(16.dp)
-                    .align(Alignment.Center)
-                    .zIndex(999f) // ✅ sopra tutto
-            ) {
-                LocationsTableScreen(
-                    context = context,
-                    onBack = { showTableAuto = false } // Azione per chiudere la tabella
-                )
-            }
-        }
+
 
 
         // Pulsante chiusura app
