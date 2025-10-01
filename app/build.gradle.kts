@@ -83,5 +83,12 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-    //implementation("org.apache.poi:poi-ooxml:5.2.3")
+
+    implementation ("androidx.appcompat:appcompat:1.6.1") // o una versione più recente
+    implementation ("androidx.recyclerview:recyclerview:1.3.2") // o una versione più recent
+
+    implementation ("androidx.constraintlayout:constraintlayout:2.1.4") // O la versione più recente
+
+
+
 }

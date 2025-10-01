@@ -663,7 +663,7 @@ fun fourSTLPositionMarkerComposable(
                     userMarker?.latLong = latLong
                 }
                 mapViewRef?.model?.mapViewPosition?.apply {
-                    setCenter(latLong)
+                    //setCenter(latLong)
                     //setZoomLevel(15.toByte())
                 }
             }
@@ -750,7 +750,7 @@ fun fourSTLPositionMarkerComposable(
                 .align(Alignment.TopEnd)
                 .padding(horizontal = 30.dp, vertical = 325.dp)
                 .zIndex(2f)
-        ) {Text("Start")
+        ) {Text("Mostra\ninizio")
             /*Icon(
                 imageVector = Icons.Default.DirectionsCar,
                 contentDescription = if (showCarMarker) "Nascondi punto auto" else "Mostra punto auto"
