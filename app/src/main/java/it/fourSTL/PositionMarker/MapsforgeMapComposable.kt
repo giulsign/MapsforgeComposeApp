@@ -51,6 +51,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalContext
 import android.app.Activity
 import android.os.Environment
@@ -59,6 +60,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import org.mapsforge.core.model.LatLong as MapsforgeLatLong
 import androidx.core.content.res.ResourcesCompat
+import android.content.Intent
 import java.util.*
 
 
@@ -293,6 +295,7 @@ fun fourSTLPositionMarkerComposable(
     var hasLocationPermission by remember { mutableStateOf(false) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var showTable by remember { mutableStateOf(false) }              // mostra tabella punti
+    var showSelectionScreen by remember { mutableStateOf(false) }
     var showTableAuto by remember { mutableStateOf(false) }          // mostra tabella auto
     var showConfirmDialog by remember { mutableStateOf(false) }      // conferma cancellazione punti
     var showConfirmDialogAuto by remember { mutableStateOf(false) }  // conferma cancellazione auto
@@ -322,16 +325,30 @@ fun fourSTLPositionMarkerComposable(
         }
     }
 
-    var userMarker: Marker? by remember { mutableStateOf(null) }
+    // Verifica file mappa
+    val mapFile = copyMapFileIfNeeded(context, mapFileName)
+    if (!mapFile.exists()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.LightGray)
+                .border(25.dp, Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("File mappa non trovato: ${mapFile.absolutePath}")
+        }
+        return
+    }
 
     // Funzione helper per creare il marker rosso
+    var userMarker: Marker? by remember { mutableStateOf(null) }
+
     fun createRedMarker(context: Context, latLong: LatLong): Marker {
         val drawable =
             ContextCompat.getDrawable(context, R.drawable.presence_online) // pallino rosso
         val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
         return Marker(latLong, bitmap, 0, -bitmap.height / 2)
     }
-
 
     //Nuovo launched effect per gestire i permessi e aggiornare in ocntinuo la posizione del marker
     LaunchedEffect(Unit) {
@@ -383,22 +400,18 @@ fun fourSTLPositionMarkerComposable(
         }
     }
 
-
-    // Verifica file mappa
-    val mapFile = copyMapFileIfNeeded(context, mapFileName)
-    if (!mapFile.exists()) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.LightGray)
-                .border(25.dp, Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("File mappa non trovato: ${mapFile.absolutePath}")
+    /*//launcher per tabella selezione
+    val activityLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val json = result.data?.getStringExtra("selected_metadata_json")
+            if (!json.isNullOrEmpty()) {
+                Toast.makeText(context, "✅ Metadati selezionati:\n$json", Toast.LENGTH_LONG).show()
+                // Qui puoi salvare su file, mostrare in tabella, ecc.
+            }
         }
-        return
-    }
-
+    }*/
 
     // Crea e mostra MapView
     Box(
@@ -439,7 +452,7 @@ fun fourSTLPositionMarkerComposable(
                 // Posizione iniziale: fallback Milano
                 val startLatLong = LatLong(45.4642, 9.19)
                 mapView.model.mapViewPosition.setCenter(startLatLong)
-                //mapView.model.mapViewPosition.setZoomLevel(10.toByte())
+                mapView.model.mapViewPosition.setZoomLevel(15.toByte())
 
                 userMarker = createRedMarker(context, startLatLong)
                 mapView.layerManager.layers.add(userMarker)
@@ -505,7 +518,7 @@ fun fourSTLPositionMarkerComposable(
             Icon(Icons.Filled.DirectionsCarFilled, contentDescription = "Auto")
         }
 
-
+        // 🔹 Pulsante cancella tabella punti
         FloatingActionButton(
             onClick = { showConfirmDialog = true },
             modifier = Modifier
@@ -757,6 +770,60 @@ fun fourSTLPositionMarkerComposable(
             )*/
         }
 
+/*
+        // Pulsante apertura SelectionActivity
+        FloatingActionButton(
+            onClick = {
+                val intent = Intent(context, SelectionActivity::class.java)
+                activityLauncher.launch(intent)
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 175.dp)
+                .zIndex(2f)
+        ) {
+            Icon(
+                imageVector = Icons.Default.List,
+                contentDescription = "Apri selezione categorie"
+            )
+        }*/
+
+        // Pulsante apertura SelectionScreen (Compose)
+        FloatingActionButton(
+            onClick = { showSelectionScreen = true },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 175.dp)
+                .zIndex(2f)
+        ) {
+            Icon(
+                imageVector = Icons.Default.List,
+                contentDescription = "Apri selezione categorie"
+            )
+        }
+
+        // Mostra SelectionScreen come overlay
+        if (showSelectionScreen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .zIndex(1000f)
+            ) {
+                SelectionScreen(
+                    onDismiss = { showSelectionScreen = false },
+                    onSave = { jsonResult ->
+                        showSelectionScreen = false
+                        Toast.makeText(
+                            context,
+                            "✅ Metadati selezionati:\n$jsonResult",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        // Qui puoi salvare su file, elaborare, ecc.
+                    }
+                )
+            }
+        }
 
 
         // Pulsante chiusura app

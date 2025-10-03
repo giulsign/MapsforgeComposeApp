@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "it.fourSTL.PositionMarker"
-        minSdk = 27
+        minSdk = 27 // API level minimo modificato per recuperare miei smartphone
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
@@ -33,8 +33,12 @@ android {
         kotlinCompilerExtensionVersion = "1.5.15"
     }
 
-    packagingOptions {
-        resources.excludes += setOf("META-INF/AL2.0", "META-INF/LGPL2.1")
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/versions/9/previous-compilation-data.bin"
+            // Aggiungi qui altri pattern se necessario, ma questo è un buon punto di partenza
+        }
     }
 }
 
@@ -64,7 +68,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
 
-    implementation("com.google.android.gms:play-services-location:21.1.0")
+    //implementation("com.google.android.gms:play-services-location:21.1.0")
 
 
     implementation("org.mapsforge:mapsforge-map-android:0.25.0")
@@ -89,6 +93,6 @@ dependencies {
 
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4") // O la versione più recente
 
-
+    implementation("com.google.android.material:material:1.11.0")
 
 }
