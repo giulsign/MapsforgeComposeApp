@@ -2,9 +2,11 @@ package it.fourSTL.PositionMarker
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -13,7 +15,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -27,118 +31,58 @@ data class SelectRow(val id: String, val title: String, val note: String = "")
 @Composable
 fun SelectionScreen(
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String) -> Unit,
+    startFile: String = "MainCategoryPositionMarker.json"
 ) {
-    // Stati
-    var currentLevel by remember { mutableStateOf(Level.CATEGORIA) }
-    var selectedCategoria by remember { mutableStateOf<SelectRow?>(null) }
-    var selectedSottocategoria by remember { mutableStateOf<SelectRow?>(null) }
-    var selectedMetadataIds by remember { mutableStateOf(linkedSetOf<String>()) }
+    val context = LocalContext.current
+    val repo = remember { PositionMarkerRepository(context) }
+    val scope = rememberCoroutineScope()
 
-    // Dati demo (puoi sostituirli con dati reali)
-    val categorie = remember {
-        listOf(
-            SelectRow("cat1", "Categoria 1", "descrizione 1"),
-            SelectRow("cat2", "Categoria 2", "descrizione 2"),
-            SelectRow("cat3", "Categoria 3", "descrizione 3"),
-            SelectRow("cat4", "Categoria 4", "descrizione 4"),
-            SelectRow("cat5", "Categoria 5", "descrizione 5")
-        )
-    }
+    val fileStack = remember { mutableStateListOf<String>() }
+    var currentFile by remember { mutableStateOf(startFile) }
+    var currentRows by remember { mutableStateOf<List<PositionItem>>(emptyList()) }
+    var selectedItems by remember { mutableStateOf(linkedSetOf<String>()) }
 
-    val sottocategorieMap = remember {
-        mapOf(
-            "cat1" to (1..5).map { SelectRow("cat1_sub$it", "Opzione $it", "tipo $it") },
-            "cat2" to (1..5).map { SelectRow("cat2_sub$it", "Opzione $it", "tipo $it") },
-            "cat3" to (1..5).map { SelectRow("cat3_sub$it", "Opzione $it", "tipo $it") },
-            "cat4" to (1..5).map { SelectRow("cat4_sub$it", "Opzione $it", "tipo $it") },
-            "cat5" to (1..5).map { SelectRow("cat5_sub$it", "Opzione $it", "tipo $it") }
-        )
-    }
-
-    val metadataMap = remember {
-        val map = mutableMapOf<String, List<SelectRow>>()
-        for ((_, list) in sottocategorieMap) {
-            for (sub in list) {
-                val rows = (1..5).map { i ->
-                    SelectRow("${sub.id}_md$i", "Metadato $i", "valore $i")
-                }
-                map[sub.id] = rows
-            }
+    // caricamento dinamico
+    LaunchedEffect(currentFile) {
+        scope.launch {
+            currentRows = repo.loadItems(currentFile)
         }
-        map
     }
 
-    // Funzione per determinare il titolo
-    val title = when (currentLevel) {
-        Level.CATEGORIA -> "Seleziona Categoria"
-        Level.SOTTOCATEGORIA -> "Sottocategorie di ${selectedCategoria?.title ?: ""}"
-        Level.METADATI -> "Metadati — ${selectedCategoria?.title ?: ""} / ${selectedSottocategoria?.title ?: ""}"
+    val isSelectable = currentRows.isNotEmpty() && currentRows.all { it.ref == null }
+    val title = when {
+        currentFile.equals(startFile, ignoreCase = true) -> "Seleziona Categoria"
+        isSelectable -> "Metadati"
+        else -> "Sottocategorie"
     }
 
-    // Funzione per determinare i dati da mostrare
-    val currentRows = when (currentLevel) {
-        Level.CATEGORIA -> categorie
-        Level.SOTTOCATEGORIA -> sottocategorieMap[selectedCategoria?.id] ?: emptyList()
-        Level.METADATI -> metadataMap[selectedSottocategoria?.id] ?: emptyList()
-    }
-
-    val isSelectable = currentLevel == Level.METADATI
-
-    // Funzione back
     val onBackPressed = {
-        when (currentLevel) {
-            Level.CATEGORIA -> onDismiss()
-            Level.SOTTOCATEGORIA -> {
-                currentLevel = Level.CATEGORIA
-                selectedCategoria = null
-            }
-            Level.METADATI -> {
-                currentLevel = Level.SOTTOCATEGORIA
-                selectedSottocategoria = null
-            }
+        if (fileStack.isEmpty()) onDismiss()
+        else currentFile = fileStack.removeAt(fileStack.lastIndex)
+    }
+
+    val onRowClick: (PositionItem) -> Unit = { row ->
+        if (!row.ref.isNullOrEmpty()) {
+            fileStack.add(currentFile)
+            currentFile = row.ref!!
+        } else {
+            if (selectedItems.contains(row.id)) selectedItems.remove(row.id)
+            else selectedItems.add(row.id)
+            selectedItems = linkedSetOf<String>().apply { addAll(selectedItems) }
         }
     }
 
-    // Funzione click su riga
-    val onRowClick: (SelectRow) -> Unit = { row ->
-        when (currentLevel) {
-            Level.CATEGORIA -> {
-                selectedCategoria = row
-                currentLevel = Level.SOTTOCATEGORIA
-            }
-            Level.SOTTOCATEGORIA -> {
-                selectedSottocategoria = row
-                currentLevel = Level.METADATI
-            }
-            Level.METADATI -> {
-                if (selectedMetadataIds.contains(row.id)) {
-                    selectedMetadataIds.remove(row.id)
-                } else {
-                    selectedMetadataIds.add(row.id)
-                }
-                selectedMetadataIds = linkedSetOf<String>().apply { addAll(selectedMetadataIds) }
-            }
-        }
-    }
-
-    // Funzione salva
     val onSaveClicked = {
         val resultArray = JSONArray()
-        val idToRowMap = metadataMap.values.flatten().associateBy { it.id }
-
-        for (id in selectedMetadataIds) {
-            idToRowMap[id]?.let { r ->
-                val obj = JSONObject()
-                obj.put("id", r.id)
-                obj.put("title", r.title)
-                obj.put("note", r.note)
-                obj.put("categoria", selectedCategoria?.title ?: "")
-                obj.put("sottocategoria", selectedSottocategoria?.title ?: "")
-                resultArray.put(obj)
-            }
+        currentRows.filter { selectedItems.contains(it.id) }.forEach { item ->
+            val obj = JSONObject()
+            obj.put("id", item.id)
+            obj.put("title", item.title)
+            obj.put("note", item.note)
+            obj.put("sourceFile", currentFile)
+            resultArray.put(obj)
         }
-
         onSave(resultArray.toString())
     }
 
@@ -160,15 +104,9 @@ fun SelectionScreen(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = onBackPressed) {
-                    Text("Indietro")
-                }
-
-                TextButton(onClick = onDismiss) {
-                    Text("Annulla")
-                }
-
-                if (currentLevel == Level.METADATI) {
+                TextButton(onClick = onBackPressed) { Text("Indietro") }
+                TextButton(onClick = onDismiss) { Text("Annulla") }
+                if (isSelectable) {
                     Button(onClick = onSaveClicked) {
                         Icon(Icons.Default.Check, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
@@ -185,8 +123,8 @@ fun SelectionScreen(
         ) {
             items(currentRows) { row ->
                 SelectionRowItem(
-                    row = row,
-                    isSelected = selectedMetadataIds.contains(row.id),
+                    row = SelectRow(row.id, row.title, row.note),
+                    isSelected = selectedItems.contains(row.id),
                     isSelectable = isSelectable,
                     onClick = { onRowClick(row) }
                 )
@@ -209,30 +147,55 @@ fun SelectionRowItem(
         Color.Transparent
     }
 
+    // 🔸 Parsing dinamico del JSON interno (row contiene già tutti i campi nel formato JSON)
+    val fields = remember(row) {
+        try {
+            val jsonObj = JSONObject()
+            jsonObj.put("id", row.id)
+            jsonObj.put("title", row.title)
+            if (row.note.isNotEmpty()) jsonObj.put("note", row.note)
+
+            // se row.title o row.note contengono JSON, possiamo anche fare un parse ulteriore
+            jsonObj.keys().asSequence().associateWith { key -> jsonObj.get(key).toString() }
+        } catch (e: Exception) {
+            emptyMap<String, String>()
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(backgroundColor)
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(horizontal = 30.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = row.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            if (row.note.isNotEmpty()) {
-                Text(
-                    text = row.note,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // Mostra dinamicamente ogni coppia chiave/valore
+            fields.forEach { (key, value) ->
+                if (key != "id") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "$key:",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = value,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
         }
 
+        // Spunta verde se selezionato
         if (isSelectable && isSelected) {
+            Spacer(modifier = Modifier.width(16.dp))
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Selezionato",
