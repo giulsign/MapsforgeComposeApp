@@ -304,6 +304,8 @@ fun fourSTLPositionMarkerComposable(
     var showGpsDialog by remember { mutableStateOf(false) }          // avviso GPS assente
     var carMarker: Marker? by remember { mutableStateOf(null) }
     var showCarMarker by remember { mutableStateOf(false) }
+    var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+
 
     // Lista delle posizioni salvate
     var savedLocations by remember { mutableStateOf(listOf<String>()) }

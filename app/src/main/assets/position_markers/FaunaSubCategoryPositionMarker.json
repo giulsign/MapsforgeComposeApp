@@ -1,5 +1,7 @@
 [
-  {"id": 1, "title": "Edibili", "ref": "FunghiEdibiliMetadata.json"},
-  {"id": 2, "title": "Non edibili", "ref": "FunghiNonEdibiliMetadata.json"},
-  {"id": 3, "title": "Velenosi", "ref": "FunghiVelenosiMetadata.json"}
+  {"id": "01", "title": "Mammiferi", "Ref": "FaunaMammiferiCategoryPositionMarker.json"},
+  {"id": "02", "title": "Uccelli", "Ref": "FaunaUccelliCategoryPositionMarker.json"},
+  {"id": "03", "title": "Rettili", "Ref": "FaunaRettiliCategoryPositionMarker.json"},
+  {"id": "04", "title": "Anfibi", "Ref": "FaunaAnfibiCategoryPositionMarker.json"},
+  {"id": "05", "title": "Insetti", "Ref": "FaunaInsettiCategoryPositionMarker.json"}
 ]

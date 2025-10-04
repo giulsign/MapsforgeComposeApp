@@ -1,0 +1,5 @@
+[
+  { "id": "01", "title": "Alberi", "Ref": "FloraAlberiCategoryPositionMarker.json" },
+  { "id": "02", "title": "Fiori", "Ref": "FloraFioriCategoryPositionMarker.json" },
+  { "id": "03", "title": "Erbe", "Ref": "FloraErbeCategoryPositionMarker.json" }
+]

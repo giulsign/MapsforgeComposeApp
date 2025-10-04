@@ -1,0 +1,5 @@
+[
+  { "id": "01", "nome italiano": "Quercia", "nome latino": "Quercus", "Altezza media": "20m", "Commestibile": "No" },
+  { "id": "02", "nome italiano": "Faggio", "nome latino": "Fagus sylvatica", "Altezza media": "25m", "Commestibile": "No" },
+  { "id": "03", "nome italiano": "Pino", "nome latino": "Pinus", "Altezza media": "30m", "Commestibile": "No" }
+]

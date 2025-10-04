@@ -1,5 +1,4 @@
 [
-  {"id": 1, "title": "Edibili", "ref": "FunghiEdibiliMetadata.json"},
-  {"id": 2, "title": "Non edibili", "ref": "FunghiNonEdibiliMetadata.json"},
-  {"id": 3, "title": "Velenosi", "ref": "FunghiVelenosiMetadata.json"}
+  {"id": 1, "title": "Edibili", "ref": "FunghiEdibiliCategoryPositionMarker.json"},
+  {"id": 2, "title": "Non Edibili / Velenosi", "ref": "FunghiVelenosiCategoryPositionMarker.json"}
 ]

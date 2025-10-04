@@ -1,0 +1,4 @@
+[
+  { "id": "01", "nome italiano": "Basilico", "nome latino": "Ocimum basilicum", "Uso": "Cucina", "Commestibile": "Sì" },
+  { "id": "02", "nome italiano": "Menta", "nome latino": "Mentha", "Uso": "Cucina/Infusi", "Commestibile": "Sì" }
+]
