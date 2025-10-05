@@ -63,6 +63,25 @@ import androidx.core.content.res.ResourcesCompat
 import android.content.Intent
 import java.util.*
 
+// 🔹 Utility per memorizzare metadati persistenti
+fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
+    val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
+    val json = JSONObject(metadata).toString()
+    prefs.edit().putString("persistent_metadata", json).apply()
+}
+
+fun loadPersistentMetadata(context: Context): Map<String, String> {
+    val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
+    val json = prefs.getString("persistent_metadata", "{}") ?: "{}"
+    val obj = JSONObject(json)
+    return obj.keys().asSequence().associateWith { obj.getString(it) }
+}
+
+fun clearPersistentMetadata(context: Context) {
+    val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
+    prefs.edit().remove("persistent_metadata").apply()
+}
+
 
 //copia direttamente italy.map nella cartella di destinazione
 private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
@@ -157,17 +176,13 @@ fun clearSavedLocationsAuto(context: Context) {
 
 
 // Funzione che salva una posizione GPS su file JSON
-fun saveLocationToJson(context: Context, location: Location) {
-
-    val pointId = getNextId(context)  // 👈 prende l’ID progressivo salvato
-
+fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<String, String> = emptyMap()) {
+    val pointId = getNextId(context)
     val file = File(context.filesDir, "locations.json")
 
-    // Crea l'oggetto JSON per questa posizione
-    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        .format(Date())
-    val hour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault())
-        .format(Date()) // con decimi di secondo
+    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    val hour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault()).format(Date())
+
     val locationJson = JSONObject().apply {
         put("id", pointId)
         put("latitude", location.latitude)
@@ -175,23 +190,22 @@ fun saveLocationToJson(context: Context, location: Location) {
         put("altitude", location.altitude)
         put("date", date)
         put("hour", hour)
+        // aggiungi i metadati se presenti
+        metadataMap.forEach { (key, value) -> put(key, value) }
     }
 
     val jsonArray: JSONArray = if (file.exists() && file.length() > 0) {
-        // Leggi contenuto esistente
         JSONArray(file.readText())
     } else {
         JSONArray()
     }
 
-    // Aggiungi il nuovo punto
     jsonArray.put(locationJson)
-
-    // Sovrascrivi il file con la nuova lista
-    file.writeText(jsonArray.toString(2)) // 2 = indentazione leggibile
+    file.writeText(jsonArray.toString(2))
 
     Toast.makeText(context, "Nuovo punto aggiunto a tabella JSON", Toast.LENGTH_LONG).show()
 }
+
 
 
 // Salva la posizione di partenza su file JSON e non consente la sovrascrittura
@@ -305,6 +319,9 @@ fun fourSTLPositionMarkerComposable(
     var carMarker: Marker? by remember { mutableStateOf(null) }
     var showCarMarker by remember { mutableStateOf(false) }
     var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    // stato per i metadati selezionati temporanei (viene passato da SelectionScreen via onSave)
+    val persistentSelectionsState = remember { mutableStateOf(mutableSetOf<String>()) }
+    var persistentMetadata by remember { mutableStateOf(loadPersistentMetadata(context)) }
 
 
     // Lista delle posizioni salvate
@@ -402,18 +419,6 @@ fun fourSTLPositionMarkerComposable(
         }
     }
 
-    /*//launcher per tabella selezione
-    val activityLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val json = result.data?.getStringExtra("selected_metadata_json")
-            if (!json.isNullOrEmpty()) {
-                Toast.makeText(context, "✅ Metadati selezionati:\n$json", Toast.LENGTH_LONG).show()
-                // Qui puoi salvare su file, mostrare in tabella, ecc.
-            }
-        }
-    }*/
 
     // Crea e mostra MapView
     Box(
@@ -489,11 +494,11 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
-        // 🔹 Pulsante laterale → salva posizione
+        /*// 🔹 Pulsante laterale → salva posizione
         FloatingActionButton(
             onClick = {
                 userLocation?.let { loc ->
-                    saveLocationToJson(context, loc)
+                    saveLocationToJson(context, loc, selectedMetadata)
                 }
             },
             modifier = Modifier
@@ -502,6 +507,23 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f)
         ) {
             Icon(Icons.Filled.Save, contentDescription = "Save")
+        }*/
+
+        // 🔹 Pulsante salva posizione
+        FloatingActionButton(
+            onClick = {
+                userLocation?.let { loc ->
+                    val finalMetadata = persistentMetadata + selectedMetadata
+                    saveLocationToJson(context, loc, finalMetadata)
+                    selectedMetadata = emptyMap() // reset temporanei
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 30.dp, vertical = 250.dp)
+                .zIndex(2f)
+        ) {
+            Icon(Icons.Filled.Save, contentDescription = "Salva posizione")
         }
 
 
@@ -772,25 +794,8 @@ fun fourSTLPositionMarkerComposable(
             )*/
         }
 
-/*
-        // Pulsante apertura SelectionActivity
-        FloatingActionButton(
-            onClick = {
-                val intent = Intent(context, SelectionActivity::class.java)
-                activityLauncher.launch(intent)
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 175.dp)
-                .zIndex(2f)
-        ) {
-            Icon(
-                imageVector = Icons.Default.List,
-                contentDescription = "Apri selezione categorie"
-            )
-        }*/
 
-        // Pulsante apertura SelectionScreen (Compose)
+        // 🔹 Apertura SelectionScreena
         FloatingActionButton(
             onClick = { showSelectionScreen = true },
             modifier = Modifier
@@ -798,13 +803,10 @@ fun fourSTLPositionMarkerComposable(
                 .padding(bottom = 175.dp)
                 .zIndex(2f)
         ) {
-            Icon(
-                imageVector = Icons.Default.List,
-                contentDescription = "Apri selezione categorie"
-            )
+            Icon(Icons.Default.List, contentDescription = "Apri selezione categorie")
         }
 
-        // Mostra SelectionScreen come overlay
+        // Overlay SelectionScreen
         if (showSelectionScreen) {
             Box(
                 modifier = Modifier
@@ -814,15 +816,24 @@ fun fourSTLPositionMarkerComposable(
             ) {
                 SelectionScreen(
                     onDismiss = { showSelectionScreen = false },
-                    onSave = { jsonResult ->
+                    // la lambda ora prende DUE parametri: metadataMap e un Boolean (che puoi ignorare con '_')
+                    onSave = { metadataMap: Map<String, String>, _ ->
                         showSelectionScreen = false
+
+                        // metadata temporanei (gialli) restituiti dalla SelectionScreen
+                        selectedMetadata = metadataMap
+
+                        // Ricarica i metadati persistenti salvati nei prefs (se la SelectionScreen li ha aggiornati)
+                        persistentMetadata = loadPersistentMetadata(context)
+
                         Toast.makeText(
                             context,
-                            "✅ Metadati selezionati:\n$jsonResult",
+                            "✅ Metadati temporanei selezionati:\n$metadataMap\nPersistenti caricate: $persistentMetadata",
                             Toast.LENGTH_LONG
                         ).show()
-                        // Qui puoi salvare su file, elaborare, ecc.
-                    }
+                    },
+                    // persistentSelectionsState.value deve essere un MutableSet<String>
+                    persistentSelections = persistentSelectionsState.value
                 )
             }
         }
@@ -844,6 +855,23 @@ fun fourSTLPositionMarkerComposable(
                     contentDescription = "Chiudi applicazione"
                 )
             }
+
+
+        // 🔹 Pulsante reset selezioni persistenti (verde)
+        FloatingActionButton(
+            onClick = {
+                // svuota il set persistente: per forzare ricomposizione ricreiamo una nuova referenza
+                persistentSelectionsState.value.clear()
+                persistentSelectionsState.value = mutableSetOf()
+                Toast.makeText(context, "Selezioni persistenti resettate", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 60.dp)
+                .zIndex(2f)
+        ) {
+            Icon(Icons.Default.Refresh, contentDescription = "Reset metadati persistenti")
+        }
 
 
         // 🔔 Dialog di conferma chiusura app
