@@ -9,6 +9,12 @@ import org.json.JSONObject
 /**
  * Legge file JSON dalla cartella assets/position_markers/
  * e li converte in liste di PositionItem.
+ *
+ * MAPPATURA CAMPI JSON -> PositionItem:
+ * - id: usa "idsp" come identificatore univoco (fallback su "id" numerico)
+ * - title: "nome italiano" (visualizzato come testo principale)
+ * - note: "nome latino" (visualizzato come sottotitolo)
+ * - ref: "ref" o "Ref" (riferimento a sottocategoria)
  */
 class PositionMarkerRepository(
     private val context: Context,
@@ -23,7 +29,14 @@ class PositionMarkerRepository(
 
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
-                val id = obj.optString("id", obj.optInt("id").toString())
+
+                // 🔑 ID: priorità a "idsp" (indice univoco), altrimenti "id"
+                val id = when {
+                    obj.has("idsp") -> obj.getString("idsp")
+                    obj.has("id") -> obj.optString("id", obj.optInt("id").toString())
+                    else -> "unknown_$i"
+                }
+
                 val title = extractTitle(obj)
                 val note = extractNote(obj)
                 val ref = obj.optString("ref", obj.optString("Ref", null))
@@ -38,22 +51,72 @@ class PositionMarkerRepository(
         }
     }
 
+    /**
+     * Estrae il titolo (nome italiano) dal JSON.
+     * Cerca prima i campi standard, poi usa ricerca case-insensitive.
+     */
     private fun extractTitle(obj: JSONObject): String {
-        val keys = listOf("title", "name", "label", "Main1", "Main2", "Sub1", "Sub2", "Nome italiano")
-        for (k in keys) if (obj.has(k)) return obj.optString(k)
-        // fallback: primo valore stringa diverso da id/ref
+        // 1️⃣ Cerca campi esatti (priorità alta)
+        val exactKeys = listOf("nome italiano", "Nome italiano", "Nome Italiano", "NOME ITALIANO")
+        for (k in exactKeys) {
+            if (obj.has(k)) return obj.optString(k, "").trim()
+        }
+
+        // 2️⃣ Cerca altri campi standard
+        val standardKeys = listOf("title", "name", "label", "Main1", "Main2", "Sub1", "Sub2")
+        for (k in standardKeys) {
+            if (obj.has(k)) return obj.optString(k, "").trim()
+        }
+
+        // 3️⃣ Ricerca case-insensitive per "nome italiano"
         val it = obj.keys()
         while (it.hasNext()) {
             val key = it.next()
-            val v = obj.optString(key, "")
-            if (v.isNotEmpty() && key.lowercase() !in listOf("id", "ref")) return v
+            if (key.lowercase().contains("nome") && key.lowercase().contains("italiano")) {
+                return obj.optString(key, "").trim()
+            }
         }
+
+        // 4️⃣ Fallback: primo valore stringa NON tecnico
+        val excludeKeys = setOf("id", "idsp", "ref", "nome latino", "nome_latino")
+        val keys = obj.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            if (key.lowercase() !in excludeKeys.map { it.lowercase() }) {
+                val v = obj.optString(key, "").trim()
+                if (v.isNotEmpty()) return v
+            }
+        }
+
         return ""
     }
 
+    /**
+     * Estrae la nota (nome latino) dal JSON.
+     * Cerca prima i campi standard, poi usa ricerca case-insensitive.
+     */
     private fun extractNote(obj: JSONObject): String {
-        val keys = listOf("note", "descrizione", "Nome latino")
-        for (k in keys) if (obj.has(k)) return obj.optString(k)
+        // 1️⃣ Cerca campi esatti (priorità alta)
+        val exactKeys = listOf("nome latino", "Nome latino", "Nome Latino", "NOME LATINO")
+        for (k in exactKeys) {
+            if (obj.has(k)) return obj.optString(k, "").trim()
+        }
+
+        // 2️⃣ Cerca altri campi standard
+        val standardKeys = listOf("note", "descrizione", "description", "Note", "Descrizione")
+        for (k in standardKeys) {
+            if (obj.has(k)) return obj.optString(k, "").trim()
+        }
+
+        // 3️⃣ Ricerca case-insensitive per "nome latino"
+        val it = obj.keys()
+        while (it.hasNext()) {
+            val key = it.next()
+            if (key.lowercase().contains("nome") && key.lowercase().contains("latino")) {
+                return obj.optString(key, "").trim()
+            }
+        }
+
         return ""
     }
 

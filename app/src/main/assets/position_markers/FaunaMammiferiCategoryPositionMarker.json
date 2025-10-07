@@ -1,6 +1,6 @@
 [
-  {"id": "01", "nome italiano": "Cervo", "nome latino": "Cervus elaphus"},
-  {"id": "02", "nome italiano": "Volpe", "nome latino": "Vulpes vulpes"},
-  {"id": "03", "nome italiano": "Lupo", "nome latino": "Canis lupus"},
-  {"id": "04", "nome italiano": "Riccio", "nome latino": "Erinaceus europaeus"}
+  {"id": 1, "idsp": "FAMA1", "nome italiano": "Cervo", "nome latino": "Cervus elaphus"},
+  {"id": 2, "idsp": "FAMA2", "nome italiano": "Volpe", "nome latino": "Vulpes vulpes"},
+  {"id": 3, "idsp": "FAMA3", "nome italiano": "Lupo", "nome latino": "Canis lupus"},
+  {"id": 4, "idsp": "FAMA4", "nome italiano": "Riccio", "nome latino": "Erinaceus europaeus"}
 ]

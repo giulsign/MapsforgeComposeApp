@@ -1,5 +1,5 @@
 [
-  {"id": "01", "nome italiano": "Ape domestica", "nome latino": "Apis mellifera"},
-  {"id": "02", "nome italiano": "Farfalla monarca", "nome latino": "Danaus plexippus"},
-  {"id": "03", "nome italiano": "Coccinella", "nome latino": "Coccinella septempunctata"}
+  {"id": 1, "idsp": "FAIN1", "nome italiano": "Ape domestica", "nome latino": "Apis mellifera"},
+  {"id": 2, "idsp": "FAIN2", "nome italiano": "Farfalla monarca", "nome latino": "Danaus plexippus"},
+  {"id": 3, "idsp": "FAIN3", "nome italiano": "Coccinella", "nome latino": "Coccinella septempunctata"}
 ]

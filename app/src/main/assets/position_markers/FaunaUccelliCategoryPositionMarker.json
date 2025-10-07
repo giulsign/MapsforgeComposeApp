@@ -1,6 +1,6 @@
 [
-  {"id": "01", "nome italiano": "Passero", "nome latino": "Passer domesticus"},
-  {"id": "02", "nome italiano": "Gufo", "nome latino": "Bubo bubo"},
-  {"id": "03", "nome italiano": "Aquila reale", "nome latino": "Aquila chrysaetos"},
-  {"id": "04", "nome italiano": "Civetta", "nome latino": "Athene noctua"}
+  {"id": 1, "idsp": "FAUC1", "nome italiano": "Passero", "nome latino": "Passer domesticus"},
+  {"id": 2, "idsp": "FAUC2", "nome italiano": "Gufo", "nome latino": "Bubo bubo"},
+  {"id": 3, "idsp": "FAUC3", "nome italiano": "Aquila reale", "nome latino": "Aquila chrysaetos"},
+  {"id": 4, "idsp": "FAUC4", "nome italiano": "Civetta", "nome latino": "Athene noctua"}
 ]

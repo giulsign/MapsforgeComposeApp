@@ -1,6 +1,3 @@
-/* Applicare le modifiche come nel file tct in desktop salvato*/
-// pulsante cancella dati json + pulsante salva posizione auto(partenza) + pulsante esportazione json(insviluppo)
-
 package it.fourSTL.PositionMarker
 
 import it.fourSTL.PositionMarker.R
@@ -493,21 +490,6 @@ fun fourSTLPositionMarkerComposable(
             )
         }
 
-
-        /*// 🔹 Pulsante laterale → salva posizione
-        FloatingActionButton(
-            onClick = {
-                userLocation?.let { loc ->
-                    saveLocationToJson(context, loc, selectedMetadata)
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.TopStart) // a metà lato destro
-                .padding(horizontal = 30.dp, vertical = 250.dp)
-                .zIndex(2f)
-        ) {
-            Icon(Icons.Filled.Save, contentDescription = "Save")
-        }*/
 
         // 🔹 Pulsante salva posizione
         FloatingActionButton(

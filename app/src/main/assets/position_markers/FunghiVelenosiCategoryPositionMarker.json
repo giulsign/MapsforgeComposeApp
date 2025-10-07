@@ -1,4 +1,4 @@
 [
-  { "id": "01", "nome italiano": "Amanita falloide", "nome latino": "Amanita phalloides", "Tossicità": "Mortale" },
-  { "id": "02", "nome italiano": "Amanita muscaria", "nome latino": "Amanita muscaria", "Tossicità": "Velenoso" }
+  { "id": 1, "idsp": "FUV1", "nome italiano": "Amanita falloide", "nome latino": "Amanita phalloides", "Tossicità": "Mortale" },
+  { "id": 2, "idsp": "FUV2", "nome italiano": "Amanita muscaria", "nome latino": "Amanita muscaria", "Tossicità": "Velenoso" }
 ]

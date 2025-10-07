@@ -1,5 +1,5 @@
 [
-  {"id": "01", "nome italiano": "Lucertola", "nome latino": "Lacerta agilis"},
-  {"id": "02", "nome italiano": "Vipera", "nome latino": "Vipera berus"},
-  {"id": "03", "nome italiano": "Tartaruga", "nome latino": "Testudo hermanni"}
+  {"id": 1, "idsp": "FARE1", "nome italiano": "Lucertola", "nome latino": "Lacerta agilis"},
+  {"id": 2, "idsp": "FARE2", "nome italiano": "Vipera", "nome latino": "Vipera berus"},
+  {"id": 3, "idsp": "FARE3", "nome italiano": "Tartaruga", "nome latino": "Testudo hermanni"}
 ]

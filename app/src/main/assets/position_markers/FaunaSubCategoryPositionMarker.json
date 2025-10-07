@@ -1,7 +1,16 @@
 [
-  {"id": "01", "title": "Mammiferi", "Ref": "FaunaMammiferiCategoryPositionMarker.json"},
-  {"id": "02", "title": "Uccelli", "Ref": "FaunaUccelliCategoryPositionMarker.json"},
-  {"id": "03", "title": "Rettili", "Ref": "FaunaRettiliCategoryPositionMarker.json"},
-  {"id": "04", "title": "Anfibi", "Ref": "FaunaAnfibiCategoryPositionMarker.json"},
-  {"id": "05", "title": "Insetti", "Ref": "FaunaInsettiCategoryPositionMarker.json"}
+  {"id": 1, "idFA": "FAMA", "title": "Mammiferi", "Ref": "FaunaMammiferiCategoryPositionMarker.json"},
+  {"id": 2, "idFA": "FAUC", "title": "Uccelli", "Ref": "FaunaUccelliCategoryPositionMarker.json"},
+  {"id": 3, "idFA": "FARE", "title": "Rettili", "Ref": "FaunaRettiliCategoryPositionMarker.json"},
+  {"id": 4, "idFA": "FAAN", "title": "Anfibi", "Ref": "FaunaAnfibiCategoryPositionMarker.json"},
+  {"id": 5, "idFA": "FAIN", "title": "Insetti", "Ref": "FaunaInsettiCategoryPositionMarker.json"},
+  {"id": 6, "idFA": "FAAR", "title": "Aracnidi", "Ref": "FaunaAracnidiCategoryPositionMarker.json"},
+  {"id": 7, "idFA": "FACR", "title": "Crostacei", "Ref": "FaunaCrostaceiCategoryPositionMarker.json"},
+  {"id": 8, "idFA": "FAGA", "title": "Gasteropodi", "Ref": "FaunaGasteropodiCategoryPositionMarker.json"},
+  {"id": 9, "idFA": "FABI", "title": "Bivalvi", "Ref": "FaunaBivalviCategoryPositionMarker.json"},
+  {"id": 10, "idFA": "FAAE", "title": "Anellidi", "Ref": "FaunaAnellidiCategoryPositionMarker.json"},
+  {"id": 11, "idFA": "FAEC", "title": "Echinodermi", "Ref": "FaunaEchinodermiCategoryPositionMarker.json"},
+  {"id": 12, "idFA": "FACN", "title": "Cnidari", "Ref": "FaunaCnidariCategoryPositionMarker.json"},
+  {"id": 13, "idFA": "FAPO", "title": "Poriferi", "Ref": "FaunaPoriferiCategoryPositionMarker.json"}
 ]
+

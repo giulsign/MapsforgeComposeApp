@@ -1,5 +1,5 @@
 [
-  {"id": "01", "nome italiano": "Rana comune", "nome latino": "Rana temporaria"},
-  {"id": "02", "nome italiano": "Rospo comune", "nome latino": "Bufo bufo"},
-  {"id": "03", "nome italiano": "Salamandra", "nome latino": "Salamandra salamandra"}
+  {"id": 1, "idsp": "FAAN1", "nome italiano": "Rana comune", "nome latino": "Rana temporaria"},
+  {"id": 2, "idsp": "FAAN2", "nome italiano": "Rospo comune", "nome latino": "Bufo bufo"},
+  {"id": 3, "idsp": "FAAN3", "nome italiano": "Salamandra", "nome latino": "Salamandra salamandra"}
 ]
