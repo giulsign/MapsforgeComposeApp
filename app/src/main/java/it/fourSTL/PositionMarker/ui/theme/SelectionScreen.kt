@@ -27,8 +27,7 @@ data class SelectRow(val id: String, val title: String, val note: String = "", v
 @Composable
 fun SelectionScreen(
     onDismiss: () -> Unit,
-    //onSave: (Map<String, String>, Boolean) -> Unit,       // mantiene la firma che usi
-    onSave: (Map<String, String>, Boolean) -> Unit,       // mantiene la firma che usi
+    onSave: (Map<String, String>, Boolean) -> Unit,
     startFile: String = "MainCategoryPositionMarker.json",
     persistentSelections: MutableSet<String>              // set degli id persistenti (mutato direttamente)
 ) {
@@ -38,6 +37,9 @@ fun SelectionScreen(
 
     var currentFile by remember { mutableStateOf(startFile) }
     var currentRows by remember { mutableStateOf<List<PositionItem>>(emptyList()) }
+
+    // Stack per la navigazione: tiene traccia dei file visitati
+    var navigationStack by remember { mutableStateOf(listOf<String>()) }
 
     // stato per ogni id -> SelectionState; inizializziamo con i persistenti già presenti
     var selectionStates by remember { mutableStateOf(mapOf<String, SelectionState>()) }
@@ -63,6 +65,7 @@ fun SelectionScreen(
             val firstId = persistentIds.first()
             val item = currentRows.firstOrNull { it.id == firstId }
             if (item != null) {
+                map["idsp"] = item.id
                 if (item.title.isNotEmpty()) map["nome italiano"] = item.title
                 if (item.note.isNotEmpty()) map["nome latino"] = item.note
             }
@@ -72,14 +75,23 @@ fun SelectionScreen(
     }
 
     val onBackPressed = {
-        onDismiss()
+        if (navigationStack.isNotEmpty()) {
+            // Naviga indietro nello stack
+            val previousFile = navigationStack.last()
+            navigationStack = navigationStack.dropLast(1)
+            currentFile = previousFile
+        } else {
+            // Se siamo al file iniziale, chiudi la schermata
+            onDismiss()
+        }
     }
 
     val onRowClick: (PositionItem) -> Unit = { row ->
         if (!row.ref.isNullOrEmpty()) {
-            // navigazione verso sottocategoria
+            // Aggiungi il file corrente allo stack prima di navigare
+            navigationStack = navigationStack + currentFile
+            // Naviga verso la sottocategoria
             currentFile = row.ref!!
-            // reset locale (caricamento avverrà con LaunchedEffect)
         } else {
             // toggle dello stato per la riga
             val current = selectionStates[row.id] ?: SelectionState.NONE
@@ -104,35 +116,37 @@ fun SelectionScreen(
     }
 
     val onSaveClicked = {
-        // prendi tutti gli id selezionati (SINGLE o PERSISTENT)
-        val selectedIds = selectionStates.filterValues { it == SelectionState.SINGLE || it == SelectionState.PERSISTENT }.keys
+        // ✅ LOGICA CORRETTA: Prendi TUTTI gli id selezionati (SINGLE + PERSISTENT)
+        val selectedIds = selectionStates.filterValues {
+            it == SelectionState.SINGLE || it == SelectionState.PERSISTENT
+        }.keys
 
-        /*val metadataMap = mutableMapOf<String, String>()
-        currentRows.filter { selectedIds.contains(it.id) }.forEach { item ->
-            if (item.title.isNotEmpty()) metadataMap["nome italiano"] = item.title
-            if (item.note.isNotEmpty()) metadataMap["nome latino"] = item.note
+        if (selectedIds.isNotEmpty()) {
+            // 🔹 Trova l'elemento selezionato (prende il primo se ce ne sono più)
+            val selectedItem = currentRows.firstOrNull { selectedIds.contains(it.id) }
+
+            if (selectedItem != null) {
+                // ✅ Crea la mappa con TUTTI i campi incluso idsp
+                val metadataMap = mutableMapOf<String, String>()
+                metadataMap["idsp"] = selectedItem.id  // ✅ SEMPRE presente quando c'è selezione
+                if (selectedItem.title.isNotEmpty()) {
+                    metadataMap["nome italiano"] = selectedItem.title
+                }
+                if (selectedItem.note.isNotEmpty()) {
+                    metadataMap["nome latino"] = selectedItem.note
+                }
+
+                // Chiama onSave con i metadati completi
+                onSave(metadataMap, false)
+            }
         }
 
-        // Chiamata al callback (secondo argomento non usato qui => false)
-        onSave(metadataMap, false)*/
-
-        val selectedRecords = currentRows
-            .filter { selectedIds.contains(it.id) }
-            .forEach { item ->
-                val record = mapOf(
-                    "idsp" to item.id,
-                    "nome italiano" to item.title,
-                    "nome latino" to item.note
-                )
-                onSave(record, false)
-            }
-
-        // resettare solamente gli STATE SINGLE (gialli) dopo il salvataggio; i PERSISTENT rimangono
+        // Resetta solo gli stati SINGLE (gialli), i PERSISTENT (verdi) rimangono
         selectionStates = selectionStates.mapValues { (_, st) ->
             if (st == SelectionState.SINGLE) SelectionState.NONE else st
         }
 
-        // salvare nuovamente la mappa persistente (nel caso qualcosa sia cambiato)
+        // Salva nuovamente i metadati persistenti
         persistCurrentPersistentMetadata()
     }
 

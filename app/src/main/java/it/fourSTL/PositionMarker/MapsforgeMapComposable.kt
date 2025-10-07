@@ -57,6 +57,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import org.mapsforge.core.model.LatLong as MapsforgeLatLong
 import androidx.core.content.res.ResourcesCompat
+import androidx.compose.foundation.clickable
 import android.content.Intent
 import java.util.*
 
@@ -699,19 +700,37 @@ fun fourSTLPositionMarkerComposable(
         ) {
             Icon(Icons.Filled.Search, contentDescription = "Search saved points")
         }
+
         if (showTable) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .background(Color.White)
-                    .padding(16.dp)
-                    .align(Alignment.Center)
-                    .zIndex(999f) // ✅ sopra tutto
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .zIndex(998f)
+                    .clickable { showTable = false }
             ) {
-                LocationsTableScreen(
-                    context = context,
-                    onBack = { showTable = false } // Azione per chiudere la tabella
-                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth(0.95f)
+                        .fillMaxHeight(0.85f)
+                        .background(Color.White, shape = MaterialTheme.shapes.large)
+                        .zIndex(999f)
+                        .clickable(enabled = false) { }
+                ) {
+                    LocationsTableScreen(
+                        context = context,
+                        onBack = { showTable = false },
+                        onPointClick = { lat, lon ->
+                            val latLong = LatLong(lat, lon)
+                            mapViewRef?.model?.mapViewPosition?.apply {
+                                setCenter(latLong)
+                                setZoomLevel(17.toByte())
+                            }
+                            showTable = false
+                        }
+                    )
+                }
             }
         }
 
