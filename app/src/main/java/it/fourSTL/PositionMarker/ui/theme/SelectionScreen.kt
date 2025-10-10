@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,6 +46,12 @@ fun SelectionScreen(
     // stato per ogni id -> SelectionState; inizializziamo con i persistenti già presenti
     var selectionStates by remember { mutableStateOf(mapOf<String, SelectionState>()) }
 
+    // Stati per la ricerca
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var searchResults by remember { mutableStateOf<List<PositionItem>>(emptyList()) }
+    var isSearching by remember { mutableStateOf(false) }
+
     LaunchedEffect(currentFile) {
         scope.launch {
             currentRows = repo.loadItems(currentFile)
@@ -74,8 +82,48 @@ fun SelectionScreen(
         savePersistentMetadata(context, map)
     }
 
+    // Funzione di ricerca ricorsiva nei file JSON
+    suspend fun searchInAllFiles(query: String): List<PositionItem> {
+        if (query.isBlank()) return emptyList()
+
+        val results = mutableListOf<PositionItem>()
+        val queryLower = query.lowercase().trim()
+        val visitedFiles = mutableSetOf<String>()
+        val filesToVisit = mutableListOf("MainCategoryPositionMarker.json")
+
+        while (filesToVisit.isNotEmpty()) {
+            val file = filesToVisit.removeAt(0)
+            if (file in visitedFiles) continue
+            visitedFiles.add(file)
+
+            val items = repo.loadItems(file)
+            items.forEach { item ->
+                // Cerca solo nei metadati (righe senza ref)
+                if (item.ref.isNullOrEmpty()) {
+                    val titleMatch = item.title.lowercase().contains(queryLower)
+                    val noteMatch = item.note.lowercase().contains(queryLower)
+
+                    if (titleMatch || noteMatch) {
+                        results.add(item)
+                    }
+                }
+                // Aggiungi sottocategorie da visitare
+                if (!item.ref.isNullOrEmpty()) {
+                    filesToVisit.add(item.ref!!)
+                }
+            }
+        }
+
+        return results
+    }
+
     val onBackPressed = {
-        if (navigationStack.isNotEmpty()) {
+        if (isSearchActive) {
+            // Se la ricerca è attiva, disattivala
+            isSearchActive = false
+            searchQuery = ""
+            searchResults = emptyList()
+        } else if (navigationStack.isNotEmpty()) {
             // Naviga indietro nello stack
             val previousFile = navigationStack.last()
             navigationStack = navigationStack.dropLast(1)
@@ -123,7 +171,8 @@ fun SelectionScreen(
 
         if (selectedIds.isNotEmpty()) {
             // 🔹 Trova l'elemento selezionato (prende il primo se ce ne sono più)
-            val selectedItem = currentRows.firstOrNull { selectedIds.contains(it.id) }
+            val itemsToSearch = if (isSearchActive) searchResults else currentRows
+            val selectedItem = itemsToSearch.firstOrNull { selectedIds.contains(it.id) }
 
             if (selectedItem != null) {
                 // ✅ Crea la mappa con TUTTI i campi incluso idsp
@@ -153,10 +202,68 @@ fun SelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Seleziona Metadati") },
+                title = {
+                    if (isSearchActive) {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { newQuery ->
+                                searchQuery = newQuery
+                                if (newQuery.length >= 2) {
+                                    isSearching = true
+                                    scope.launch {
+                                        searchResults = searchInAllFiles(newQuery)
+                                        // Inizializza gli stati per i risultati di ricerca
+                                        searchResults.forEach { item ->
+                                            if (!selectionStates.containsKey(item.id)) {
+                                                val st = if (persistentSelections.contains(item.id))
+                                                    SelectionState.PERSISTENT
+                                                else
+                                                    SelectionState.NONE
+                                                selectionStates = selectionStates + (item.id to st)
+                                            }
+                                        }
+                                        isSearching = false
+                                    }
+                                } else {
+                                    searchResults = emptyList()
+                                }
+                            },
+                            placeholder = { Text("Cerca metadati...") },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Text("Seleziona Metadati")
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
+                    }
+                },
+                actions = {
+                    if (isSearchActive) {
+                        IconButton(onClick = {
+                            searchQuery = ""
+                            searchResults = emptyList()
+                        }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Cancella ricerca")
+                        }
+                    }
+                    IconButton(onClick = {
+                        isSearchActive = !isSearchActive
+                        if (!isSearchActive) {
+                            searchQuery = ""
+                            searchResults = emptyList()
+                        }
+                    }) {
+                        Icon(Icons.Default.Search, contentDescription = "Cerca")
                     }
                 }
             )
@@ -179,19 +286,55 @@ fun SelectionScreen(
             }
         }
     ) { padding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            items(currentRows) { row ->
-                val state = selectionStates[row.id] ?: SelectionState.NONE
-                SelectionRowItem(
-                    row = SelectRow(row.id, row.title, row.note, row.ref),
-                    state = state,
-                    onClick = { onRowClick(row) }
-                )
-                Divider()
+            // Mostra indicatore di caricamento durante la ricerca
+            if (isSearching) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            // Mostra info sui risultati
+            if (isSearchActive && searchQuery.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    tonalElevation = 2.dp
+                ) {
+                    Text(
+                        text = if (searchQuery.length < 2) {
+                            "Inserisci almeno 2 caratteri"
+                        } else {
+                            "${searchResults.size} risultati trovati"
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+
+            // Lista dei risultati
+            val displayItems = if (isSearchActive && searchQuery.length >= 2) {
+                searchResults
+            } else {
+                currentRows
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(displayItems) { row ->
+                    val state = selectionStates[row.id] ?: SelectionState.NONE
+                    SelectionRowItem(
+                        row = SelectRow(row.id, row.title, row.note, row.ref),
+                        state = state,
+                        onClick = { onRowClick(row) }
+                    )
+                    HorizontalDivider()
+                }
             }
         }
     }

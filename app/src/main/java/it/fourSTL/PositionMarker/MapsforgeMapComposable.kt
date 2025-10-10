@@ -422,7 +422,7 @@ fun fourSTLPositionMarkerComposable(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .border(25.dp, Color.Black)   // ✅ bordo attorno alla mappa
+            .border(6.dp, Color.Black)   // ✅ bordo attorno alla mappa
     ) {
         AndroidView(
             factory = {

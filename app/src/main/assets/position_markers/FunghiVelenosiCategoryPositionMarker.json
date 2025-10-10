@@ -1,4 +1,25 @@
 [
-  { "id": 1, "idsp": "FUV1", "nome italiano": "Amanita falloide", "nome latino": "Amanita phalloides", "Tossicità": "Mortale" },
-  { "id": 2, "idsp": "FUV2", "nome italiano": "Amanita muscaria", "nome latino": "Amanita muscaria", "Tossicità": "Velenoso" }
+{"id":1,"idsp":"FUVE1","nome_italiano":"Amanita muscaria (Amanita muscaria)","nome_latino":"Amanita muscaria"},
+{"id":2,"idsp":"FUVE2","nome_italiano":"Amanita pantherina (Tignosa bruna)","nome_latino":"Amanita pantherina"},
+{"id":3,"idsp":"FUVE3","nome_italiano":"Paxillo involuto (Paxillus)","nome_latino":"Paxillus involutus"},
+{"id":4,"idsp":"FUVE4","nome_italiano":"Gyromitra / falsa spugnola","nome_latino":"Gyromitra esculenta"},
+{"id":5,"idsp":"FUVE5","nome_italiano":"Inocybe (varie specie, ricche di muscarina)","nome_latino":"Inocybe spp."},
+{"id":6,"idsp":"FUVE6","nome_italiano":"Russula emetica (Colombina rossa)","nome_latino":"Russula emetica"},
+{"id":7,"idsp":"FUVE7","nome_italiano":"Clitocybe (es. Clitocybe dealbata / rivulosa) — falsi prataioli","nome_latino":"Clitocybe spp. (es. C. dealbata, C. rivulosa)"},
+{"id":8,"idsp":"FUVE8","nome_italiano":"Rubroboletus (porcino malefico)","nome_latino":"Rubroboletus satanas"},
+{"id":9,"idsp":"FUVE9","nome_italiano":"Lepiota (piccole Lepiote tossiche)","nome_latino":"Lepiota spp. (es. L. brunneoincarnata)"},
+{"id":10,"idsp":"FUVE10","nome_italiano":"Entoloma (specie tossiche con forte gastroenterite)","nome_latino":"Entoloma spp. (es. E. sinuatum suggerito come pericoloso)"},
+{"id":11,"idsp":"FUVE11","nome_italiano":"Galerina (piccola, spesso su ceppaie)","nome_latino":"Galerina marginata"},
+{"id":12,"idsp":"FUVE12","nome_italiano":"Coprinus / Coprinopsis (alcune specie che causano reazioni in concomitanza con alcol)","nome_latino":"Coprinus/Coprinopsis spp."},
+{"id":13,"idsp":"FUVE13","nome_italiano":"Boletus amari / Boleti amareggianti (non commestibili)","nome_latino":"es. Boletus/Boletaceae spp. amari"},
+{"id":14,"idsp":"FUVE14","nome_italiano":"Armillaria mellea (chiodino) — generalmente commestibile ma talvolta mal tollerato da alcuni","nome_latino":"Armillaria mellea"},
+{"id":15,"idsp":"FUVE15","nome_italiano":"Amanita falloide (Tignosa verdognola / Death cap)","nome_latino":"Amanita phalloides"},
+{"id":16,"idsp":"FUVE16","nome_italiano":"Amanita virosa (Ovolaccio / Ovolo malefico)","nome_latino":"Amanita virosa"},
+{"id":17,"idsp":"FUVE17","nome_italiano":"Amanita verna (Tignosa primaverile)","nome_latino":"Amanita verna"},
+{"id":18,"idsp":"FUVE18","nome_italiano":"Amanita ocreata (varietà mortale simile, presente in alcune aree)","nome_latino":"Amanita ocreata"},
+{"id":19,"idsp":"FUVE19","nome_italiano":"Cortinarius orellanus (Cortinario orellano)","nome_latino":"Cortinarius orellanus"},
+{"id":20,"idsp":"FUVE20","nome_italiano":"Cortinarius rubellus (Cortinario rosso-bruno pericoloso)","nome_latino":"Cortinarius rubellus"},
+{"id":21,"idsp":"FUVE21","nome_italiano":"Galerina marginata (piccola amatossina-produttrice)","nome_latino":"Galerina marginata"},
+{"id":22,"idsp":"FUVE22","nome_italiano":"Lepiota brunneoincarnata (piccole Lepiote amatossiniche)","nome_latino":"Lepiota brunneoincarnata"},
+{"id":23,"idsp":"FUVE23","nome_italiano":"Entoloma sinuatum (entro spesso tra i mortali / gravemente tossico)","nome_latino":"Entoloma sinuatum"}
 ]
