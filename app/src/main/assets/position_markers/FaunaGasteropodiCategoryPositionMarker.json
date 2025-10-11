@@ -1,3 +1,18 @@
 [
-  {"id": 1, "idsp": "FAGA1", "nome italiano": "Chiocciola comune", "nome latino": "Helix aspersa"}
+  {"id": 1, "idsp": "FAGA1", "nome italiano": "Chiocciola comune", "nome latino": "Helix aspersa"},
+  {"id": 2, "idsp": "FAGA2", "nome italiano": "Chiocciola romana / lumacone", "nome latino": "Helix pomatia"},
+  {"id": 3, "idsp": "FAGA3", "nome italiano": "Lumaca rossa di giardino", "nome latino": "Arion rufus"},
+  {"id": 4, "idsp": "FAGA4", "nome italiano": "Chiocciolina delle siepi", "nome latino": "Cepaea nemoralis"},
+  {"id": 5, "idsp": "FAGA5", "nome italiano": "Limaccia nera", "nome latino": "Limax cinereoniger"},
+  {"id": 6, "idsp": "FAGA6", "nome italiano": "Lumaca di stagno", "nome latino": "Lymnaea stagnalis"},
+  {"id": 7, "idsp": "FAGA7", "nome italiano": "Planorbide comune", "nome latino": "Planorbarius corneus"},
+  {"id": 8, "idsp": "FAGA8", "nome italiano": "Chiocciola d’acqua dolce piccola", "nome latino": "Physa acuta"},
+  {"id": 9, "idsp": "FAGA9", "nome italiano": "Patella / cappello di prete", "nome latino": "Patella caerulea"},
+  {"id": 10, "idsp": "FAGA10", "nome italiano": "Nassarius / lumachina di mare", "nome latino": "Nassarius mutabilis"},
+  {"id": 11, "idsp": "FAGA11", "nome italiano": "Murice spinoso", "nome latino": "Bolinus brandaris"},
+  {"id": 12, "idsp": "FAGA12", "nome italiano": "Buccino comune", "nome latino": "Buccinum undatum"},
+  {"id": 13, "idsp": "FAGA13", "nome italiano": "Conchiglia orecchietta / Haliotide", "nome latino": "Haliotis tuberculata"},
+  {"id": 14, "idsp": "FAGA14", "nome italiano": "Aplysia / lepre di mare", "nome latino": "Aplysia depilans"},
+  {"id": 15, "idsp": "FAGA15", "nome italiano": "Colombella rustica", "nome latino": "Columbella rustica"}
 ]
+

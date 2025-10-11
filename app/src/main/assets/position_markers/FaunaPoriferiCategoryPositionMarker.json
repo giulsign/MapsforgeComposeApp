@@ -1,3 +1,13 @@
 [
-  {"id": 1, "idsp": "FAPO1", "nome italiano": "Spugna da bagno", "nome latino": "Spongia officinalis"}
+  {"id": 1, "idsp": "FAPO1", "nome italiano": "Spugna gialla del Mediterraneo", "nome latino": "Aplysina aerophoba"},
+  {"id": 2, "idsp": "FAPO2", "nome italiano": "Spugna da bagno", "nome latino": "Spongia officinalis"},
+  {"id": 3, "idsp": "FAPO3", "nome italiano": "Spugna a barile", "nome latino": "Ircinia variabilis"},
+  {"id": 4, "idsp": "FAPO4", "nome italiano": "Spugna cuscino", "nome latino": "Chondrosia reniformis"},
+  {"id": 5, "idsp": "FAPO5", "nome italiano": "Spugna rossa incrostante", "nome latino": "Crambe crambe"},
+  {"id": 6, "idsp": "FAPO6", "nome italiano": "Spugna arancione incrostante", "nome latino": "Hemimycale columella"},
+  {"id": 7, "idsp": "FAPO7", "nome italiano": "Spugna perforante", "nome latino": "Cliona celata"},
+  {"id": 8, "idsp": "FAPO8", "nome italiano": "Spugna ramificata grigia", "nome latino": "Haliclona mediterranea"},
+  {"id": 9, "idsp": "FAPO9", "nome italiano": "Spugna di laguna (acqua salmastra)", "nome latino": "Halichondria panicea"},
+  {"id": 10, "idsp": "FAPO10", "nome italiano": "Spugna d’acqua dolce", "nome latino": "Spongilla lacustris"}
 ]
+
