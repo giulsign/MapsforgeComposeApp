@@ -59,6 +59,7 @@ import org.mapsforge.core.model.LatLong as MapsforgeLatLong
 import androidx.core.content.res.ResourcesCompat
 import androidx.compose.foundation.clickable
 import android.content.Intent
+import it.fourSTL.PositionMarker.clearPersistentSelections
 import java.util.*
 
 // 🔹 Utility per memorizzare metadati persistenti
@@ -859,11 +860,33 @@ fun fourSTLPositionMarkerComposable(
 
 
         // 🔹 Pulsante reset selezioni persistenti (verde)
-        FloatingActionButton(
+        /*FloatingActionButton(
             onClick = {
                 // svuota il set persistente: per forzare ricomposizione ricreiamo una nuova referenza
                 persistentSelectionsState.value.clear()
                 persistentSelectionsState.value = mutableSetOf()
+                Toast.makeText(context, "Selezioni persistenti resettate", Toast.LENGTH_SHORT).show()
+            },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 60.dp)
+                .zIndex(2f)
+        ) {
+            Icon(Icons.Default.Refresh, contentDescription = "Reset metadati persistenti")
+        }*/
+
+        FloatingActionButton(
+            onClick = {
+                // Cancella le selezioni persistenti dalle SharedPreferences
+                clearPersistentSelections(context)
+                clearPersistentMetadata(context)
+
+
+                // Svuota il set in memoria per forzare la ricomposizione della UI
+                persistentSelectionsState.value = mutableSetOf()
+                persistentMetadata = emptyMap()
+
+
                 Toast.makeText(context, "Selezioni persistenti resettate", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier

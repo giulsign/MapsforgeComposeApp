@@ -1,6 +1,8 @@
 package it.fourSTL.PositionMarker
 
+import android.content.Context
 import org.json.JSONObject
+import kotlin.collections.remove
 
 /**
  * Rappresenta un elemento generico (categoria, sottocategoria, metadato)
@@ -13,3 +15,8 @@ data class PositionItem(
     val ref: String? = null,
     val raw: JSONObject? = null
 )
+
+fun clearPersistentSelections(context: Context) {
+    val prefs = context.getSharedPreferences("PositionMarkerPrefs", Context.MODE_PRIVATE)
+    prefs.edit().remove("persistent_selections").apply()
+}
