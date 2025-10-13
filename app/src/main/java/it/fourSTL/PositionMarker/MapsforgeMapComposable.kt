@@ -797,7 +797,7 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
-        // 🔹 Apertura SelectionScreena
+        // 🔹 Apertura SelectionScreen
         FloatingActionButton(
             onClick = { showSelectionScreen = true },
             modifier = Modifier
@@ -860,21 +860,6 @@ fun fourSTLPositionMarkerComposable(
 
 
         // 🔹 Pulsante reset selezioni persistenti (verde)
-        /*FloatingActionButton(
-            onClick = {
-                // svuota il set persistente: per forzare ricomposizione ricreiamo una nuova referenza
-                persistentSelectionsState.value.clear()
-                persistentSelectionsState.value = mutableSetOf()
-                Toast.makeText(context, "Selezioni persistenti resettate", Toast.LENGTH_SHORT).show()
-            },
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 60.dp)
-                .zIndex(2f)
-        ) {
-            Icon(Icons.Default.Refresh, contentDescription = "Reset metadati persistenti")
-        }*/
-
         FloatingActionButton(
             onClick = {
                 // Cancella le selezioni persistenti dalle SharedPreferences
