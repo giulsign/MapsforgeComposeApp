@@ -213,7 +213,11 @@ fun LocationsTableScreen(
                         isSelected = location.id == selectedLocationId,
                         onClick = {
                             selectedLocationId = location.id
-                            onPointClick(filteredLocations)
+                            if (searchQuery.isBlank()) {
+                                onPointClick(listOf(location))
+                            } else {
+                                onPointClick(filteredLocations)
+                            }
                         },
                         onDelete = {
                             locationToDelete = location
@@ -371,7 +375,7 @@ fun LocationCard(
                             Icon(
                                 Icons.Default.ImageSearch,
                                 contentDescription = "Cerca Immagine",
-                                tint = Color(0xFF0288D1)
+                                tint = Color(blue = 0x80, green = 0x80, red = 0x80)
                             )
                         }
                     }
