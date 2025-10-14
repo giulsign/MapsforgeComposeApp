@@ -321,6 +321,7 @@ fun fourSTLPositionMarkerComposable(
     // stato per i metadati selezionati temporanei (viene passato da SelectionScreen via onSave)
     val persistentSelectionsState = remember { mutableStateOf(mutableSetOf<String>()) }
     var persistentMetadata by remember { mutableStateOf(loadPersistentMetadata(context)) }
+    var filteredMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
 
 
     // Lista delle posizioni salvate
@@ -480,6 +481,9 @@ fun fourSTLPositionMarkerComposable(
                         setZoomLevel(15.toByte())
                     }
                 }
+                // Rimuovi i marker filtrati
+                filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
+                filteredMarkers = emptyList()
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -722,12 +726,29 @@ fun fourSTLPositionMarkerComposable(
                     LocationsTableScreen(
                         context = context,
                         onBack = { showTable = false },
-                        onPointClick = { lat, lon ->
-                            val latLong = LatLong(lat, lon)
-                            mapViewRef?.model?.mapViewPosition?.apply {
-                                setCenter(latLong)
-                                setZoomLevel(17.toByte())
+                        onPointClick = { locations ->
+                            // Rimuovi i marker precedenti
+                            filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
+
+                            val markers = locations.map { loc ->
+                                val latLong = LatLong(loc.latitude, loc.longitude)
+                                val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker_blue, null)
+                                val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+                                Marker(latLong, markerBitmap, 0, -markerBitmap.height / 2)
                             }
+
+                            markers.forEach { mapViewRef?.layerManager?.layers?.add(it) }
+                            filteredMarkers = markers
+
+                            if (locations.isNotEmpty()) {
+                                val firstLocation = locations.first()
+                                val latLong = LatLong(firstLocation.latitude, firstLocation.longitude)
+                                mapViewRef?.model?.mapViewPosition?.apply {
+                                    setCenter(latLong)
+                                    setZoomLevel(17.toByte())
+                                }
+                            }
+
                             showTable = false
                         }
                     )

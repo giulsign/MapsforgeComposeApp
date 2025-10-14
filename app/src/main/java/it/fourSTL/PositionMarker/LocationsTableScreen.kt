@@ -3,6 +3,7 @@ package it.fourSTL.PositionMarker
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ImageSearch // <-- Icona per la ricerca immagini
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -126,14 +128,26 @@ fun deleteLocationFromJson(context: Context, locationId: Int): Boolean {
 fun LocationsTableScreen(
     context: Context,
     onBack: () -> Unit,
-    onPointClick: ((Double, Double) -> Unit)? = null
+    onPointClick: (List<LocationDatas>) -> Unit
 ) {
     var locations by remember { mutableStateOf(readLocationsFromJsons(context)) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var locationToDelete by remember { mutableStateOf<LocationDatas?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedLocationId by remember { mutableStateOf<Int?>(null) }
+
 
     fun reloadLocations() {
         locations = readLocationsFromJsons(context)
+    }
+
+    val filteredLocations = if (searchQuery.isBlank()) {
+        locations
+    } else {
+        locations.filter {
+            it.nomeItaliano?.contains(searchQuery, ignoreCase = true) == true ||
+                    it.nomeLatino?.contains(searchQuery, ignoreCase = true) == true
+        }
     }
 
     Column(
@@ -163,6 +177,17 @@ fun LocationsTableScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Cerca per nome italiano o latino") },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+
         // Lista dei punti
         if (locations.isEmpty()) {
             Box(
@@ -182,10 +207,14 @@ fun LocationsTableScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(locations) { location ->
+                items(filteredLocations) { location ->
                     LocationCard(
                         location = location,
-                        onClick = { onPointClick?.invoke(location.latitude, location.longitude) },
+                        isSelected = location.id == selectedLocationId,
+                        onClick = {
+                            selectedLocationId = location.id
+                            onPointClick(filteredLocations)
+                        },
                         onDelete = {
                             locationToDelete = location
                             showDeleteDialog = true
@@ -234,146 +263,21 @@ fun LocationsTableScreen(
     }
 }
 
-/*@Composable
-fun LocationCard(
-    location: LocationDatas,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    // MODIFICA: Ottieni il context per usarlo nella funzione di ricerca
-    val context = LocalContext.current
-
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (location.idsp != null) Color(0xFFFFF9C4) else MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
-        ) {
-            // Header della card
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Punto #${location.id}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(location.date, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    Text(location.hour.take(8), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // Coordinate GPS
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row {
-                    Text("📍 Latitudine:  ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                    Text(String.format("%.6f", location.latitude), style = MaterialTheme.typography.bodyMedium)
-                }
-                Row {
-                    Text("📍 Longitudine: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                    Text(String.format("%.6f", location.longitude), style = MaterialTheme.typography.bodyMedium)
-                }
-                Row {
-                    Text("⛰️ Altitudine:  ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                    Text(String.format("%.1f m", location.altitude), style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-
-            // Metadati (se presenti)
-            if (location.idsp != null) {
-                Spacer(Modifier.height(12.dp))
-                Divider(color = Color.Gray.copy(alpha = 0.3f))
-                Spacer(Modifier.height(12.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row {
-                        Text("🔖 Codice: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        Text(location.idsp, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    }
-                    location.nomeItaliano?.let { nome ->
-                        Row {
-                            Text("🇮🇹 ", style = MaterialTheme.typography.bodyMedium)
-                            Text(nome, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        }
-                    }
-                    location.nomeLatino?.let { nome ->
-                        Row {
-                            Text("🌿 ", style = MaterialTheme.typography.bodySmall)
-                            Text(nome, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic, color = Color.Gray)
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // MODIFICA: Sezione Pulsanti Azione
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // MODIFICA: Il pulsante "Cerca Web" ora è il primo
-                // e viene mostrato solo se c'è un metadato da cercare
-                location.nomeLatino?.let { query ->
-                    if (query.isNotBlank()) {
-                        TextButton(
-                            onClick = { searchImageOnWeb(context, query) },
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = Color(0xFF0288D1) // Un colore blu per distinguerlo
-                            )
-                        ) {
-                            Icon(Icons.Default.ImageSearch, contentDescription = "Cerca Immagine", modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("Cerca Web")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                    }
-                }
-
-                // Pulsante vai al punto
-                TextButton(
-                    onClick = onClick,
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Icon(Icons.Default.MyLocation, contentDescription = "Vai al punto", modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Vai al punto")
-                }
-
-                Spacer(Modifier.width(8.dp))
-
-                // Pulsante elimina
-                TextButton(
-                    onClick = onDelete,
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Elimina", modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Elimina")
-                }
-            }
-        }
-    }
-}*/
-
 @Composable
 fun LocationCard(
     location: LocationDatas,
+    isSelected: Boolean,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
+    val backgroundColor = if (isSelected) Color(0xFF81D4FA) else if (location.idsp != null) Color(0xFFFFF9C4) else MaterialTheme.colorScheme.surface
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (location.idsp != null) Color(0xFFFFF9C4) else MaterialTheme.colorScheme.surface
+            containerColor = backgroundColor
         )
     ) {
         // Row principale che separa le info a sinistra dai pulsanti a destra
@@ -485,4 +389,3 @@ fun LocationCard(
         }
     }
 }
-
