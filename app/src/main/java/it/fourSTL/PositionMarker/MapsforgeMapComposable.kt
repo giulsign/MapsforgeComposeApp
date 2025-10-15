@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -30,7 +29,6 @@ import org.mapsforge.map.layer.cache.TileCache
 import org.mapsforge.map.layer.renderer.TileRendererLayer
 import org.mapsforge.map.reader.MapFile
 import org.mapsforge.map.layer.overlay.Marker
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
@@ -43,7 +41,6 @@ import java.util.Locale
 import java.io.File
 import androidx.core.content.edit
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.zIndex
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -58,6 +55,17 @@ import java.io.FileOutputStream
 import org.mapsforge.core.model.LatLong as MapsforgeLatLong
 import androidx.core.content.res.ResourcesCompat
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import android.content.Intent
 import it.fourSTL.PositionMarker.clearPersistentSelections
 import java.util.*
@@ -322,6 +330,7 @@ fun fourSTLPositionMarkerComposable(
     val persistentSelectionsState = remember { mutableStateOf(mutableSetOf<String>()) }
     var persistentMetadata by remember { mutableStateOf(loadPersistentMetadata(context)) }
     var filteredMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
+    var buttonsVisible by remember { mutableStateOf(false) }
 
 
     // Lista delle posizioni salvate
@@ -472,7 +481,7 @@ fun fourSTLPositionMarkerComposable(
         )
 
         // Pulsante MyLocation
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = {
                 userLocation?.let { loc ->
                     val latLong = LatLong(loc.latitude, loc.longitude)
@@ -493,12 +502,12 @@ fun fourSTLPositionMarkerComposable(
             Icon(
                 imageVector = Icons.Filled.MyLocation,
                 contentDescription = "Ritorna alla mia posizione"
-            )
+            )}
         }
 
 
         // 🔹 Pulsante salva posizione
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = {
                 userLocation?.let { loc ->
                     val finalMetadata = persistentMetadata + selectedMetadata
@@ -512,11 +521,11 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f)
         ) {
             Icon(Icons.Filled.Save, contentDescription = "Salva posizione")
-        }
+        }}
 
 
         // 🔹 Pulsante laterale → salva posizione automobile / punto partenza
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = {
                 userLocation?.let { loc ->
                     saveLocationToJsonAuto(context, loc)
@@ -528,10 +537,10 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f)
         ) {
             Icon(Icons.Filled.DirectionsCarFilled, contentDescription = "Auto")
-        }
+        }}
 
         // 🔹 Pulsante cancella tabella punti
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = { showConfirmDialog = true },
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -539,7 +548,7 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f)
         ) {
             Icon(Icons.Filled.Delete, contentDescription = "Cancella tabella punti")
-        }
+        }}
 
         // 🔹 Dialogo conferma cancellazione punti salvati
         if (showConfirmDialog) {
@@ -588,7 +597,7 @@ fun fourSTLPositionMarkerComposable(
         // pulsante esportazione dati json salvati
         val contextData = LocalContext.current
 
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
                 onClick = { exportJsonToDownload(contextData) },
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -599,11 +608,11 @@ fun fourSTLPositionMarkerComposable(
                     imageVector = Icons.Default.FileCopy,
                     contentDescription = "Esporta tabella punti in formato JSON"
                 )
-            }
+            }}
 
 
         // 🔹 Pulsante cancella posizione auto
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = { showConfirmDialogAuto = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -611,7 +620,7 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f)
         ) {
             Icon(Icons.Filled.Delete, contentDescription = "Cancella posizione auto")
-        }
+        }}
 
         // 🔹 Dialogo conferma cancellazione posizione auto
         if (showConfirmDialogAuto) {
@@ -658,7 +667,7 @@ fun fourSTLPositionMarkerComposable(
 
 
         // Pulsanti Zoom in riga
-        Row(
+        if (buttonsVisible) {Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 30.dp),
@@ -674,7 +683,7 @@ fun fourSTLPositionMarkerComposable(
             }) {
                 Icon(Icons.Default.ZoomIn, contentDescription = "Zoom In")
             }
-        }
+        }}
 
 
         // Marker aggiornato con GPS
@@ -696,7 +705,7 @@ fun fourSTLPositionMarkerComposable(
 
 
         // Visualizzazione tabella punti salvati
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = { showTable = true },
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -704,7 +713,7 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f)
         ) {
             Icon(Icons.Filled.Search, contentDescription = "Search saved points")
-        }
+        }}
 
         if (showTable) {
             Box(
@@ -758,7 +767,7 @@ fun fourSTLPositionMarkerComposable(
 
 
         // Pulsante per visualizzare/nascondere punto auto salvato
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = {
                 mapViewRef?.let { map ->
                     if (!showCarMarker) {
@@ -815,11 +824,11 @@ fun fourSTLPositionMarkerComposable(
                 imageVector = Icons.Default.DirectionsCar,
                 contentDescription = if (showCarMarker) "Nascondi punto auto" else "Mostra punto auto"
             )*/
-        }
+        }}
 
 
         // 🔹 Apertura SelectionScreen
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = { showSelectionScreen = true },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -827,7 +836,7 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f)
         ) {
             Icon(Icons.Default.List, contentDescription = "Apri selezione categorie")
-        }
+        }}
 
         // Overlay SelectionScreen
         if (showSelectionScreen) {
@@ -866,7 +875,7 @@ fun fourSTLPositionMarkerComposable(
         var showExitDialog by remember { mutableStateOf(false) }
         val context = LocalContext.current
 
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
                 onClick = { showExitDialog = true },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -877,11 +886,11 @@ fun fourSTLPositionMarkerComposable(
                     imageVector = Icons.Filled.Close,
                     contentDescription = "Chiudi applicazione"
                 )
-            }
+            }}
 
 
         // 🔹 Pulsante reset selezioni persistenti (verde)
-        FloatingActionButton(
+        if (buttonsVisible) {FloatingActionButton(
             onClick = {
                 // Cancella le selezioni persistenti dalle SharedPreferences
                 clearPersistentSelections(context)
@@ -897,10 +906,32 @@ fun fourSTLPositionMarkerComposable(
             },
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 60.dp)
+                .padding(top = 90.dp)
                 .zIndex(2f)
         ) {
             Icon(Icons.Default.Refresh, contentDescription = "Reset metadati persistenti")
+        }}
+
+        // Pulsante offuscamento (toggle)
+        FloatingActionButton(
+            onClick = {
+                buttonsVisible = !buttonsVisible
+            },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 60.dp)
+                .zIndex(2f)
+        ) {
+            Icon(
+                imageVector = if (buttonsVisible)
+                    Icons.Filled.VisibilityOff  // Icona quando sono visibili (per nasconderli)
+                else
+                    Icons.Filled.Visibility,    // Icona quando sono nascosti (per mostrarli)
+                contentDescription = if (buttonsVisible)
+                    "Nascondi pulsanti"
+                else
+                    "Mostra pulsanti"
+            )
         }
 
 
