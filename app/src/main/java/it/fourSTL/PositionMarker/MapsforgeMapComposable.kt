@@ -1,8 +1,6 @@
 package it.fourSTL.PositionMarker
 
-import it.fourSTL.PositionMarker.R
 import android.Manifest
-//import android.R
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -52,23 +50,16 @@ import android.os.Environment
 import android.widget.Toast
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import org.mapsforge.core.model.LatLong as MapsforgeLatLong
 import androidx.core.content.res.ResourcesCompat
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import android.content.Intent
-import it.fourSTL.PositionMarker.clearPersistentSelections
-import java.util.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
+import org.mapsforge.map.layer.overlay.Circle
 
 // 🔹 Utility per memorizzare metadati persistenti
 fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
@@ -497,12 +488,13 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 100.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            shape = CircleShape,
+            containerColor = Color.White
         ) {
-            Icon(
-                imageVector = Icons.Filled.MyLocation,
-                contentDescription = "Ritorna alla mia posizione"
-            )}
+            Icon (painter = painterResource(id = R.drawable.my_location),
+                contentDescription = "Toggle pulsanti",
+                tint = Color.Unspecified)}
         }
 
 
@@ -518,7 +510,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(horizontal = 30.dp, vertical = 250.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
             Icon(Icons.Filled.Save, contentDescription = "Salva posizione")
         }}
@@ -534,7 +528,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.TopEnd) // a metà lato destro
                 .padding(horizontal = 30.dp, vertical = 250.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
             Icon(Icons.Filled.DirectionsCarFilled, contentDescription = "Auto")
         }}
@@ -545,7 +541,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(horizontal = 30.dp, vertical = 30.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
             Icon(Icons.Filled.Delete, contentDescription = "Cancella tabella punti")
         }}
@@ -602,7 +600,9 @@ fun fourSTLPositionMarkerComposable(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(horizontal = 30.dp, vertical = 350.dp)
-                    .zIndex(2f)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
             ) {
                 Icon(
                     imageVector = Icons.Default.FileCopy,
@@ -617,7 +617,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(horizontal = 30.dp, vertical = 350.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
             Icon(Icons.Filled.Delete, contentDescription = "Cancella posizione auto")
         }}
@@ -671,7 +673,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 30.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            //containerColor = Color.White,
+            //shape = CircleShape
         ) {
             FloatingActionButton(onClick = {
                 mapViewRef?.model?.mapViewPosition?.zoomOut()
@@ -710,9 +714,15 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(horizontal = 30.dp, vertical = 325.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
-            Icon(Icons.Filled.Search, contentDescription = "Search saved points")
+            Icon(
+                painter = painterResource(id = R.drawable.archive_light),
+                contentDescription = "Toggle pulsanti",
+                tint = Color.Unspecified
+            )
         }}
 
         if (showTable) {
@@ -818,7 +828,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(horizontal = 30.dp, vertical = 325.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {Text("Mostra\ninizio")
             /*Icon(
                 imageVector = Icons.Default.DirectionsCar,
@@ -833,7 +845,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 175.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
             Icon(Icons.Default.List, contentDescription = "Apri selezione categorie")
         }}
@@ -880,7 +894,9 @@ fun fourSTLPositionMarkerComposable(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(30.dp)
-                    .zIndex(2f)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
             ) {
                 Icon(
                     imageVector = Icons.Filled.Close,
@@ -907,7 +923,9 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 90.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
             Icon(Icons.Default.Refresh, contentDescription = "Reset metadati persistenti")
         }}
@@ -920,18 +938,22 @@ fun fourSTLPositionMarkerComposable(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 60.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
         ) {
-            Icon(
-                imageVector = if (buttonsVisible)
-                    Icons.Filled.VisibilityOff  // Icona quando sono visibili (per nasconderli)
+
+                if (buttonsVisible)
+                    Icon (painter = painterResource(id = R.drawable.hamburger_opt_visible),
+                    contentDescription = "Toggle pulsanti",
+                    tint = Color.Unspecified)
+
+
                 else
-                    Icons.Filled.Visibility,    // Icona quando sono nascosti (per mostrarli)
-                contentDescription = if (buttonsVisible)
-                    "Nascondi pulsanti"
-                else
-                    "Mostra pulsanti"
-            )
+                    Icon (painter = painterResource(id = R.drawable.hamburger_opt_invisible),
+                        contentDescription = "Toggle pulsanti",
+                        tint = Color.Unspecified)
+
         }
 
 
