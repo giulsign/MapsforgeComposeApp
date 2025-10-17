@@ -672,20 +672,23 @@ fun fourSTLPositionMarkerComposable(
         if (buttonsVisible) {Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 30.dp),
+                .padding(bottom = 30.dp)
+                .background(Color.White, shape = CircleShape),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            //containerColor = Color.White,
-            //shape = CircleShape
         ) {
             FloatingActionButton(onClick = {
                 mapViewRef?.model?.mapViewPosition?.zoomOut()
             }) {
-                Icon(Icons.Default.ZoomOut, contentDescription = "Zoom Out")
+                Icon (painter = painterResource(id = R.drawable.zoom_out),
+                    contentDescription = "Zoom Out",
+                    tint = Color.Unspecified)
             }
             FloatingActionButton(onClick = {
                 mapViewRef?.model?.mapViewPosition?.zoomIn()
             }) {
-                Icon(Icons.Default.ZoomIn, contentDescription = "Zoom In")
+                Icon (painter = painterResource(id = R.drawable.zoom_in),
+                    contentDescription = "Zoom In",
+                    tint = Color.Unspecified)
             }
         }}
 
@@ -831,11 +834,9 @@ fun fourSTLPositionMarkerComposable(
                 .zIndex(2f),
             containerColor = Color.White,
             shape = CircleShape
-        ) {Text("Mostra\ninizio")
-            /*Icon(
-                imageVector = Icons.Default.DirectionsCar,
-                contentDescription = if (showCarMarker) "Nascondi punto auto" else "Mostra punto auto"
-            )*/
+        ) {Icon (painter = painterResource(id = R.drawable.show_start),
+            contentDescription = "Show Start",
+            tint = Color.Unspecified)
         }}
 
 
