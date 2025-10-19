@@ -514,7 +514,9 @@ fun fourSTLPositionMarkerComposable(
             containerColor = Color.White,
             shape = CircleShape
         ) {
-            Icon(Icons.Filled.Save, contentDescription = "Salva posizione")
+            Icon (painter = painterResource(id = R.drawable.save),
+                contentDescription = "Save",
+                tint = Color.Unspecified)
         }}
 
 
@@ -532,7 +534,9 @@ fun fourSTLPositionMarkerComposable(
             containerColor = Color.White,
             shape = CircleShape
         ) {
-            Icon(Icons.Filled.DirectionsCarFilled, contentDescription = "Auto")
+            Icon (painter = painterResource(id = R.drawable.save_car),
+                contentDescription = "Save car position",
+                tint = Color.Unspecified)
         }}
 
         // 🔹 Pulsante cancella tabella punti
@@ -850,7 +854,9 @@ fun fourSTLPositionMarkerComposable(
             containerColor = Color.White,
             shape = CircleShape
         ) {
-            Icon(Icons.Default.List, contentDescription = "Apri selezione categorie")
+            Icon (painter = painterResource(id = R.drawable.list),
+            contentDescription = "list",
+            tint = Color.Unspecified)
         }}
 
         // Overlay SelectionScreen
@@ -899,10 +905,9 @@ fun fourSTLPositionMarkerComposable(
                 containerColor = Color.White,
                 shape = CircleShape
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = "Chiudi applicazione"
-                )
+            Icon (painter = painterResource(id = R.drawable.close),
+                contentDescription = "Close app",
+                tint = Color.Unspecified)
             }}
 
 
@@ -928,7 +933,9 @@ fun fourSTLPositionMarkerComposable(
             containerColor = Color.White,
             shape = CircleShape
         ) {
-            Icon(Icons.Default.Refresh, contentDescription = "Reset metadati persistenti")
+            Icon (painter = painterResource(id = R.drawable.reset_selection),
+                contentDescription = "Reset selezioni persistenti",
+                tint = Color.Unspecified)
         }}
 
         // Pulsante offuscamento (toggle)
