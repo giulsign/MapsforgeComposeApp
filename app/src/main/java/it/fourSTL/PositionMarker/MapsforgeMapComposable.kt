@@ -56,12 +56,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
-import org.mapsforge.map.layer.overlay.Circle
 
-// 🔹 Utility per memorizzare metadati persistenti
+// 🔹 UTILITY per memorizzare metadati persistenti
 fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
     val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
     val json = JSONObject(metadata).toString()
@@ -80,8 +77,10 @@ fun clearPersistentMetadata(context: Context) {
     prefs.edit().remove("persistent_metadata").apply()
 }
 
+// 🔹 Funzioni per il nuovo sistema di selezioni persistenti (importate da SelectionScreen.kt)
 
-//copia direttamente italy.map nella cartella di destinazione
+
+// Copia italy.map nella cartella di destinazione
 private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
     val destFile = File(context.getExternalFilesDir("maps"), mapFileName)
 
@@ -96,7 +95,7 @@ private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
     return destFile
 }
 
-// Mostra la posizione di partenza sulla mappa a richiesta
+// Mostra la posizione di partenza sulla mappa
 fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android.view.MapView) {
     val file = File(context.filesDir, "auto_locations.json")
 
@@ -112,29 +111,17 @@ fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android
             return
         }
 
-        // Recupera il primo punto salvato
         val locationJson = jsonArray.getJSONObject(0)
         val latitude = locationJson.getDouble("latitude")
         val longitude = locationJson.getDouble("longitude")
-        val date = locationJson.getString("date")
-        val hour = locationJson.getString("hour")
 
-        // Coordinate Mapsforge (long, lat)
         val geoPoint = LatLong(latitude, longitude)
-
-        // Carica un'icona per il marker (es. da drawable)
         val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker, null)
         val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-
         val marker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
 
-        // Layer dei marker
-        val layer = map.layerManager.layers
-        layer.add(marker)
-
-        // Centra e zooma la mappa sul punto
+        map.layerManager.layers.add(marker)
         map.model.mapViewPosition.setCenter(geoPoint)
-        //map.model.mapViewPosition.setZoomLevel(17.toByte())
 
         Toast.makeText(context, "📍 Punto di partenza visualizzato sulla mappa", Toast.LENGTH_LONG).show()
 
@@ -144,7 +131,7 @@ fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android
     }
 }
 
-        // Logica per aggiungere ID sequenziale al file json
+// ID sequenziale
 fun getNextId(context: Context): Int {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     val nextId = prefs.getInt("last_id", 0) + 1
@@ -152,28 +139,25 @@ fun getNextId(context: Context): Int {
     return nextId
 }
 
-
-// Funzione cancella i dati json con dialogo di conferma
+// Cancella dati tabella JSON
 fun clearSavedLocations(context: Context) {
     val file = File(context.filesDir, "locations.json")
     if (file.exists()) {
-        file.writeText("[]") // JSON vuoto
+        file.writeText("[]")
     }
     Toast.makeText(context, "Dati tabella JSON cancellati", Toast.LENGTH_LONG).show()
 }
 
-
-// Funzione cancella i dati json posizione auto
+// Cancella posizione auto
 fun clearSavedLocationsAuto(context: Context) {
     val file = File(context.filesDir, "auto_locations.json")
     if (file.exists()) {
-        file.writeText("[]") // JSON vuoto
+        file.writeText("[]")
     }
     Toast.makeText(context, "Dati posizione di partenza cancellati", Toast.LENGTH_LONG).show()
 }
 
-
-// Funzione che salva una posizione GPS su file JSON
+// Salva posizione GPS su file JSON
 fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<String, String> = emptyMap()) {
     val pointId = getNextId(context)
     val file = File(context.filesDir, "locations.json")
@@ -188,7 +172,6 @@ fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<St
         put("altitude", location.altitude)
         put("date", date)
         put("hour", hour)
-        // aggiungi i metadati se presenti
         metadataMap.forEach { (key, value) -> put(key, value) }
     }
 
@@ -204,13 +187,10 @@ fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<St
     Toast.makeText(context, "Nuovo punto aggiunto a tabella JSON", Toast.LENGTH_LONG).show()
 }
 
-
-
-// Salva la posizione di partenza su file JSON e non consente la sovrascrittura
+// Salva posizione di partenza (una sola volta)
 fun saveLocationToJsonAuto(context: Context, location: Location) {
     val file = File(context.filesDir, "auto_locations.json")
 
-    // Se esiste già un punto salvato, blocca il salvataggio
     if (file.exists() && file.length() > 0) {
         try {
             val jsonArray = JSONArray(file.readText())
@@ -220,20 +200,16 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
                     "⚠️ Esiste già un punto salvato. Eliminare prima di aggiungerne un altro.",
                     Toast.LENGTH_LONG
                 ).show()
-                return // blocca qui
+                return
             }
         } catch (e: Exception) {
-            // se errore nel file, possiamo resettarlo
             file.delete()
         }
     }
 
-    // Genera nuovo ID progressivo
     val pointId = getNextId(context)
-
-    // Crea l'oggetto JSON per questa posizione
     val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-    val hour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault()).format(Date()) // con decimi di secondo
+    val hour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault()).format(Date())
 
     val locationJson = JSONObject().apply {
         put("id", pointId)
@@ -244,24 +220,15 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
         put("hour", hour)
     }
 
-    // Crea un nuovo JSONArray e aggiunge il punto
     val jsonArray = JSONArray().apply { put(locationJson) }
-
-    // Scrive il file
     file.writeText(jsonArray.toString(2))
 
-    Toast.makeText(
-        context,
-        "✅ Nuovo punto di partenza salvato.",
-        Toast.LENGTH_LONG
-    ).show()
+    Toast.makeText(context, "✅ Nuovo punto di partenza salvato.", Toast.LENGTH_LONG).show()
 }
 
-
-// funzione esporta punti salvati in formato json in cartella download
+// Esporta JSON in Download
 fun exportJsonToDownload(context: Context) {
     try {
-        // File sorgente nella directory interna dell'app
         val sourceFile = File(context.filesDir, "locations.json")
 
         if (!sourceFile.exists()) {
@@ -269,17 +236,14 @@ fun exportJsonToDownload(context: Context) {
             return
         }
 
-        // Prepara nome file con timestamp
         val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(Date())
         val fileName = "fourSTLPositionMarker_locations_$timestamp.json"
 
-        // Directory di destinazione (Download pubblica)
         val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         if (!downloadDir.exists()) downloadDir.mkdirs()
 
         val destFile = File(downloadDir, fileName)
 
-        // Copia del file
         FileInputStream(sourceFile).use { input ->
             FileOutputStream(destFile).use { output ->
                 input.copyTo(output)
@@ -294,37 +258,36 @@ fun exportJsonToDownload(context: Context) {
     }
 }
 
-
-//Main composable
+// Main composable
 @Composable
 fun fourSTLPositionMarkerComposable(
     context: Context,
     modifier: Modifier = Modifier,
     mapFileName: String = "italy.map"
 ) {
-    // Stato posizione utente
     var userLocation by remember { mutableStateOf<Location?>(null) }
     var hasLocationPermission by remember { mutableStateOf(false) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
-    var showTable by remember { mutableStateOf(false) }              // mostra tabella punti
+    var showTable by remember { mutableStateOf(false) }
     var showSelectionScreen by remember { mutableStateOf(false) }
-    var showTableAuto by remember { mutableStateOf(false) }          // mostra tabella auto
-    var showConfirmDialog by remember { mutableStateOf(false) }      // conferma cancellazione punti
-    var showConfirmDialogAuto by remember { mutableStateOf(false) }  // conferma cancellazione auto
-    var showConfirmMessage by remember { mutableStateOf(false) }     // messaggio finale dopo cancellazione punti
-    var showConfirmMessageAuto by remember { mutableStateOf(false) } // messaggio finale dopo cancellazione auto
-    var showGpsDialog by remember { mutableStateOf(false) }          // avviso GPS assente
+    var showTableAuto by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var showConfirmDialogAuto by remember { mutableStateOf(false) }
+    var showConfirmMessage by remember { mutableStateOf(false) }
+    var showConfirmMessageAuto by remember { mutableStateOf(false) }
+    var showGpsDialog by remember { mutableStateOf(false) }
     var carMarker: Marker? by remember { mutableStateOf(null) }
     var showCarMarker by remember { mutableStateOf(false) }
     var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-    // stato per i metadati selezionati temporanei (viene passato da SelectionScreen via onSave)
-    val persistentSelectionsState = remember { mutableStateOf(mutableSetOf<String>()) }
+
+    // 🔹 Carica le selezioni persistenti all'avvio
+    val persistentSelectionsState = remember {
+        mutableStateOf(loadPersistentSelectionsSet(context))
+    }
     var persistentMetadata by remember { mutableStateOf(loadPersistentMetadata(context)) }
     var filteredMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
     var buttonsVisible by remember { mutableStateOf(false) }
 
-
-    // Lista delle posizioni salvate
     var savedLocations by remember { mutableStateOf(listOf<String>()) }
 
     val fusedLocationClient: FusedLocationProviderClient =
@@ -359,17 +322,16 @@ fun fourSTLPositionMarkerComposable(
         return
     }
 
-    // Funzione helper per creare il marker rosso
+    // Marker rosso per la posizione utente
     var userMarker: Marker? by remember { mutableStateOf(null) }
 
     fun createRedMarker(context: Context, latLong: LatLong): Marker {
-        val drawable =
-            ContextCompat.getDrawable(context, R.drawable.presence_online) // pallino rosso
+        val drawable = ContextCompat.getDrawable(context, R.drawable.presence_online)
         val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
         return Marker(latLong, bitmap, 0, -bitmap.height / 2)
     }
 
-    //Nuovo launched effect per gestire i permessi e aggiornare in ocntinuo la posizione del marker
+    // Gestione permessi e aggiornamento continuo posizione
     LaunchedEffect(Unit) {
         when {
             ContextCompat.checkSelfPermission(
@@ -378,23 +340,22 @@ fun fourSTLPositionMarkerComposable(
             ) == PackageManager.PERMISSION_GRANTED -> {
                 hasLocationPermission = true
 
-                // Prima posizione nota (può essere null)
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     if (location != null) {
                         userLocation = location
                     }
                 }
 
-                // 🔁 Aggiornamento continuo in tempo reale
+                // Aggiornamento continuo in tempo reale
                 val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
                     com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
-                    2000 // ogni 2 secondi
+                    2000
                 ).build()
 
                 val locationCallback = object : com.google.android.gms.location.LocationCallback() {
                     override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
                         result.lastLocation?.let { loc ->
-                            userLocation = loc // aggiorna marker in tempo reale
+                            userLocation = loc
                         }
                     }
                 }
@@ -405,33 +366,30 @@ fun fourSTLPositionMarkerComposable(
                     android.os.Looper.getMainLooper()
                 )
 
-                // 🔔 Timeout: se dopo 20 secondi userLocation è ancora null, mostra dialog
+                // Timeout GPS: 20 secondi
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     if (userLocation == null) {
                         showGpsDialog = true
                     }
                 }, 20000)
             }
-
             else -> {
                 permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
     }
 
-
     // Crea e mostra MapView
     Box(
         modifier = modifier
             .fillMaxSize()
-            .border(6.dp, Color.Black)   // ✅ bordo attorno alla mappa
+            .border(6.dp, Color.Black)
     ) {
         AndroidView(
             factory = {
                 AndroidGraphicFactory.createInstance(context.applicationContext)
                 val mapView = MapView(context).apply {
                     mapScaleBar.isVisible = false
-                    // nessun controllo nativo
                     setBuiltInZoomControls(false)
                     setZoomLevelMin(2.toByte())
                     setZoomLevelMax(20.toByte())
@@ -456,14 +414,13 @@ fun fourSTLPositionMarkerComposable(
                 }
                 mapView.layerManager.layers.add(renderer)
 
-                // Posizione iniziale: fallback Milano
+                // Posizione iniziale: Milano
                 val startLatLong = LatLong(45.4642, 9.19)
                 mapView.model.mapViewPosition.setCenter(startLatLong)
                 mapView.model.mapViewPosition.setZoomLevel(15.toByte())
 
                 userMarker = createRedMarker(context, startLatLong)
                 mapView.layerManager.layers.add(userMarker)
-
 
                 mapViewRef = mapView
                 mapView
@@ -472,87 +429,106 @@ fun fourSTLPositionMarkerComposable(
         )
 
         // Pulsante MyLocation
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = {
-                userLocation?.let { loc ->
-                    val latLong = LatLong(loc.latitude, loc.longitude)
-                    mapViewRef?.model?.mapViewPosition?.apply {
-                        setCenter(latLong)
-                        setZoomLevel(15.toByte())
+        //if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = {
+                    userLocation?.let { loc ->
+                        val latLong = LatLong(loc.latitude, loc.longitude)
+                        mapViewRef?.model?.mapViewPosition?.apply {
+                            setCenter(latLong)
+                            setZoomLevel(15.toByte())
+                        }
                     }
-                }
-                // Rimuovi i marker filtrati
-                filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
-                filteredMarkers = emptyList()
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 100.dp)
-                .zIndex(2f),
-            shape = CircleShape,
-            containerColor = Color.White
-        ) {
-            Icon (painter = painterResource(id = R.drawable.my_location),
-                contentDescription = "Toggle pulsanti",
-                tint = Color.Unspecified)}
+                    filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
+                    filteredMarkers = emptyList()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 100.dp)
+                    .zIndex(2f),
+                shape = CircleShape,
+                containerColor = Color.White
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.my_location),
+                    contentDescription = "Vai alla mia posizione",
+                    tint = Color.Unspecified
+                )
+            //}
         }
 
-
         // 🔹 Pulsante salva posizione
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = {
-                userLocation?.let { loc ->
-                    val finalMetadata = persistentMetadata + selectedMetadata
-                    saveLocationToJson(context, loc, finalMetadata)
-                    selectedMetadata = emptyMap() // reset temporanei
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(horizontal = 30.dp, vertical = 250.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon (painter = painterResource(id = R.drawable.save),
-                contentDescription = "Save",
-                tint = Color.Unspecified)
-        }}
+        //if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = {
+                    userLocation?.let { loc ->
+                        // ✅ RICARICA i metadati persistenti PRIMA di salvare
+                        persistentMetadata = loadPersistentMetadata(context)
 
+                        val finalMetadata = persistentMetadata + selectedMetadata
+                        saveLocationToJson(context, loc, finalMetadata)
 
-        // 🔹 Pulsante laterale → salva posizione automobile / punto partenza
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = {
-                userLocation?.let { loc ->
-                    saveLocationToJsonAuto(context, loc)
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd) // a metà lato destro
-                .padding(horizontal = 30.dp, vertical = 250.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon (painter = painterResource(id = R.drawable.save_car),
-                contentDescription = "Save car position",
-                tint = Color.Unspecified)
-        }}
+                        // Reset SOLO dei temporanei
+                        selectedMetadata = emptyMap()
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(horizontal = 30.dp, vertical = 175.dp)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.save),
+                    contentDescription = "Salva",
+                    tint = Color.Unspecified
+                )
+            //}
+        }
 
-        // 🔹 Pulsante cancella tabella punti
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = { showConfirmDialog = true },
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(horizontal = 30.dp, vertical = 30.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon(Icons.Filled.Delete, contentDescription = "Cancella tabella punti")
-        }}
+        // Pulsante salva posizione auto
+        //if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = {
+                    userLocation?.let { loc ->
+                        saveLocationToJsonAuto(context, loc)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = 30.dp, vertical = 175.dp)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.save_car),
+                    contentDescription = "Salva posizione partenza",
+                    tint = Color.Unspecified
+                )
+            //}
+        }
 
-        // 🔹 Dialogo conferma cancellazione punti salvati
+        // Pulsante cancella tabella punti
+        if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = { showConfirmDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 30.dp, vertical = 200.dp)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.delete),
+                    contentDescription = "Cancella punti salvati",
+                    tint = Color.Unspecified)
+            }
+        }
+
+        // Dialogo conferma cancellazione punti
         if (showConfirmDialog) {
             AlertDialog(
                 onDismissRequest = { showConfirmDialog = false },
@@ -561,7 +537,7 @@ fun fourSTLPositionMarkerComposable(
                         onClick = {
                             clearSavedLocations(context)
                             showConfirmDialog = false
-                            showConfirmMessage = true // ✅ Mostra messaggio finale
+                            showConfirmMessage = true
                         }
                     ) {
                         Text("Conferma")
@@ -574,14 +550,12 @@ fun fourSTLPositionMarkerComposable(
                 },
                 title = { Text("Conferma eliminazione dei punti salvati") },
                 text = {
-                    Text(
-                        "Vuoi davvero cancellare la tabella dei punti salvati? Questa azione non può essere annullata."
-                    )
+                    Text("Vuoi davvero cancellare la tabella dei punti salvati? Questa azione non può essere annullata.")
                 }
             )
         }
 
-        // 🔹 Dialogo messaggio finale dopo cancellazione
+        // Messaggio finale dopo cancellazione
         if (showConfirmMessage) {
             AlertDialog(
                 onDismissRequest = { showConfirmMessage = false },
@@ -595,40 +569,44 @@ fun fourSTLPositionMarkerComposable(
             )
         }
 
-
-        // pulsante esportazione dati json salvati
-        val contextData = LocalContext.current
-
-        if (buttonsVisible) {FloatingActionButton(
-                onClick = { exportJsonToDownload(contextData) },
+        // Pulsante esportazione JSON
+        if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = { exportJsonToDownload(context) },
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(horizontal = 30.dp, vertical = 350.dp)
+                    .padding(horizontal = 30.dp, vertical = 275.dp)
                     .zIndex(2f),
                 containerColor = Color.White,
                 shape = CircleShape
             ) {
                 Icon(
-                    imageVector = Icons.Default.FileCopy,
-                    contentDescription = "Esporta tabella punti in formato JSON"
+                    painter = painterResource(id = R.drawable.file_export),
+                    contentDescription = "Esporta punti salvati in json",
+                    tint = Color.Unspecified)
+            }
+        }
+
+        // Pulsante cancella posizione auto
+        if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = { showConfirmDialogAuto = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = 30.dp, vertical = 325.dp)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.delete),
+                    contentDescription = "Cancella punti auto",
+                    tint = Color.Unspecified
                 )
-            }}
+            }
+        }
 
-
-        // 🔹 Pulsante cancella posizione auto
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = { showConfirmDialogAuto = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(horizontal = 30.dp, vertical = 350.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon(Icons.Filled.Delete, contentDescription = "Cancella posizione auto")
-        }}
-
-        // 🔹 Dialogo conferma cancellazione posizione auto
+        // Dialogo conferma cancellazione auto
         if (showConfirmDialogAuto) {
             AlertDialog(
                 onDismissRequest = { showConfirmDialogAuto = false },
@@ -637,7 +615,7 @@ fun fourSTLPositionMarkerComposable(
                         onClick = {
                             clearSavedLocationsAuto(context)
                             showConfirmDialogAuto = false
-                            showConfirmMessageAuto = true // ✅ mostra messaggio finale
+                            showConfirmMessageAuto = true
                         }
                     ) {
                         Text("Conferma")
@@ -650,14 +628,12 @@ fun fourSTLPositionMarkerComposable(
                 },
                 title = { Text("Conferma eliminazione posizione auto") },
                 text = {
-                    Text(
-                        "Vuoi davvero cancellare la posizione salvata? Questa azione non può essere annullata."
-                    )
+                    Text("Vuoi davvero cancellare la posizione salvata? Questa azione non può essere annullata.")
                 }
             )
         }
 
-        // 🔹 Dialogo messaggio finale dopo cancellazione posizione auto
+        // Messaggio finale dopo cancellazione auto
         if (showConfirmMessageAuto) {
             AlertDialog(
                 onDismissRequest = { showConfirmMessageAuto = false },
@@ -671,33 +647,41 @@ fun fourSTLPositionMarkerComposable(
             )
         }
 
+        // Pulsanti Zoom
+        //if (buttonsVisible) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 30.dp)
+                    .background(Color.Transparent),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                FloatingActionButton(
+                    onClick = { mapViewRef?.model?.mapViewPosition?.zoomOut() },
+                    containerColor = Color.White, // 🔹 Colore del pulsante
+                    shape = CircleShape // 🔹 Forma del pulsante
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.zoom_out),
+                        contentDescription = "Zoom out",
+                        tint = Color.Unspecified
+                    )
+                }
+                FloatingActionButton(
+                    onClick = { mapViewRef?.model?.mapViewPosition?.zoomIn() },
+                    containerColor = Color.White, // 🔹 Colore del pulsante
+                    shape = CircleShape // 🔹 Forma del pulsante
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.zoom_in),
+                        contentDescription = "Zoom in",
+                        tint = Color.Unspecified
+                    )
+                }
+            //}
+        }
 
-        // Pulsanti Zoom in riga
-        if (buttonsVisible) {Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 30.dp)
-                .background(Color.White, shape = CircleShape),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            FloatingActionButton(onClick = {
-                mapViewRef?.model?.mapViewPosition?.zoomOut()
-            }) {
-                Icon (painter = painterResource(id = R.drawable.zoom_out),
-                    contentDescription = "Zoom Out",
-                    tint = Color.Unspecified)
-            }
-            FloatingActionButton(onClick = {
-                mapViewRef?.model?.mapViewPosition?.zoomIn()
-            }) {
-                Icon (painter = painterResource(id = R.drawable.zoom_in),
-                    contentDescription = "Zoom In",
-                    tint = Color.Unspecified)
-            }
-        }}
-
-
-        // Marker aggiornato con GPS
+        // Marker GPS aggiornato
         LaunchedEffect(userLocation) {
             userLocation?.let { loc ->
                 val latLong = LatLong(loc.latitude, loc.longitude)
@@ -707,30 +691,27 @@ fun fourSTLPositionMarkerComposable(
                 } else {
                     userMarker?.latLong = latLong
                 }
-                mapViewRef?.model?.mapViewPosition?.apply {
-                    //setCenter(latLong)
-                    //setZoomLevel(15.toByte())
-                }
             }
         }
 
-
         // Visualizzazione tabella punti salvati
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = { showTable = true },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(horizontal = 30.dp, vertical = 325.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.archive_light),
-                contentDescription = "Toggle pulsanti",
-                tint = Color.Unspecified
-            )
-        }}
+        if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = { showTable = true },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(horizontal = 30.dp, vertical = 325.dp)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.archive_light),
+                    contentDescription = "Visualizza tabella",
+                    tint = Color.Unspecified
+                )
+            }
+        }
 
         if (showTable) {
             Box(
@@ -753,12 +734,15 @@ fun fourSTLPositionMarkerComposable(
                         context = context,
                         onBack = { showTable = false },
                         onPointClick = { locations ->
-                            // Rimuovi i marker precedenti
                             filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
 
                             val markers = locations.map { loc ->
                                 val latLong = LatLong(loc.latitude, loc.longitude)
-                                val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker_blue, null)
+                                val drawable = ResourcesCompat.getDrawable(
+                                    context.resources,
+                                    R.drawable.ic_marker_blue,
+                                    null
+                                )
                                 val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
                                 Marker(latLong, markerBitmap, 0, -markerBitmap.height / 2)
                             }
@@ -782,84 +766,88 @@ fun fourSTLPositionMarkerComposable(
             }
         }
 
+        // Pulsante mostra/nascondi punto auto
+        //if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = {
+                    mapViewRef?.let { map ->
+                        if (!showCarMarker) {
+                            val file = File(context.filesDir, "auto_locations.json")
+                            if (file.exists() && file.length() > 0) {
+                                try {
+                                    val jsonArray = JSONArray(file.readText())
+                                    if (jsonArray.length() > 0) {
+                                        val locationJson = jsonArray.getJSONObject(0)
+                                        val latitude = locationJson.getDouble("latitude")
+                                        val longitude = locationJson.getDouble("longitude")
 
-        // Pulsante per visualizzare/nascondere punto auto salvato
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = {
-                mapViewRef?.let { map ->
-                    if (!showCarMarker) {
-                        // ✅ Mostra punto auto
-                        val file = File(context.filesDir, "auto_locations.json")
-                        if (file.exists() && file.length() > 0) {
-                            try {
-                                val jsonArray = JSONArray(file.readText())
-                                if (jsonArray.length() > 0) {
-                                    val locationJson = jsonArray.getJSONObject(0)
-                                    val latitude = locationJson.getDouble("latitude")
-                                    val longitude = locationJson.getDouble("longitude")
+                                        val geoPoint = LatLong(latitude, longitude)
 
-                                    val geoPoint = LatLong(latitude, longitude)
+                                        val drawable = ResourcesCompat.getDrawable(
+                                            context.resources,
+                                            R.drawable.ic_marker,
+                                            null
+                                        )
+                                        val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
 
-                                    val drawable = ResourcesCompat.getDrawable(
-                                        context.resources,
-                                        R.drawable.ic_marker,
-                                        null
-                                    )
-                                    val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+                                        carMarker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
+                                        map.layerManager.layers.add(carMarker)
 
-                                    carMarker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
-                                    map.layerManager.layers.add(carMarker)
+                                        map.model.mapViewPosition.setCenter(geoPoint)
 
-                                    // centra e zoomma
-                                    map.model.mapViewPosition.setCenter(geoPoint)
-                                    //map.model.mapViewPosition.setZoomLevel(17.toByte())
-
-                                    showCarMarker = true
+                                        showCarMarker = true
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "❌ Errore lettura punto auto", Toast.LENGTH_LONG)
+                                        .show()
                                 }
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "❌ Errore lettura punto auto", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "⚠️ Nessun punto auto salvato.", Toast.LENGTH_LONG).show()
                             }
                         } else {
-                            Toast.makeText(context, "⚠️ Nessun punto auto salvato.", Toast.LENGTH_LONG).show()
+                            carMarker?.let { marker ->
+                                map.layerManager.layers.remove(marker)
+                            }
+                            carMarker = null
+                            showCarMarker = false
                         }
-                    } else {
-                        // ❌ Nascondi marker auto
-                        carMarker?.let { marker ->
-                            map.layerManager.layers.remove(marker)
-                        }
-                        carMarker = null
-                        showCarMarker = false
                     }
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(horizontal = 30.dp, vertical = 325.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {Icon (painter = painterResource(id = R.drawable.show_start),
-            contentDescription = "Show Start",
-            tint = Color.Unspecified)
-        }}
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = 30.dp, vertical = 250.dp)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.show_start),
+                    contentDescription = "Mostra punto partenza",
+                    tint = Color.Unspecified
+                )
+            //}
+        }
 
+        // 🔹 Pulsante apertura SelectionScreen
+        //if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = { showSelectionScreen = true },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(horizontal = 30.dp, vertical = 250.dp)
+                    .zIndex(2f),
+                containerColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.list),
+                    contentDescription = "Apri tabella selezione",
+                    tint = Color.Unspecified
+                )
+            //}
+        }
 
-        // 🔹 Apertura SelectionScreen
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = { showSelectionScreen = true },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 175.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon (painter = painterResource(id = R.drawable.list),
-            contentDescription = "list",
-            tint = Color.Unspecified)
-        }}
-
-        // Overlay SelectionScreen
+        // 🔹 Overlay SelectionScreen
         if (showSelectionScreen) {
             Box(
                 modifier = Modifier
@@ -869,76 +857,55 @@ fun fourSTLPositionMarkerComposable(
             ) {
                 SelectionScreen(
                     onDismiss = { showSelectionScreen = false },
-                    // la lambda ora prende DUE parametri: metadataMap e un Boolean (che puoi ignorare con '_')
                     onSave = { metadataMap: Map<String, String>, _ ->
                         showSelectionScreen = false
 
-                        // metadata temporanei (gialli) restituiti dalla SelectionScreen
+                        // Metadata temporanei (gialli)
                         selectedMetadata = metadataMap
 
-                        // Ricarica i metadati persistenti salvati nei prefs (se la SelectionScreen li ha aggiornati)
+                        // ✅ RICARICA i metadati e le selezioni persistenti
                         persistentMetadata = loadPersistentMetadata(context)
+                        persistentSelectionsState.value = loadPersistentSelectionsSet(context)
 
                         Toast.makeText(
                             context,
-                            "✅ Metadati temporanei selezionati:\n$metadataMap\nPersistenti caricate: $persistentMetadata",
+                            "✅ Temporanei: ${metadataMap.size} | Persistenti: ${persistentMetadata.size}",
                             Toast.LENGTH_LONG
                         ).show()
                     },
-                    // persistentSelectionsState.value deve essere un MutableSet<String>
                     persistentSelections = persistentSelectionsState.value
                 )
             }
         }
 
+        // 🔹 Pulsante reset selezioni persistenti
+        if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = {
+                    // Usa la funzione completa da SelectionScreen.kt
+                    clearAllPersistentData(context)
 
-        // Pulsante chiusura app
-        var showExitDialog by remember { mutableStateOf(false) }
-        val context = LocalContext.current
+                    persistentSelectionsState.value = mutableSetOf()
+                    persistentMetadata = emptyMap()
 
-        if (buttonsVisible) {FloatingActionButton(
-                onClick = { showExitDialog = true },
+                    Toast.makeText(context, "Selezioni persistenti resettate", Toast.LENGTH_SHORT).show()
+                },
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(30.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 30.dp, vertical = 350.dp)
                     .zIndex(2f),
                 containerColor = Color.White,
                 shape = CircleShape
             ) {
-            Icon (painter = painterResource(id = R.drawable.close),
-                contentDescription = "Close app",
-                tint = Color.Unspecified)
-            }}
+                Icon(
+                    painter = painterResource(id = R.drawable.reset_selection),
+                    contentDescription = "Reset selezioni persistenti",
+                    tint = Color.Unspecified
+                )
+            }
+        }
 
-
-        // 🔹 Pulsante reset selezioni persistenti (verde)
-        if (buttonsVisible) {FloatingActionButton(
-            onClick = {
-                // Cancella le selezioni persistenti dalle SharedPreferences
-                clearPersistentSelections(context)
-                clearPersistentMetadata(context)
-
-
-                // Svuota il set in memoria per forzare la ricomposizione della UI
-                persistentSelectionsState.value = mutableSetOf()
-                persistentMetadata = emptyMap()
-
-
-                Toast.makeText(context, "Selezioni persistenti resettate", Toast.LENGTH_SHORT).show()
-            },
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 90.dp)
-                .zIndex(2f),
-            containerColor = Color.White,
-            shape = CircleShape
-        ) {
-            Icon (painter = painterResource(id = R.drawable.reset_selection),
-                contentDescription = "Reset selezioni persistenti",
-                tint = Color.Unspecified)
-        }}
-
-        // Pulsante offuscamento (toggle)
+        // Pulsante toggle visibilità pulsanti
         FloatingActionButton(
             onClick = {
                 buttonsVisible = !buttonsVisible
@@ -950,22 +917,42 @@ fun fourSTLPositionMarkerComposable(
             containerColor = Color.White,
             shape = CircleShape
         ) {
-
-                if (buttonsVisible)
-                    Icon (painter = painterResource(id = R.drawable.hamburger_opt_visible),
+            if (buttonsVisible)
+                Icon(
+                    painter = painterResource(id = R.drawable.settings_visible),
                     contentDescription = "Toggle pulsanti",
-                    tint = Color.Unspecified)
-
-
-                else
-                    Icon (painter = painterResource(id = R.drawable.hamburger_opt_invisible),
-                        contentDescription = "Toggle pulsanti",
-                        tint = Color.Unspecified)
-
+                    tint = Color.Unspecified
+                )
+            else
+                Icon(
+                    painter = painterResource(id = R.drawable.settings_invisible),
+                    contentDescription = "Toggle pulsanti",
+                    tint = Color.Unspecified
+                )
         }
 
+        // Pulsante chiusura app
+        var showExitDialog by remember { mutableStateOf(false) }
 
-        // 🔔 Dialog di conferma chiusura app
+        //if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = { showExitDialog = true },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = 30.dp, vertical = 60.dp)
+                    .zIndex(2f),
+                containerColor = Color.Black,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.close),
+                    contentDescription = "Chiudi app",
+                    tint = Color.Unspecified
+                )
+            //}
+        }
+
+        // Dialog conferma chiusura app
         if (showExitDialog) {
             AlertDialog(
                 onDismissRequest = { showExitDialog = false },
@@ -976,8 +963,6 @@ fun fourSTLPositionMarkerComposable(
                         onClick = {
                             showExitDialog = false
                             (context as? Activity)?.finishAffinity()
-                            // In alternativa, chiusura forzata:
-                            // exitProcess(0)
                         }
                     ) {
                         Text("Conferma")
@@ -989,9 +974,9 @@ fun fourSTLPositionMarkerComposable(
                     }
                 }
             )
-
-            }
         }
+
+        // Dialog GPS assente
         if (showGpsDialog) {
             AlertDialog(
                 onDismissRequest = { showGpsDialog = false },
@@ -1009,6 +994,5 @@ fun fourSTLPositionMarkerComposable(
                 }
             )
         }
+    }
 }
-
-

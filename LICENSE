@@ -1,0 +1,18 @@
+Copyright (c) 2024 Giuliano Signorelli
+Website: www.4stl.it
+Contact: postmaster@4stl.it
+
+All Rights Reserved
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby denied.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+This license does not apply to third-party libraries and dependencies used within this project, which are subject to their own respective licenses. The map data and rendering libraries are not covered by this license.
