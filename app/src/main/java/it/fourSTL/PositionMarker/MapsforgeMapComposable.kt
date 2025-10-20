@@ -54,11 +54,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.mikepenz.aboutlibraries.ui.compose.LibrariesContainer
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.platform.LocalContext
 
 // 🔹 UTILITY per memorizzare metadati persistenti
 fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
@@ -943,7 +947,7 @@ fun fourSTLPositionMarkerComposable(
                 .align(Alignment.TopStart)
                 .padding(horizontal = 30.dp, vertical = 60.dp)
                 .zIndex(2f), // Assicura che stia sopra la mappa
-            containerColor = Color.Black,
+            containerColor = Color.Yellow,
             shape = CircleShape
         ) {
             Icon(
@@ -955,27 +959,61 @@ fun fourSTLPositionMarkerComposable(
 
         // Schermata delle licenze (mostrata come un overlay)
         if (showLicenses) {
+            // Stato per tenere traccia della scheda selezionata
+            var tabIndex by remember { mutableStateOf(0) }
+            val tabs = listOf("Dependencies", "App License", "Third Party License", "Readme")
+
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .zIndex(1001f), // zIndex altissimo per stare sopra a tutto
                 topBar = {
-                    TopAppBar(
-                        title = { Text("Licenze Open Source") },
-                        navigationIcon = {
-                            IconButton(onClick = { showLicenses = false }) {
-                                Icon(
-                                    imageVector = Icons.Default.ArrowBack,
-                                    contentDescription = "Indietro"
+                    Column {
+                        // Barra del titolo con pulsante indietro
+                        TopAppBar(
+                            title = { Text("Informazioni e Licenze") },
+                            navigationIcon = {
+                                IconButton(onClick = { showLicenses = false }) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowBack,
+                                        contentDescription = "Indietro"
+                                    )
+                                }
+                            }
+                        )
+                        // Barra delle schede (Tab)
+                        TabRow(selectedTabIndex = tabIndex) {
+                            tabs.forEachIndexed { index, title ->
+                                Tab(
+                                    selected = tabIndex == index,
+                                    onClick = { tabIndex = index },
+                                    text = { Text(text = title) }
                                 )
                             }
                         }
-                    )
+                    }
                 }
             ) { paddingValues ->
-                LibrariesContainer(
-                    modifier = Modifier.padding(paddingValues)
-                )
+                // Contenuto della scheda selezionata
+                Column(modifier = Modifier.padding(paddingValues)) {
+                    when (tabIndex) {
+                        0 -> LibrariesContainer(
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        1 -> AssetTextView(
+                            assetFileName = "LICENSE",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        2 -> AssetTextView(
+                            assetFileName = "THIRD_PARTY_LICENSES.md",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        3 -> AssetTextView(
+                            assetFileName = "README.md",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             }
         }
 
@@ -1043,6 +1081,27 @@ fun fourSTLPositionMarkerComposable(
                     }
                 }
             )
+        }
+    }
+}
+
+// Funzione helper per leggere e mostrare un file di testo dagli assets
+@Composable
+private fun AssetTextView(assetFileName: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    // Legge il testo una sola volta e lo "ricorda"
+    val text = remember(assetFileName) {
+        try {
+            context.assets.open(assetFileName).bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            "Errore nel caricamento del file: ${e.message}"
+        }
+    }
+
+    // LazyColumn rende il testo scorrevole in modo efficiente
+    LazyColumn(modifier = modifier.padding(16.dp)) {
+        item {
+            Text(text = text, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
