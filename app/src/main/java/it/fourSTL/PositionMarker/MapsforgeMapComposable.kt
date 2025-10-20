@@ -27,10 +27,6 @@ import org.mapsforge.map.layer.cache.TileCache
 import org.mapsforge.map.layer.renderer.TileRendererLayer
 import org.mapsforge.map.reader.MapFile
 import org.mapsforge.map.layer.overlay.Marker
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.ZoomIn
-import androidx.compose.material.icons.filled.ZoomOut
-import androidx.compose.material.icons.filled.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -38,13 +34,10 @@ import java.util.Date
 import java.util.Locale
 import java.io.File
 import androidx.core.content.edit
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.zIndex
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.platform.LocalContext
 import android.app.Activity
 import android.os.Environment
 import android.widget.Toast
@@ -57,6 +50,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.mikepenz.aboutlibraries.ui.compose.LibrariesContainer
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 // 🔹 UTILITY per memorizzare metadati persistenti
 fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
@@ -259,6 +261,7 @@ fun exportJsonToDownload(context: Context) {
 }
 
 // Main composable
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun fourSTLPositionMarkerComposable(
     context: Context,
@@ -279,6 +282,7 @@ fun fourSTLPositionMarkerComposable(
     var carMarker: Marker? by remember { mutableStateOf(null) }
     var showCarMarker by remember { mutableStateOf(false) }
     var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var showLicenses by remember { mutableStateOf(false) }
 
     // 🔹 Carica le selezioni persistenti all'avvio
     val persistentSelectionsState = remember {
@@ -430,83 +434,83 @@ fun fourSTLPositionMarkerComposable(
 
         // Pulsante MyLocation
         //if (buttonsVisible) {
-            FloatingActionButton(
-                onClick = {
-                    userLocation?.let { loc ->
-                        val latLong = LatLong(loc.latitude, loc.longitude)
-                        mapViewRef?.model?.mapViewPosition?.apply {
-                            setCenter(latLong)
-                            setZoomLevel(15.toByte())
-                        }
+        FloatingActionButton(
+            onClick = {
+                userLocation?.let { loc ->
+                    val latLong = LatLong(loc.latitude, loc.longitude)
+                    mapViewRef?.model?.mapViewPosition?.apply {
+                        setCenter(latLong)
+                        setZoomLevel(15.toByte())
                     }
-                    filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
-                    filteredMarkers = emptyList()
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 100.dp)
-                    .zIndex(2f),
-                shape = CircleShape,
-                containerColor = Color.White
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.my_location),
-                    contentDescription = "Vai alla mia posizione",
-                    tint = Color.Unspecified
-                )
+                }
+                filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
+                filteredMarkers = emptyList()
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 100.dp)
+                .zIndex(2f),
+            shape = CircleShape,
+            containerColor = Color.White
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.my_location),
+                contentDescription = "Vai alla mia posizione",
+                tint = Color.Unspecified
+            )
             //}
         }
 
         // 🔹 Pulsante salva posizione
         //if (buttonsVisible) {
-            FloatingActionButton(
-                onClick = {
-                    userLocation?.let { loc ->
-                        // ✅ RICARICA i metadati persistenti PRIMA di salvare
-                        persistentMetadata = loadPersistentMetadata(context)
+        FloatingActionButton(
+            onClick = {
+                userLocation?.let { loc ->
+                    // ✅ RICARICA i metadati persistenti PRIMA di salvare
+                    persistentMetadata = loadPersistentMetadata(context)
 
-                        val finalMetadata = persistentMetadata + selectedMetadata
-                        saveLocationToJson(context, loc, finalMetadata)
+                    val finalMetadata = persistentMetadata + selectedMetadata
+                    saveLocationToJson(context, loc, finalMetadata)
 
-                        // Reset SOLO dei temporanei
-                        selectedMetadata = emptyMap()
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(horizontal = 30.dp, vertical = 175.dp)
-                    .zIndex(2f),
-                containerColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.save),
-                    contentDescription = "Salva",
-                    tint = Color.Unspecified
-                )
+                    // Reset SOLO dei temporanei
+                    selectedMetadata = emptyMap()
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 30.dp, vertical = 175.dp)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.save),
+                contentDescription = "Salva",
+                tint = Color.Unspecified
+            )
             //}
         }
 
         // Pulsante salva posizione auto
         //if (buttonsVisible) {
-            FloatingActionButton(
-                onClick = {
-                    userLocation?.let { loc ->
-                        saveLocationToJsonAuto(context, loc)
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(horizontal = 30.dp, vertical = 175.dp)
-                    .zIndex(2f),
-                containerColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.save_car),
-                    contentDescription = "Salva posizione partenza",
-                    tint = Color.Unspecified
-                )
+        FloatingActionButton(
+            onClick = {
+                userLocation?.let { loc ->
+                    saveLocationToJsonAuto(context, loc)
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(horizontal = 30.dp, vertical = 175.dp)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.save_car),
+                contentDescription = "Salva posizione partenza",
+                tint = Color.Unspecified
+            )
             //}
         }
 
@@ -931,6 +935,51 @@ fun fourSTLPositionMarkerComposable(
                 )
         }
 
+
+        // Pulsante per le licenze
+        FloatingActionButton(
+            onClick = { showLicenses = true },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 30.dp, vertical = 60.dp)
+                .zIndex(2f), // Assicura che stia sopra la mappa
+            containerColor = Color.Black,
+            shape = CircleShape
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.license),
+                contentDescription = "Chiudi app",
+                tint = Color.Unspecified
+            )
+        }
+
+        // Schermata delle licenze (mostrata come un overlay)
+        if (showLicenses) {
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1001f), // zIndex altissimo per stare sopra a tutto
+                topBar = {
+                    TopAppBar(
+                        title = { Text("Licenze Open Source") },
+                        navigationIcon = {
+                            IconButton(onClick = { showLicenses = false }) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Indietro"
+                                )
+                            }
+                        }
+                    )
+                }
+            ) { paddingValues ->
+                LibrariesContainer(
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+        }
+
+
         // Pulsante chiusura app
         var showExitDialog by remember { mutableStateOf(false) }
 
@@ -951,6 +1000,7 @@ fun fourSTLPositionMarkerComposable(
                 )
             //}
         }
+
 
         // Dialog conferma chiusura app
         if (showExitDialog) {

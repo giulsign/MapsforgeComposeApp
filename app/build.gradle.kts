@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     kotlin("android")
+    id("com.mikepenz.aboutlibraries.plugin") // <--
 }
 
 android {
@@ -68,7 +69,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
 
-    //implementation("com.google.android.gms:play-services-location:21.1.0")
+    implementation("com.google.android.gms:play-services-location:21.1.0")
 
 
     implementation("org.mapsforge:mapsforge-map-android:0.25.0")
@@ -85,8 +86,6 @@ dependencies {
 
     implementation("com.caverock:androidsvg:1.4")
 
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-
 
     implementation ("androidx.appcompat:appcompat:1.6.1") // o una versione più recente
     implementation ("androidx.recyclerview:recyclerview:1.3.2") // o una versione più recent
@@ -94,5 +93,9 @@ dependencies {
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4") // O la versione più recente
 
     implementation("com.google.android.material:material:1.11.0")
+
+    // AboutLibraries - Per la gestione delle licenze open source
+    implementation("com.mikepenz:aboutlibraries-compose:11.1.0")
+    implementation("com.mikepenz:aboutlibraries:11.1.0")
 
 }

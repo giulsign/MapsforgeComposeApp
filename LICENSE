@@ -1,18 +1,66 @@
-Copyright (c) 2024 Giuliano Signorelli
-Website: www.4stl.it
-Contact: postmaster@4stl.it
+DUAL LICENSE: GPLv3 + PROPRIETARY NOTICE
+----------------------------------------
 
-All Rights Reserved
+Copyright (c) 2024–2025 Giuliano Signorelli  
+All rights reserved.  
+Email: postmaster@4stl.it  
+Website: https://www.4stl.it
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby denied.
+---
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+1. SOFTWARE LICENSE (GPLv3)
 
-This license does not apply to third-party libraries and dependencies used within this project, which are subject to their own respective licenses. The map data and rendering libraries are not covered by this license.
+This software is distributed under the terms of the GNU General Public License version 3 (GPLv3) as published by the Free Software Foundation.
+
+You are free to:
+ - use, study, and modify this software;
+ - redistribute it and/or distribute modified versions,
+   provided that you comply with the GPLv3 license terms.
+
+You must:
+ - include a copy of this license with any distribution;
+ - make the complete source code available to any recipient of the software;
+ - preserve all copyright notices.
+
+A full copy of the GPLv3 license is available at:
+https://www.gnu.org/licenses/gpl-3.0.html
+
+---
+
+2. PROPRIETARY COMPONENTS NOTICE
+
+Certain elements of this application are proprietary and not covered by the GPLv3 license.  
+These include, but are not limited to:
+
+ - the application name, logo, and branding (“4STL”);
+ - visual design, UI layouts, icons, and artistic assets created by the author;
+ - all non-code media (images, logos, sounds, documentation texts);
+ - any other original creative work by the author not derived from GPL components.
+
+These proprietary elements remain the exclusive property of Giuliano Signorelli
+and may not be copied, redistributed, or used in derivative works without prior written consent.
+
+---
+
+3. THIRD-PARTY COMPONENTS
+
+This software integrates third-party components, including:
+ - Mapsforge, licensed under the GNU General Public License v3 (GPLv3).
+
+These components are redistributed in compliance with their respective licenses.
+The source code and license text of Mapsforge are available at:
+https://github.com/mapsforge/mapsforge
+
+---
+
+4. DISCLAIMER OF WARRANTY
+
+This software is provided “AS IS” without warranty of any kind, express or implied.
+The author is not responsible for any damage or loss arising from the use or inability to use this software.
+
+---
+
+5. CONTACT AND CONTRIBUTIONS
+
+For inquiries, source code access, or contributions, contact:
+Giuliano Signorelli – postmaster@4stl.it
