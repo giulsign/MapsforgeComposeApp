@@ -1021,13 +1021,17 @@ fun fourSTLPositionMarkerComposable(
 
         // Pulsanti per la registrazione della traccia
         var isTracking by remember { mutableStateOf(false) }
-
-        Row(
+        // Stato per la visibilità del dialog di salvataggio
+        var showSaveDialog by remember { mutableStateOf(false) }
+        // Stato per il nome del file inserito dall'utente
+        var fileName by remember { mutableStateOf("") }
+        if (buttonsVisible) {
+        Column(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .align(Alignment.BottomStart)
+                .padding(horizontal = 30.dp, vertical = 50.dp)
                 .zIndex(2f),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Pulsante per avviare/fermare la registrazione
             FloatingActionButton(
@@ -1060,7 +1064,10 @@ fun fourSTLPositionMarkerComposable(
             if (isTracking) {
                 FloatingActionButton(
                     onClick = {
-                        // TODO: Implementare la logica per salvare la traccia in formato GPX
+                        // Genera un nome di file di default con il timestamp
+                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                        fileName = "track_$timestamp"
+                        showSaveDialog = true
                     },
                     containerColor = Color.Blue,
                     shape = CircleShape
@@ -1071,9 +1078,44 @@ fun fourSTLPositionMarkerComposable(
                         tint = Color.White
                     )
                 }
-            }
+            }}
         }
 
+        // Dialog per il salvataggio del file
+        if (showSaveDialog) {
+            AlertDialog(
+                onDismissRequest = { showSaveDialog = false },
+                title = { Text("Salva Traccia GPX") },
+                text = {
+                    // Campo di testo per inserire il nome del file
+                    androidx.compose.material3.TextField(
+                        value = fileName,
+                        onValueChange = { fileName = it },
+                        label = { Text("Nome del file") },
+                        singleLine = true
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val intent = Intent(context, GpsTrackingService::class.java).apply {
+                                action = GpsTrackingService.ACTION_SAVE
+                                putExtra(GpsTrackingService.EXTRA_FILENAME, fileName)
+                            }
+                            context.startService(intent)
+                            showSaveDialog = false
+                        }
+                    ) {
+                        Text("Salva")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSaveDialog = false }) {
+                        Text("Annulla")
+                    }
+                }
+            )
+        }
 
         // Pulsante chiusura app
         var showExitDialog by remember { mutableStateOf(false) }
