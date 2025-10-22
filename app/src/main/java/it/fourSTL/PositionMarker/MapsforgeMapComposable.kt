@@ -39,6 +39,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import android.app.Activity
+import android.content.Intent
 import android.os.Environment
 import android.widget.Toast
 import java.io.FileInputStream
@@ -1013,6 +1014,62 @@ fun fourSTLPositionMarkerComposable(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
+                }
+            }
+        }
+
+
+        // Pulsanti per la registrazione della traccia
+        var isTracking by remember { mutableStateOf(false) }
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .zIndex(2f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Pulsante per avviare/fermare la registrazione
+            FloatingActionButton(
+                onClick = {
+                    isTracking = !isTracking
+                    val intent = Intent(context, GpsTrackingService::class.java).apply {
+                        action = if (isTracking) {
+                            GpsTrackingService.ACTION_START
+                        } else {
+                            GpsTrackingService.ACTION_STOP
+                        }
+                    }
+                    context.startService(intent)
+                },
+                containerColor = if (isTracking) Color.Red else Color.Green,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = if (isTracking) {
+                        painterResource(id = R.drawable.ic_stop) // TODO: Aggiungi un'icona di stop
+                    } else {
+                        painterResource(id = R.drawable.ic_play) // TODO: Aggiungi un'icona di play
+                    },
+                    contentDescription = if (isTracking) "Ferma registrazione" else "Avvia registrazione",
+                    tint = Color.White
+                )
+            }
+
+            // Pulsante per salvare la traccia (visibile solo durante la registrazione)
+            if (isTracking) {
+                FloatingActionButton(
+                    onClick = {
+                        // TODO: Implementare la logica per salvare la traccia in formato GPX
+                    },
+                    containerColor = Color.Blue,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_save), // Puoi usare un'icona di salvataggio esistente
+                        contentDescription = "Salva traccia",
+                        tint = Color.White
+                    )
                 }
             }
         }
