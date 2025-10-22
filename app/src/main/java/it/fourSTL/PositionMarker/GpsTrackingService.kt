@@ -10,6 +10,7 @@ import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -17,12 +18,15 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class GpsTrackingService : Service() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private val trackPoints = mutableListOf<Location>()
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -33,32 +37,36 @@ class GpsTrackingService : Service() {
                 locationResult.lastLocation?.let {
                     Log.d(TAG, "New location: ${it.latitude}, ${it.longitude}")
                     trackPoints.add(it)
+                    _trackPointsFlow.value = ArrayList(trackPoints)
                 }
             }
         }
     }
 
+    @SuppressLint("WakelockTimeout")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
-                Log.d(TAG, "Starting tracking")
-                trackPoints.clear() // Pulisce i punti precedenti all'avvio di una nuova traccia
+                Log.d(TAG, "Starting tracking and acquiring WakeLock")
+                // Acquisisce il WakeLock per tenere attiva la CPU
+                val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GpsTrackingService::lock").apply {
+                    acquire()
+                }
+
+                trackPoints.clear()
+                _trackPointsFlow.value = emptyList()
                 startLocationUpdates()
                 startForegroundService()
             }
             ACTION_STOP -> {
                 Log.d(TAG, "Stopping tracking")
-                stopLocationUpdates()
-                Log.d(TAG, "Track points collected: ${trackPoints.size}. Points discarded.")
-                trackPoints.clear() // L'utente ha fermato senza salvare
-                stopForeground(true)
-                stopSelf()
+                stopTrackingAndReleaseResources()
             }
             ACTION_SAVE -> {
                 val fileName = intent.getStringExtra(EXTRA_FILENAME)
                 if (fileName != null && trackPoints.isNotEmpty()) {
                     Log.d(TAG, "Saving track to $fileName.gpx")
-                    // Passiamo una copia della lista per evitare problemi di concorrenza
                     GpxUtils.saveTrackAsGpx(applicationContext, ArrayList(trackPoints), fileName)
                 } else {
                     Log.w(TAG, "File name is null or no track points to save.")
@@ -68,11 +76,26 @@ class GpsTrackingService : Service() {
         return START_STICKY
     }
 
+    private fun stopTrackingAndReleaseResources() {
+        stopLocationUpdates()
+        trackPoints.clear()
+        _trackPointsFlow.value = emptyList()
+        // Rilascia il WakeLock quando la registrazione si ferma
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+                Log.d(TAG, "WakeLock released")
+            }
+        }
+        stopForeground(true)
+        stopSelf()
+    }
+
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
         val locationRequest = LocationRequest.create().apply {
-            interval = 5000 // 5 secondi
-            fastestInterval = 2000 // 2 secondi
+            interval = 5000
+            fastestInterval = 2000
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
 
@@ -118,6 +141,12 @@ class GpsTrackingService : Service() {
         return null
     }
 
+    override fun onDestroy() {
+        // Assicura che le risorse vengano rilasciate anche se il servizio viene terminato in modo anomalo
+        stopTrackingAndReleaseResources()
+        super.onDestroy()
+    }
+
     companion object {
         private const val TAG = "GpsTrackingService"
         const val ACTION_START = "it.fourSTL.PositionMarker.action.START_TRACKING"
@@ -127,5 +156,8 @@ class GpsTrackingService : Service() {
 
         private const val NOTIFICATION_ID = 1
         private const val NOTIFICATION_CHANNEL_ID = "gps_tracking_channel"
+
+        private val _trackPointsFlow = MutableStateFlow<List<Location>>(emptyList())
+        val trackPointsFlow = _trackPointsFlow.asStateFlow()
     }
 }
