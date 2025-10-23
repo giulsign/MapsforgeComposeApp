@@ -304,7 +304,7 @@ fun fourSTLPositionMarkerComposable(
     var buttonsVisible by remember { mutableStateOf(false) }
 
     var savedLocations by remember { mutableStateOf(listOf<String>()) }
-
+    var isInitialLocationSet by remember { mutableStateOf(false) }
     val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
@@ -432,16 +432,36 @@ fun fourSTLPositionMarkerComposable(
                 }
                 mapView.layerManager.layers.add(renderer)
 
-                // Posizione iniziale: Milano
+                // Posizione iniziale di fallback: Milano. Corretto.
                 val startLatLong = LatLong(45.4642, 9.19)
                 mapView.model.mapViewPosition.setCenter(startLatLong)
                 mapView.model.mapViewPosition.setZoomLevel(15.toByte())
 
+                // Crea il marker iniziale a Milano, che poi verrà spostato.
                 userMarker = createRedMarker(context, startLatLong)
                 mapView.layerManager.layers.add(userMarker)
 
                 mapViewRef = mapView
                 mapView
+            },
+            update = { mapView ->
+                userLocation?.let { loc ->
+                    val latLong = LatLong(loc.latitude, loc.longitude)
+
+                    // Sposta la posizione del marker esistente.
+                    userMarker?.latLong = latLong
+
+                    // Se non abbiamo ancora impostato la posizione iniziale,
+                    // centra la mappa sulla posizione GPS e imposta il flag a true.
+                    if (!isInitialLocationSet) {
+                        mapView.model.mapViewPosition.setCenter(latLong)
+                        mapView.model.mapViewPosition.setZoomLevel(15.toByte())
+                        isInitialLocationSet = true
+                    }
+
+                    // Forza il ridisegno della mappa.
+                    mapView.invalidate()
+                }
             },
             modifier = Modifier.fillMaxSize()
         )
