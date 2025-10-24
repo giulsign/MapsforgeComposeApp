@@ -901,8 +901,32 @@ fun fourSTLPositionMarkerComposable(
                                         val locationJson = jsonArray.getJSONObject(0)
                                         val latitude = locationJson.getDouble("latitude")
                                         val longitude = locationJson.getDouble("longitude")
-
                                         val geoPoint = LatLong(latitude, longitude)
+
+                                        // Calcola la distanza
+                                        userLocation?.let { currentLoc ->
+                                            val startLocation = Location("").apply {
+                                                setLatitude(latitude)
+                                                setLongitude(longitude)
+                                            }
+                                            val distance = currentLoc.distanceTo(startLocation) / 1000f // in km
+                                            Toast.makeText(
+                                                context,
+                                                String.format(
+                                                    Locale.getDefault(),
+                                                    "📍 Punto di partenza visualizzato. Distanza: %.2f km",
+                                                    distance
+                                                ),
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        } ?: run {
+                                            Toast.makeText(
+                                                context,
+                                                "📍 Punto di partenza visualizzato.",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+
 
                                         val drawable = ResourcesCompat.getDrawable(
                                             context.resources,
@@ -910,12 +934,9 @@ fun fourSTLPositionMarkerComposable(
                                             null
                                         )
                                         val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-
                                         carMarker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
                                         map.layerManager.layers.add(carMarker)
-
                                         map.model.mapViewPosition.setCenter(geoPoint)
-
                                         showCarMarker = true
                                     }
                                 } catch (e: Exception) {
@@ -931,6 +952,7 @@ fun fourSTLPositionMarkerComposable(
                             }
                             carMarker = null
                             showCarMarker = false
+                            Toast.makeText(context, "Punto di partenza nascosto.", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
