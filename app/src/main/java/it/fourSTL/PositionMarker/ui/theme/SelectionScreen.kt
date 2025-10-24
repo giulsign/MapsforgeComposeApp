@@ -116,6 +116,36 @@ fun SelectionScreen(
         }
     }
 
+
+    // 🔹 FUNZIONE CORRETTA: Salva TUTTE le selezioni persistenti
+    fun savePersistentSelectionsToPrefs() {
+        // Salva il set di ID persistenti
+        savePersistentSelectionsSet(context, persistentSelections)
+
+        // Per retrocompatibilità, salva anche la mappa metadati del primo elemento
+        val persistentIds = selectionStates.filterValues { it == SelectionState.PERSISTENT }.keys
+        val map = mutableMapOf<String, String>()
+
+        if (persistentIds.isNotEmpty()) {
+            val firstId = persistentIds.first()
+            val itemsToSearch = if (isSearchActive)
+                (currentRows + searchResults).distinctBy { it.id }
+            else
+                currentRows
+
+            val item = itemsToSearch.firstOrNull { it.id == firstId }
+            if (item != null) {
+                map["idsp"] = item.id
+                if (item.title.isNotEmpty()) map["nome italiano"] = item.title
+                if (item.note.isNotEmpty()) map["nome latino"] = item.note
+            }
+        }
+
+        savePersistentMetadata(context, map)
+    }
+
+
+
     // Funzione di ricerca ricorsiva
     suspend fun searchInAllFiles(query: String): List<PositionItem> {
         if (query.isBlank()) return emptyList()
@@ -225,6 +255,8 @@ fun SelectionScreen(
         selectionStates = selectionStates.mapValues { (_, st) ->
             if (st == SelectionState.SINGLE) SelectionState.NONE else st
         }
+        // Salva nuovamente le selezioni persistenti
+        savePersistentSelectionsToPrefs()
     }
 
     if (showAddPersonalNoteDialog) {
