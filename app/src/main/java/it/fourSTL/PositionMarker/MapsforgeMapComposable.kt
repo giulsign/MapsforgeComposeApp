@@ -70,6 +70,9 @@ import org.mapsforge.core.graphics.Style
 import androidx.compose.runtime.collectAsState
 import org.mapsforge.core.graphics.Cap
 import org.mapsforge.core.graphics.Join
+import android.net.Uri
+
+
 
 // 🔹 UTILITY per memorizzare metadati persistenti
 fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
@@ -282,6 +285,8 @@ fun fourSTLPositionMarkerComposable(
     var userLocation by remember { mutableStateOf<Location?>(null) }
     var hasLocationPermission by remember { mutableStateOf(false) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
+    var buttonsVisible by remember { mutableStateOf(false) }
+    var isInitialLocationSet by remember { mutableStateOf(false) }
     var showTable by remember { mutableStateOf(false) }
     var showSelectionScreen by remember { mutableStateOf(false) }
     var showTableAuto by remember { mutableStateOf(false) }
@@ -301,15 +306,23 @@ fun fourSTLPositionMarkerComposable(
     }
     var persistentMetadata by remember { mutableStateOf(loadPersistentMetadata(context)) }
     var filteredMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
-    var buttonsVisible by remember { mutableStateOf(false) }
 
     var savedLocations by remember { mutableStateOf(listOf<String>()) }
-    var isInitialLocationSet by remember { mutableStateOf(false) }
     val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
+    // 🔹 NUOVO: Stati per il tracciato in tempo reale dal servizio
+    val realTimeTrackPoints by GpsTrackingService.trackPointsFlow.collectAsState()
+    var realTimePolyline by remember { mutableStateOf<Polyline?>(null) }
+
+
     // 🔹 Raccoglie i punti della traccia dal servizio come uno stato
     val trackPoints by GpsTrackingService.trackPointsFlow.collectAsState()
+
+    // 🔹 Stati per il percorso GPX caricato
+    var loadedGpxTrack by remember { mutableStateOf<List<LatLong>>(emptyList()) }
+    var loadedGpxPolyline by remember { mutableStateOf<Polyline?>(null) }
+    var showLoadedGpxTrack by remember { mutableStateOf(true) }
 
     // Launcher per chiedere permessi
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -324,6 +337,25 @@ fun fourSTLPositionMarkerComposable(
             }
         }
     }
+
+
+    // 🔹 NUOVO: Launcher per selezionare un file GPX dal dispositivo
+    val gpxFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            if (uri != null) {
+                val points = GpxParser.parse(context, uri)
+                if (points.isNotEmpty()) {
+                    loadedGpxTrack = points
+                    showLoadedGpxTrack = true
+                    Toast.makeText(context, "Percorso GPX caricato con ${points.size} punti", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Errore: Impossibile leggere il file GPX o file vuoto", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    )
+
 
     // Verifica file mappa
     val mapFile = copyMapFileIfNeeded(context, mapFileName)
@@ -733,7 +765,7 @@ fun fourSTLPositionMarkerComposable(
             }
         }
 
-
+        /*
         // 🔹 Gestione della polilinea per la traccia in tempo reale
         var trackPolyline by remember { mutableStateOf<Polyline?>(null) }
 
@@ -770,6 +802,55 @@ fun fourSTLPositionMarkerComposable(
                 // Se non ci sono abbastanza punti, assicura che non ci sia nessuna polilinea visualizzata
                 trackPolyline = null
             }
+        }*/
+
+
+        // 🔹 NUOVO: LaunchedEffect per disegnare la traccia BLU in tempo reale
+        LaunchedEffect(realTimeTrackPoints, mapViewRef) {
+            val mapView = mapViewRef ?: return@LaunchedEffect
+            realTimePolyline?.let { mapView.layerManager.layers.remove(it) }
+            if (realTimeTrackPoints.size > 1) {
+                val paint = AndroidGraphicFactory.INSTANCE.createPaint().apply {
+                    setStyle(Style.STROKE)
+                    color = android.graphics.Color.BLUE
+                    strokeWidth = 12f
+                    setStrokeJoin(Join.ROUND)
+                    setStrokeCap(Cap.ROUND)
+                }
+                val newPolyline = Polyline(paint, AndroidGraphicFactory.INSTANCE).apply {
+                    realTimeTrackPoints.forEach { location ->
+                        addPoint(LatLong(location.latitude, location.longitude))
+                    }
+                }
+                mapView.layerManager.layers.add(newPolyline)
+                realTimePolyline = newPolyline
+            }
+        }
+
+
+        // 🔹 NUOVO: LaunchedEffect per disegnare la traccia VIOLA caricata da GPX
+        LaunchedEffect(loadedGpxTrack, showLoadedGpxTrack, mapViewRef) {
+            val mapView = mapViewRef ?: return@LaunchedEffect
+            loadedGpxPolyline?.let { mapView.layerManager.layers.remove(it) }
+            if (showLoadedGpxTrack && loadedGpxTrack.isNotEmpty()) {
+                val paint = AndroidGraphicFactory.INSTANCE.createPaint().apply {
+                    setStyle(Style.STROKE)
+                    color = android.graphics.Color.MAGENTA
+                    strokeWidth = 10f
+                    setStrokeJoin(Join.ROUND)
+                    setStrokeCap(Cap.ROUND)
+                }
+                val newPolyline = Polyline(paint, AndroidGraphicFactory.INSTANCE).apply {
+                    loadedGpxTrack.forEach { point -> addPoint(point) }
+                }
+                // Inserisce il layer sotto il marker utente per non coprirlo
+                val layerIndex = if (mapView.layerManager.layers.size() > 0) {
+                    mapView.layerManager.layers.size() - 1
+                } else {
+                    0
+                }
+                mapView.layerManager.layers.add(layerIndex, newPolyline)
+                loadedGpxPolyline = newPolyline}
         }
 
 
@@ -1186,6 +1267,51 @@ fun fourSTLPositionMarkerComposable(
                 }
             )
         }
+
+
+        // 🔹 NUOVO: Pulsante per caricare un percorso GPX
+        if (buttonsVisible) {
+            FloatingActionButton(
+                onClick = { gpxFilePickerLauncher.launch("*/*") },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd) // Puoi cambiare questa posizione
+                    .padding(horizontal = 30.dp, vertical = 50.dp) // Puoi cambiare questa posizione
+                    .zIndex(2f),
+                containerColor = Color(0xFF9C27B0), // Viola
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.file_open), // Aggiungi icona 'file_open'
+                    contentDescription = "Carica percorso GPX",
+                    tint = Color.White
+                )
+            }
+        }
+
+        // 🔹 NUOVO: Pulsante per mostrare/nascondere il percorso GPX caricato
+        if (loadedGpxTrack.isNotEmpty() && buttonsVisible) {
+            FloatingActionButton(
+                onClick = { showLoadedGpxTrack = !showLoadedGpxTrack },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd) // Puoi cambiare questa posizione
+                    .padding(horizontal = 30.dp, vertical = 125.dp) // Puoi cambiare questa posizione
+                    .zIndex(2f),
+                containerColor = if (showLoadedGpxTrack) Color.White else Color.LightGray,
+                shape = CircleShape
+            ) {
+                Icon(
+                    painter = if (showLoadedGpxTrack) {
+                        painterResource(id = R.drawable.ic_visibility_off) // Aggiungi icona
+                    } else {
+                        painterResource(id = R.drawable.ic_visibility) // Aggiungi icona
+                    },
+                    contentDescription = "Mostra/Nascondi percorso caricato",
+                    tint = Color.Black
+                )
+            }
+        }
+
+
 
         // Pulsante chiusura app
         var showExitDialog by remember { mutableStateOf(false) }
