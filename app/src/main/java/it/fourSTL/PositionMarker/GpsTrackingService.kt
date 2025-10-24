@@ -12,6 +12,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -20,6 +21,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.ui.platform.LocalContext
 
 class GpsTrackingService : Service() {
 
@@ -48,6 +50,7 @@ class GpsTrackingService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 Log.d(TAG, "Starting tracking and acquiring WakeLock")
+                Toast.makeText(this, "Inizio registrazione tracciato", Toast.LENGTH_SHORT).show()
                 // Acquisisce il WakeLock per tenere attiva la CPU
                 val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GpsTrackingService::lock").apply {
@@ -61,6 +64,7 @@ class GpsTrackingService : Service() {
             }
             ACTION_STOP -> {
                 Log.d(TAG, "Stopping tracking")
+                Toast.makeText(this, "Fine registrazione tracciato", Toast.LENGTH_SHORT).show()
                 stopTrackingAndReleaseResources()
             }
             ACTION_SAVE -> {

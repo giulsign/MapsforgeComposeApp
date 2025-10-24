@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
@@ -19,7 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
 // Selezioni: NONE = non selezionato, SINGLE = giallo (valido 1 salvataggio), PERSISTENT = verde (persistente)
 enum class SelectionState { NONE, SINGLE, PERSISTENT }
@@ -99,6 +102,8 @@ fun SelectionScreen(
     var searchResults by remember { mutableStateOf<List<PositionItem>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
 
+    var showAddPersonalNoteDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(currentFile) {
         scope.launch {
             currentRows = repo.loadItems(currentFile)
@@ -109,33 +114,6 @@ fun SelectionScreen(
                 row.id to st
             }
         }
-    }
-
-    // 🔹 FUNZIONE CORRETTA: Salva TUTTE le selezioni persistenti
-    fun savePersistentSelectionsToPrefs() {
-        // Salva il set di ID persistenti
-        savePersistentSelectionsSet(context, persistentSelections)
-
-        // Per retrocompatibilità, salva anche la mappa metadati del primo elemento
-        val persistentIds = selectionStates.filterValues { it == SelectionState.PERSISTENT }.keys
-        val map = mutableMapOf<String, String>()
-
-        if (persistentIds.isNotEmpty()) {
-            val firstId = persistentIds.first()
-            val itemsToSearch = if (isSearchActive)
-                (currentRows + searchResults).distinctBy { it.id }
-            else
-                currentRows
-
-            val item = itemsToSearch.firstOrNull { it.id == firstId }
-            if (item != null) {
-                map["idsp"] = item.id
-                if (item.title.isNotEmpty()) map["nome italiano"] = item.title
-                if (item.note.isNotEmpty()) map["nome latino"] = item.note
-            }
-        }
-
-        savePersistentMetadata(context, map)
     }
 
     // Funzione di ricerca ricorsiva
@@ -210,9 +188,6 @@ fun SelectionScreen(
                 persistentSelections.remove(row.id)
                 removePersistentItemDetails(context, row.id)
             }
-
-            // 🔹 Salva TUTTE le selezioni persistenti
-            savePersistentSelectionsToPrefs()
         }
     }
 
@@ -250,9 +225,22 @@ fun SelectionScreen(
         selectionStates = selectionStates.mapValues { (_, st) ->
             if (st == SelectionState.SINGLE) SelectionState.NONE else st
         }
+    }
 
-        // Salva nuovamente le selezioni persistenti
-        savePersistentSelectionsToPrefs()
+    if (showAddPersonalNoteDialog) {
+        AddPersonalNoteDialog(
+            onDismiss = { showAddPersonalNoteDialog = false },
+            onSave = { nota, notaB ->
+                scope.launch {
+                    val success = savePersonalNote(context, nota, notaB)
+                    if (success) {
+                        // Ricarica la lista
+                        currentRows = repo.loadItems(currentFile)
+                    }
+                }
+                showAddPersonalNoteDialog = false
+            }
+        )
     }
 
     Scaffold(
@@ -325,6 +313,13 @@ fun SelectionScreen(
                 }
             )
         },
+        floatingActionButton = {
+            if (currentFile == "personale.json") {
+                FloatingActionButton(onClick = { showAddPersonalNoteDialog = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Aggiungi nota personale")
+                }
+            }
+        },
         bottomBar = {
             val anySelected = selectionStates.any { it.value != SelectionState.NONE }
             Row(
@@ -394,6 +389,82 @@ fun SelectionScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AddPersonalNoteDialog(
+    onDismiss: () -> Unit,
+    onSave: (String, String) -> Unit
+) {
+    var nota by remember { mutableStateOf("") }
+    var notaB by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Aggiungi Nota Personale") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = nota,
+                    onValueChange = { nota = it },
+                    label = { Text("Nota") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = notaB,
+                    onValueChange = { notaB = it },
+                    label = { Text("Nota B") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(nota, notaB) },
+                enabled = nota.isNotBlank()
+            ) {
+                Text("Salva")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Annulla")
+            }
+        }
+    )
+}
+
+private fun savePersonalNote(context: Context, nota: String, notaB: String): Boolean {
+    val file = File(context.filesDir, "personale.json")
+
+    return try {
+        val jsonArray = if (file.exists() && file.readText().isNotBlank()) {
+            JSONArray(file.readText())
+        } else {
+            JSONArray()
+        }
+
+        val newId = if (jsonArray.length() > 0) {
+            jsonArray.getJSONObject(jsonArray.length() - 1).getInt("id") + 1
+        } else {
+            1
+        }
+
+        val newEntry = JSONObject().apply {
+            put("id", newId)
+            put("idsp", "PERS$newId")
+            put("nota", nota)
+            put("nota_b", notaB)
+        }
+
+        jsonArray.put(newEntry)
+        file.writeText(jsonArray.toString(2))
+        true
+    } catch (e: Exception) {
+        e.printStackTrace()
+        false
     }
 }
 

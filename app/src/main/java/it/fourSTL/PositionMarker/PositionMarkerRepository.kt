@@ -5,21 +5,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
 /**
- * Legge file JSON dalla cartella assets/position_markers/
+ * Legge file JSON dalla cartella assets/position_markers/ e/o dalla memoria interna.
  * e li converte in liste di PositionItem.
  *
  * MAPPATURA CAMPI JSON -> PositionItem:
  * - id: usa "idsp" come identificatore univoco (fallback su "id" numerico)
- * - title: "nome italiano" (visualizzato come testo principale)
- * - note: "nome latino" (visualizzato come sottotitolo)
+ * - title: "nome italiano" o "nota" (visualizzato come testo principale)
+ * - note: "nome latino" o "nota_b" (visualizzato come sottotitolo)
  * - ref: "ref" o "Ref" (riferimento a sottocategoria)
  */
 class PositionMarkerRepository(
     private val context: Context,
     private val basePath: String = "position_markers/"
 ) {
+
+    init {
+        // Crea il file personale.json se non esiste
+        val personalJson = File(context.filesDir, "personale.json")
+        if (!personalJson.exists()) {
+            personalJson.writeText("[]")
+        }
+    }
 
     suspend fun loadItems(filename: String): List<PositionItem> = withContext(Dispatchers.IO) {
         try {
@@ -52,12 +61,12 @@ class PositionMarkerRepository(
     }
 
     /**
-     * Estrae il titolo (nome italiano) dal JSON.
+     * Estrae il titolo (nome italiano o nota) dal JSON.
      * Cerca prima i campi standard, poi usa ricerca case-insensitive.
      */
     private fun extractTitle(obj: JSONObject): String {
         // 1️⃣ Cerca campi esatti (priorità alta)
-        val exactKeys = listOf("nome italiano", "Nome italiano", "Nome Italiano", "NOME ITALIANO")
+        val exactKeys = listOf("nome italiano", "Nome italiano", "Nome Italiano", "NOME ITALIANO", "nota")
         for (k in exactKeys) {
             if (obj.has(k)) return obj.optString(k, "").trim()
         }
@@ -78,7 +87,7 @@ class PositionMarkerRepository(
         }
 
         // 4️⃣ Fallback: primo valore stringa NON tecnico
-        val excludeKeys = setOf("id", "idsp", "ref", "nome latino", "nome_latino")
+        val excludeKeys = setOf("id", "idsp", "ref", "nome latino", "nome_latino", "nota_b")
         val keys = obj.keys()
         while (keys.hasNext()) {
             val key = keys.next()
@@ -92,12 +101,12 @@ class PositionMarkerRepository(
     }
 
     /**
-     * Estrae la nota (nome latino) dal JSON.
+     * Estrae la nota (nome latino o nota_b) dal JSON.
      * Cerca prima i campi standard, poi usa ricerca case-insensitive.
      */
     private fun extractNote(obj: JSONObject): String {
         // 1️⃣ Cerca campi esatti (priorità alta)
-        val exactKeys = listOf("nome latino", "Nome latino", "Nome Latino", "NOME LATINO")
+        val exactKeys = listOf("nome latino", "Nome latino", "Nome Latino", "NOME LATINO", "nota_b")
         for (k in exactKeys) {
             if (obj.has(k)) return obj.optString(k, "").trim()
         }
@@ -121,11 +130,25 @@ class PositionMarkerRepository(
     }
 
     private fun readFileText(filename: String): String? {
-        return try {
-            context.assets.open(basePath + filename).bufferedReader().use { it.readText() }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        if (filename == "personale.json") {
+            return try {
+                val file = File(context.filesDir, "personale.json")
+                if (file.exists()) {
+                    file.readText()
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else {
+            return try {
+                context.assets.open(basePath + filename).bufferedReader().use { it.readText() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
         }
     }
 }

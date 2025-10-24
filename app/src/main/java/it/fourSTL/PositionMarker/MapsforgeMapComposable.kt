@@ -765,45 +765,6 @@ fun fourSTLPositionMarkerComposable(
             }
         }
 
-        /*
-        // 🔹 Gestione della polilinea per la traccia in tempo reale
-        var trackPolyline by remember { mutableStateOf<Polyline?>(null) }
-
-        LaunchedEffect(trackPoints, mapViewRef) {
-            val mapView = mapViewRef ?: return@LaunchedEffect
-
-            // Rimuove la vecchia polilinea dalla mappa, se esiste
-            trackPolyline?.let {
-                mapView.layerManager.layers.remove(it)
-            }
-
-            // Se ci sono almeno due punti, crea e disegna la nuova polilinea
-            if (trackPoints.size > 1) {
-                // Definisce lo stile della linea (colore, spessore, ecc.)
-                val paint = AndroidGraphicFactory.INSTANCE.createPaint().apply {
-                    color = android.graphics.Color.BLUE // Colore azzurro/blu
-                    strokeWidth = 12f // Spessore della linea
-                    setStyle(Style.STROKE)
-                    setStrokeJoin(Join.ROUND) // Angoli arrotondati
-                    setStrokeCap(Cap.ROUND)   // Estremità arrotondate
-                }
-
-                // Crea l'oggetto Polyline e aggiunge tutti i punti
-                val newPolyline = Polyline(paint, AndroidGraphicFactory.INSTANCE).apply {
-                    trackPoints.forEach { location ->
-                        addPoint(LatLong(location.latitude, location.longitude))
-                    }
-                }
-
-                // Aggiunge la nuova polilinea alla mappa e ne salva il riferimento
-                mapView.layerManager.layers.add(newPolyline)
-                trackPolyline = newPolyline
-            } else {
-                // Se non ci sono abbastanza punti, assicura che non ci sia nessuna polilinea visualizzata
-                trackPolyline = null
-            }
-        }*/
-
 
         // 🔹 NUOVO: LaunchedEffect per disegnare la traccia BLU in tempo reale
         LaunchedEffect(realTimeTrackPoints, mapViewRef) {
