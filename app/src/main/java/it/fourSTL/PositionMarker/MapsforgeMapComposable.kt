@@ -132,7 +132,7 @@ fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android
         val longitude = locationJson.getDouble("longitude")
 
         val geoPoint = LatLong(latitude, longitude)
-        val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker, null)
+        val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker_red, null)
         val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
         val marker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
 
@@ -376,8 +376,11 @@ fun fourSTLPositionMarkerComposable(
     var userMarker: Marker? by remember { mutableStateOf(null) }
 
     fun createRedMarker(context: Context, latLong: LatLong): Marker {
-        val drawable = ContextCompat.getDrawable(context, R.drawable.presence_online)
+        //val drawable = ContextCompat.getDrawable(context, R.drawable.presence_online)
+        //val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+        val drawable = ContextCompat.getDrawable(context, R.drawable.ic_marker_red)
         val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+        //return Marker(latLong, bitmap, 0, -bitmap.height / 2)
         return Marker(latLong, bitmap, 0, -bitmap.height / 2)
     }
 
