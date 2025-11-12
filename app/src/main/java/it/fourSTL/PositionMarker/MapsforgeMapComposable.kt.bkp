@@ -1,0 +1,778 @@
+package it.fourSTL.PositionMarker
+
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import org.mapsforge.core.model.LatLong
+import org.mapsforge.map.android.graphics.AndroidGraphicFactory
+import org.mapsforge.map.android.util.AndroidUtil
+import org.mapsforge.map.android.view.MapView
+import org.mapsforge.map.layer.cache.TileCache
+import org.mapsforge.map.layer.renderer.TileRendererLayer
+import org.mapsforge.map.reader.MapFile
+import org.mapsforge.map.layer.overlay.Marker
+import org.json.JSONArray
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.io.File
+import androidx.core.content.edit
+import androidx.compose.ui.zIndex
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.MaterialTheme
+import android.app.Activity
+import android.content.Intent
+import android.os.Environment
+import android.widget.Toast
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import androidx.core.content.res.ResourcesCompat
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.mikepenz.aboutlibraries.ui.compose.LibrariesContainer
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.platform.LocalContext
+import org.mapsforge.map.layer.overlay.Polyline
+import org.mapsforge.core.graphics.Paint
+import org.mapsforge.core.graphics.Style
+import androidx.compose.runtime.collectAsState
+import org.mapsforge.core.graphics.Cap
+import org.mapsforge.core.graphics.Join
+import android.net.Uri
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.ExtendedFloatingActionButton
+
+
+// 🔹 UTILITY per memorizzare metadati persistenti
+fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
+    val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
+    val json = JSONObject(metadata).toString()
+    prefs.edit().putString("persistent_metadata", json).apply()
+}
+
+fun loadPersistentMetadata(context: Context): Map<String, String> {
+    val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
+    val json = prefs.getString("persistent_metadata", "{}") ?: "{}"
+    val obj = JSONObject(json)
+    return obj.keys().asSequence().associateWith { obj.getString(it) }
+}
+
+fun clearPersistentMetadata(context: Context) {
+    val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
+    prefs.edit().remove("persistent_metadata").apply()
+}
+
+// 🔹 Funzioni per il nuovo sistema di selezioni persistenti (importate da SelectionScreen.kt)
+
+
+// Copia italy.map nella cartella di destinazione
+private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
+    val destFile = File(context.getExternalFilesDir("maps"), mapFileName)
+
+    if (!destFile.exists()) {
+        destFile.parentFile?.mkdirs()
+        context.assets.open("maps/$mapFileName").use { input ->
+            destFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+    }
+    return destFile
+}
+
+// Mostra la posizione di partenza sulla mappa
+fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android.view.MapView) {
+    val file = File(context.filesDir, "auto_locations.json")
+
+    if (!file.exists() || file.length() == 0L) {
+        Toast.makeText(context, "⚠️ Nessun punto salvato trovato.", Toast.LENGTH_LONG).show()
+        return
+    }
+
+    try {
+        val jsonArray = JSONArray(file.readText())
+        if (jsonArray.length() == 0) {
+            Toast.makeText(context, "⚠️ Nessun punto valido nel file JSON.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val locationJson = jsonArray.getJSONObject(0)
+        val latitude = locationJson.getDouble("latitude")
+        val longitude = locationJson.getDouble("longitude")
+
+        val geoPoint = LatLong(latitude, longitude)
+        val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker_red, null)
+        val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+        val marker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
+
+        map.layerManager.layers.add(marker)
+        map.model.mapViewPosition.setCenter(geoPoint)
+
+        Toast.makeText(context, "📍 Punto di partenza visualizzato sulla mappa", Toast.LENGTH_LONG).show()
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "❌ Errore nella lettura del punto salvato.", Toast.LENGTH_LONG).show()
+    }
+}
+
+// ID sequenziale
+fun getNextId(context: Context): Int {
+    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    val nextId = prefs.getInt("last_id", 0) + 1
+    prefs.edit { putInt("last_id", nextId) }
+    return nextId
+}
+
+// Cancella dati tabella JSON
+fun clearSavedLocations(context: Context) {
+    val file = File(context.filesDir, "locations.json")
+    if (file.exists()) {
+        file.writeText("[]")
+    }
+    Toast.makeText(context, "Dati tabella JSON cancellati", Toast.LENGTH_LONG).show()
+}
+
+// Cancella posizione auto
+fun clearSavedLocationsAuto(context: Context) {
+    val file = File(context.filesDir, "auto_locations.json")
+    if (file.exists()) {
+        file.writeText("[]")
+    }
+    Toast.makeText(context, "Dati posizione di partenza cancellati", Toast.LENGTH_LONG).show()
+}
+
+// Salva posizione GPS su file JSON
+fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<String, String> = emptyMap()) {
+    val pointId = getNextId(context)
+    val file = File(context.filesDir, "locations.json")
+
+    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    val hour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault()).format(Date())
+
+    val locationJson = JSONObject().apply {
+        put("id", pointId)
+        put("latitude", location.latitude)
+        put("longitude", location.longitude)
+        put("altitude", location.altitude)
+        put("date", date)
+        put("hour", hour)
+        metadataMap.forEach { (key, value) -> put(key, value) }
+    }
+
+    val jsonArray: JSONArray = if (file.exists() && file.length() > 0) {
+        JSONArray(file.readText())
+    } else {
+        JSONArray()
+    }
+
+    jsonArray.put(locationJson)
+    file.writeText(jsonArray.toString(2))
+
+    Toast.makeText(context, "Nuovo punto aggiunto a tabella JSON", Toast.LENGTH_LONG).show()
+}
+
+// Salva posizione di partenza (una sola volta)
+fun saveLocationToJsonAuto(context: Context, location: Location) {
+    val file = File(context.filesDir, "auto_locations.json")
+
+    if (file.exists() && file.length() > 0) {
+        try {
+            val jsonArray = JSONArray(file.readText())
+            if (jsonArray.length() > 0) {
+                Toast.makeText(
+                    context,
+                    "⚠️ Esiste già un punto salvato. Eliminare prima di aggiungerne un altro.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
+            }
+        } catch (e: Exception) {
+            file.delete()
+        }
+    }
+
+    val pointId = getNextId(context)
+    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    val hour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault()).format(Date())
+
+    val locationJson = JSONObject().apply {
+        put("id", pointId)
+        put("latitude", location.latitude)
+        put("longitude", location.longitude)
+        put("altitude", location.altitude)
+        put("date", date)
+        put("hour", hour)
+    }
+
+    val jsonArray = JSONArray().apply { put(locationJson) }
+    file.writeText(jsonArray.toString(2))
+
+    Toast.makeText(context, "✅ Nuovo punto di partenza salvato.", Toast.LENGTH_LONG).show()
+}
+
+// Esporta JSON in Download
+fun exportJsonToDownload(context: Context) {
+    try {
+        val sourceFile = File(context.filesDir, "locations.json")
+
+        if (!sourceFile.exists()) {
+            Toast.makeText(context, "Nessun file JSON trovato", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(Date())
+        val fileName = "fourSTLPositionMarker_locations_$timestamp.json"
+
+        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        if (!downloadDir.exists()) downloadDir.mkdirs()
+
+        val destFile = File(downloadDir, fileName)
+
+        FileInputStream(sourceFile).use { input ->
+            FileOutputStream(destFile).use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        Toast.makeText(context, "File copiato in Download come $fileName", Toast.LENGTH_LONG).show()
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "Errore durante la copia: ${e.message}", Toast.LENGTH_LONG).show()
+    }
+}
+
+// Main composable
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun fourSTLPositionMarkerComposable(
+    context: Context,
+    modifier: Modifier = Modifier,
+    mapFileName: String = "italy.map"
+) {
+    var userLocation by remember { mutableStateOf<Location?>(null) }
+    var hasLocationPermission by remember { mutableStateOf(false) }
+    var mapViewRef by remember { mutableStateOf<MapView?>(null) }
+    var buttonsVisible by remember { mutableStateOf(false) }
+    var isInitialLocationSet by remember { mutableStateOf(false) }
+    var showTable by remember { mutableStateOf(false) }
+    var showSelectionScreen by remember { mutableStateOf(false) }
+    var showTableAuto by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var showConfirmDialogAuto by remember { mutableStateOf(false) }
+    var showConfirmMessage by remember { mutableStateOf(false) }
+    var showConfirmMessageAuto by remember { mutableStateOf(false) }
+    var showGpsDialog by remember { mutableStateOf(false) }
+    var carMarker: Marker? by remember { mutableStateOf(null) }
+    var showCarMarker by remember { mutableStateOf(false) }
+    var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var showLicenses by remember { mutableStateOf(false) }
+
+    // 🔹 Carica le selezioni persistenti all'avvio
+    val persistentSelectionsState = remember {
+        mutableStateOf(loadPersistentSelectionsSet(context))
+    }
+    var persistentMetadata by remember { mutableStateOf(loadPersistentMetadata(context)) }
+    var filteredMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
+
+    var savedLocations by remember { mutableStateOf(listOf<String>()) }
+    val fusedLocationClient: FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
+
+    // 🔹 NUOVO: Stati per il tracciato in tempo reale dal servizio
+    val realTimeTrackPoints by GpsTrackingService.trackPointsFlow.collectAsState()
+    var realTimePolyline by remember { mutableStateOf<Polyline?>(null) }
+
+
+    // 🔹 Raccoglie i punti della traccia dal servizio come uno stato
+    val trackPoints by GpsTrackingService.trackPointsFlow.collectAsState()
+
+    // 🔹 Stati per il percorso GPX caricato
+    var loadedGpxTrack by remember { mutableStateOf<List<LatLong>>(emptyList()) }
+    var loadedGpxPolyline by remember { mutableStateOf<Polyline?>(null) }
+    var showLoadedGpxTrack by remember { mutableStateOf(true) }
+
+    // Launcher per chiedere permessi
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasLocationPermission = granted
+        if (granted) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    userLocation = location
+                }
+            }
+        }
+    }
+
+
+    // 🔹 NUOVO: Launcher per selezionare un file GPX dal dispositivo
+    val gpxFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            if (uri != null) {
+                val points = GpxParser.parse(context, uri)
+                if (points.isNotEmpty()) {
+                    loadedGpxTrack = points
+                    showLoadedGpxTrack = true
+                    Toast.makeText(context, "Percorso GPX caricato con ${points.size} punti", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Errore: Impossibile leggere il file GPX o file vuoto", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    )
+
+
+    // Verifica file mappa
+    val mapFile = copyMapFileIfNeeded(context, mapFileName)
+    if (!mapFile.exists()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.LightGray)
+                .border(25.dp, Color.Black),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("File mappa non trovato: ${mapFile.absolutePath}")
+        }
+        return
+    }
+
+    // Marker rosso per la posizione utente
+    var userMarker: Marker? by remember { mutableStateOf(null) }
+
+    fun createRedMarker(context: Context, latLong: LatLong): Marker {
+        //val drawable = ContextCompat.getDrawable(context, R.drawable.presence_online)
+        //val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+        val drawable = ContextCompat.getDrawable(context, R.drawable.ic_marker_red)
+        val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+        //return Marker(latLong, bitmap, 0, -bitmap.height / 2)
+        return Marker(latLong, bitmap, 0, -bitmap.height / 2)
+    }
+
+    // Gestione permessi e aggiornamento continuo posizione
+    LaunchedEffect(Unit) {
+        when {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                hasLocationPermission = true
+
+                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    if (location != null) {
+                        userLocation = location
+                    }
+                }
+
+                // Aggiornamento continuo in tempo reale
+                val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+                    com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
+                    2000
+                ).build()
+
+                val locationCallback = object : com.google.android.gms.location.LocationCallback() {
+                    override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
+                        result.lastLocation?.let { loc ->
+                            userLocation = loc
+                        }
+                    }
+                }
+
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    android.os.Looper.getMainLooper()
+                )
+
+                // Timeout GPS: 20 secondi
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    if (userLocation == null) {
+                        showGpsDialog = true
+                    }
+                }, 20000)
+            }
+            else -> {
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+    }
+
+    // Crea e mostra MapView
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .border(6.dp, Color.Black)
+    ) {
+        AndroidView(
+            factory = {
+                AndroidGraphicFactory.createInstance(context.applicationContext)
+                val mapView = MapView(context).apply {
+                    mapScaleBar.isVisible = false
+                    setBuiltInZoomControls(false)
+                    setZoomLevelMin(2.toByte())
+                    setZoomLevelMax(20.toByte())
+                }
+
+                val mapFileReader = MapFile(mapFile)
+                val tileCache: TileCache = AndroidUtil.createTileCache(
+                    context,
+                    "mapcache",
+                    mapView.model.displayModel.tileSize,
+                    1f,
+                    mapView.model.frameBufferModel.overdrawFactor
+                )
+
+                val renderer = TileRendererLayer(
+                    tileCache,
+                    mapFileReader,
+                    mapView.model.mapViewPosition,
+                    AndroidGraphicFactory.INSTANCE
+                ).apply {
+                    setXmlRenderTheme(AssetsRenderTheme(context))
+                }
+                mapView.layerManager.layers.add(renderer)
+
+                // Posizione iniziale di fallback: Milano. Corretto.
+                val startLatLong = LatLong(45.4642, 9.19)
+                mapView.model.mapViewPosition.setCenter(startLatLong)
+                mapView.model.mapViewPosition.setZoomLevel(15.toByte())
+
+                // Crea il marker iniziale a Milano, che poi verrà spostato.
+                userMarker = createRedMarker(context, startLatLong)
+                mapView.layerManager.layers.add(userMarker)
+
+                mapViewRef = mapView
+                mapView
+            },
+            update = { mapView ->
+                userLocation?.let { loc ->
+                    val latLong = LatLong(loc.latitude, loc.longitude)
+
+                    // Sposta la posizione del marker esistente.
+                    userMarker?.latLong = latLong
+
+                    // Se non abbiamo ancora impostato la posizione iniziale,
+                    // centra la mappa sulla posizione GPS e imposta il flag a true.
+                    if (!isInitialLocationSet) {
+                        mapView.model.mapViewPosition.setCenter(latLong)
+                        mapView.model.mapViewPosition.setZoomLevel(15.toByte())
+                        isInitialLocationSet = true
+                    }
+
+                    // Forza il ridisegno della mappa.
+                    mapView.invalidate()
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Pannello pulsanti laterale
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                if (buttonsVisible) {
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            userLocation?.let { loc ->
+                                val latLong = LatLong(loc.latitude, loc.longitude)
+                                mapViewRef?.model?.mapViewPosition?.apply {
+                                    setCenter(latLong)
+                                    setZoomLevel(15.toByte())
+                                }
+                            }
+                            filteredMarkers.forEach { mapViewRef?.layerManager?.layers?.remove(it) }
+                            filteredMarkers = emptyList()
+                        },
+                        icon = { Icon(painterResource(id = R.drawable.my_location), "My Location") },
+                        text = { Text("My Location") }
+                    )
+
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            userLocation?.let { loc ->
+                                persistentMetadata = loadPersistentMetadata(context)
+                                val finalMetadata = persistentMetadata + selectedMetadata
+                                saveLocationToJson(context, loc, finalMetadata)
+                                selectedMetadata = emptyMap()
+                            }
+                        },
+                        icon = { Icon(painterResource(id = R.drawable.save), "Save Position") },
+                        text = { Text("Save Position") }
+                    )
+
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            userLocation?.let { loc ->
+                                saveLocationToJsonAuto(context, loc)
+                            }
+                        },
+                        icon = { Icon(painterResource(id = R.drawable.save_car), "Save Car") },
+                        text = { Text("Save Car") }
+                    )
+
+                    ExtendedFloatingActionButton(
+                        onClick = { showTable = true },
+                        icon = { Icon(painterResource(id = R.drawable.archive_light), "Show Table") },
+                        text = { Text("Show Table") }
+                    )
+
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            mapViewRef?.let { map ->
+                                if (!showCarMarker) {
+                                    val file = File(context.filesDir, "auto_locations.json")
+                                    if (file.exists() && file.length() > 0) {
+                                        try {
+                                            val jsonArray = JSONArray(file.readText())
+                                            if (jsonArray.length() > 0) {
+                                                val locationJson = jsonArray.getJSONObject(0)
+                                                val latitude = locationJson.getDouble("latitude")
+                                                val longitude = locationJson.getDouble("longitude")
+                                                val geoPoint = LatLong(latitude, longitude)
+
+                                                userLocation?.let { currentLoc ->
+                                                    val startLocation = Location("").apply {
+                                                        setLatitude(latitude)
+                                                        setLongitude(longitude)
+                                                    }
+                                                    val distance = currentLoc.distanceTo(startLocation) / 1000f // in km
+                                                    Toast.makeText(
+                                                        context,
+                                                        String.format(
+                                                            Locale.getDefault(),
+                                                            "📍 Punto di partenza visualizzato. Distanza: %.2f km",
+                                                            distance
+                                                        ),
+                                                        Toast.LENGTH_LONG
+                                                    ).show()
+                                                } ?: run {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "📍 Punto di partenza visualizzato.",
+                                                        Toast.LENGTH_LONG
+                                                    ).show()
+                                                }
+
+                                                val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker, null)
+                                                val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+                                                carMarker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
+                                                map.layerManager.layers.add(carMarker)
+                                                map.model.mapViewPosition.setCenter(geoPoint)
+                                                showCarMarker = true
+                                            }
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "❌ Errore lettura punto auto", Toast.LENGTH_LONG).show()
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "⚠️ Nessun punto auto salvato.", Toast.LENGTH_LONG).show()
+                                    }
+                                } else {
+                                    carMarker?.let { marker ->
+                                        map.layerManager.layers.remove(marker)
+                                    }
+                                    carMarker = null
+                                    showCarMarker = false
+                                    Toast.makeText(context, "Punto di partenza nascosto.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        icon = { Icon(painterResource(id = R.drawable.show_start), if (showCarMarker) "Hide Car" else "Show Car") },
+                        text = { Text(if (showCarMarker) "Hide Car" else "Show Car") }
+                    )
+                     ExtendedFloatingActionButton(
+                        onClick = { gpxFilePickerLauncher.launch("*/*") },
+                        icon = { Icon(painterResource(id = R.drawable.file_open), "Load GPX") },
+                        text = { Text("Load GPX") }
+                    )
+                }
+            }
+        }
+
+
+        // Pulsante toggle visibilità pulsanti
+        FloatingActionButton(
+            onClick = {
+                buttonsVisible = !buttonsVisible
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .zIndex(2f),
+            containerColor = Color.White,
+            shape = CircleShape
+        ) {
+            if (buttonsVisible)
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Toggle pulsanti",
+                )
+            else
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Toggle pulsanti",
+                )
+        }
+
+
+        // Pulsante per le licenze
+        FloatingActionButton(
+            onClick = { showLicenses = true },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 30.dp, vertical = 60.dp)
+                .zIndex(2f), // Assicura che stia sopra la mappa
+            containerColor = Color.Yellow,
+            shape = CircleShape
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.license),
+                contentDescription = "Chiudi app",
+                tint = Color.Unspecified
+            )
+        }
+
+        // Schermata delle licenze (mostrata come un overlay)
+        if (showLicenses) {
+            // Stato per tenere traccia della scheda selezionata
+            var tabIndex by remember { mutableStateOf(0) }
+            val tabs = listOf("Dependencies", "App License", "Third Party License", "Readme")
+
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1001f), // zIndex altissimo per stare sopra a tutto
+                topBar = {
+                    Column {
+                        // Barra del titolo con pulsante indietro
+                        TopAppBar(
+                            title = { Text("Informazioni e Licenze") },
+                            navigationIcon = {
+                                IconButton(onClick = { showLicenses = false }) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowBack,
+                                        contentDescription = "Indietro"
+                                    )
+                                }
+                            }
+                        )
+                        // Barra delle schede (Tab)
+                        TabRow(selectedTabIndex = tabIndex) {
+                            tabs.forEachIndexed { index, title ->
+                                Tab(
+                                    selected = tabIndex == index,
+                                    onClick = { tabIndex = index },
+                                    text = { Text(text = title) }
+                                )
+                            }
+                        }
+                    }
+                }
+            ) { paddingValues ->
+                // Contenuto della scheda selezionata
+                Column(modifier = Modifier.padding(paddingValues)) {
+                    when (tabIndex) {
+                        0 -> LibrariesContainer(
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        1 -> AssetTextView(
+                            assetFileName = "LICENSE",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        2 -> AssetTextView(
+                            assetFileName = "THIRD_PARTY_LICENSES.md",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        3 -> AssetTextView(
+                            assetFileName = "README.md",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+            }
+        }
+
+        // Dialog GPS assente
+        if (showGpsDialog) {
+            AlertDialog(
+                onDismissRequest = { showGpsDialog = false },
+                title = { Text("Segnale GPS assente") },
+                text = {
+                    Text(
+                        "⚠️ Nessun segnale GPS rilevato.\n\n" +
+                                "Assicurati che il GPS sia attivo e che il dispositivo abbia visibilità diretta del cielo."
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { showGpsDialog = false }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+    }
+}
+
+// Funzione helper per leggere e mostrare un file di testo dagli assets
+@Composable
+private fun AssetTextView(assetFileName: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    // Legge il testo una sola volta e lo "ricorda"
+    val text = remember(assetFileName) {
+        try {
+            context.assets.open(assetFileName).bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            "Errore nel caricamento del file: ${e.message}"
+        }
+    }
+
+    // LazyColumn rende il testo scorrevole in modo efficiente
+    LazyColumn(modifier = modifier.padding(16.dp)) {
+        item {
+            Text(text = text, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
