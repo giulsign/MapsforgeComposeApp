@@ -26,6 +26,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import org.json.JSONArray
 import java.io.File
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.asPaddingValues
 
 // Data class per rappresentare una posizione salvata (invariata)
 data class LocationDatas(
@@ -153,6 +156,7 @@ fun LocationsTableScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(WindowInsets.systemBars.asPaddingValues()) // ⬅️ AGGIUNGI QUESTA RIGA
             .padding(16.dp)
     ) {
         // Header

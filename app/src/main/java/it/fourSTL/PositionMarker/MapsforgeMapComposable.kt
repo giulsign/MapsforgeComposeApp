@@ -436,6 +436,7 @@ fun fourSTLPositionMarkerComposable(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .padding(WindowInsets.systemBars.asPaddingValues()) // ⬅️ AGGIUNGI QUESTA RIGA
             .border(6.dp, Color.Black)
     ) {
         AndroidView(
