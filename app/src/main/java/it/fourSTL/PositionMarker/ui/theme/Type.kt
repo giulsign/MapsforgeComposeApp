@@ -5,6 +5,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.Font
+import it.fourSTL.PositionMarker.R
 
 // Set of Material typography styles to start with
 val Typography = Typography(
@@ -31,4 +33,8 @@ val Typography = Typography(
         letterSpacing = 0.5.sp
     )
     */
+)
+val MyCustomFont = FontFamily(
+    Font(R.font.agdasima_regular, FontWeight.Normal),
+    Font(R.font.agdasima_bold, FontWeight.Bold)
 )
