@@ -167,12 +167,12 @@ fun LocationsTableScreen(
         ) {
             Column {
                 Text(
-                    "Punti salvati",
+                    "Saved points",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "${locations.size} punt${if (locations.size == 1) "o" else "i"} totali",
+                    "Total ${locations.size} point${if (locations.size == 1) "" else "s"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -184,7 +184,7 @@ fun LocationsTableScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Cerca per nome italiano o latino") },
+            label = { Text("Search by italian or latin name") },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") }
         )
@@ -202,8 +202,8 @@ fun LocationsTableScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("📍 Nessun punto salvato", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
-                    Text("Salva un punto GPS per visualizzarlo qui", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text("📍 No point saved", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
+                    Text("Save a point before to show here", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
             }
         } else {
@@ -239,7 +239,7 @@ fun LocationsTableScreen(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("Chiudi", style = MaterialTheme.typography.titleMedium)
+            Text("Close", style = MaterialTheme.typography.titleMedium)
         }
     }
 
@@ -247,8 +247,8 @@ fun LocationsTableScreen(
     if (showDeleteDialog && locationToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Elimina punto") },
-            text = { Text("Vuoi eliminare il punto #${locationToDelete?.id}?\nQuesta azione non può essere annullata.") },
+            title = { Text("Delete point") },
+            text = { Text("Do you want to delete this point? #${locationToDelete?.id}?\nThis action cannot be undone.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -261,11 +261,11 @@ fun LocationsTableScreen(
                         locationToDelete = null
                     }
                 ) {
-                    Text("Elimina", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Annulla") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Undo") }
             }
         )
     }
