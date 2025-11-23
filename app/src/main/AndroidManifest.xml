@@ -32,7 +32,7 @@
         <activity
             android:name="it.fourSTL.PositionMarker.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.fourSTLPositionMarkerTheme">
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

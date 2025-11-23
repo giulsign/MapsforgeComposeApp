@@ -46,10 +46,4 @@ For more details on third-party licenses, see the [THIRD_PARTY_LICENSES.md](THIR
 - **Developer**: Giuliano Signorelli
 - **Website**: [www.4stl.it](http://www.4stl.it)
 - **Email**: [postmaster@4stl.it](mailto:postmaster@4stl.it)
-
-
-# 4STL Android Application
-**Author:** Giuliano Signorelli  
-**Website:** [https://www.4stl.it](https://www.4stl.it)  
-**Contact:** postmaster@4stl.it  
-**License:** GPLv3 with Proprietary Branding Notice
+- **License:** GPLv3 with Proprietary Branding Notice

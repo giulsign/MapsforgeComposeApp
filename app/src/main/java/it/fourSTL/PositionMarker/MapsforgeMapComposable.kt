@@ -1,5 +1,6 @@
 package it.fourSTL.PositionMarker
 
+import it.fourSTL.PositionMarker.R
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -46,7 +47,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import androidx.core.content.res.ResourcesCompat
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -1532,37 +1532,8 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // 🔹 NUOVO: Pulsante per caricare un percorso GPX
-                            if (buttonsVisible) {
-                                FloatingActionButton(
-                                    onClick = { gpxFilePickerLauncher.launch("*/*") },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd) // Puoi cambiare questa posizione
-                        .padding(
-                            horizontal = 30.dp,
-                            vertical = 50.dp
-                        ) // Puoi cambiare questa posizione
-                        .zIndex(2f),
-                    containerColor = Color(0xB3E0E0E0),
-                    contentColor = Color.Transparent,
-                    shape = RectangleShape,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 0.dp,
-                        focusedElevation = 0.dp,
-                        hoveredElevation = 0.dp
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.file_open), // Aggiungi icona 'file_open'
-                        contentDescription = "Carica percorso GPX",
-                        tint = Color.White
-                    )
-                }
-            }
-
             // 🔹 NUOVO: Pulsante per mostrare/nascondere il percorso GPX caricato
-            if (loadedGpxTrack.isNotEmpty() && buttonsVisible) {
+            /*if (loadedGpxTrack.isNotEmpty() && buttonsVisible) {
                 FloatingActionButton(
                     onClick = { showLoadedGpxTrack = !showLoadedGpxTrack },
                     modifier = Modifier
@@ -1592,7 +1563,7 @@ fun VerticalCategoryButton(
                         tint = Color.Black
                     )
                 }
-            }
+            }*/
 
 
             // Pulsante chiusura app
