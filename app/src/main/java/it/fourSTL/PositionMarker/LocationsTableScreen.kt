@@ -366,7 +366,7 @@ fun LocationCard(
                 IconButton(onClick = onClick) {
                     Icon(
                         Icons.Default.MyLocation,
-                        contentDescription = "Vai al punto",
+                        contentDescription = "Show Point Location",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -378,7 +378,7 @@ fun LocationCard(
                         IconButton(onClick = { searchImageOnWeb(context, query) }) {
                             Icon(
                                 Icons.Default.ImageSearch,
-                                contentDescription = "Cerca Immagine",
+                                contentDescription = "Search Image on Web",
                                 tint = Color(blue = 0x80, green = 0x80, red = 0x80)
                             )
                         }
@@ -389,7 +389,7 @@ fun LocationCard(
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Elimina",
+                        contentDescription = "Delete",
                         tint = MaterialTheme.colorScheme.error
                     )
                 }

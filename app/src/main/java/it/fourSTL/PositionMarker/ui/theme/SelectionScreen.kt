@@ -304,7 +304,7 @@ fun SelectionScreen(
                                     searchResults = emptyList()
                                 }
                             },
-                            placeholder = { Text("Cerca metadati...") },
+                            placeholder = { Text("Search metadatas...") },
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
@@ -316,12 +316,12 @@ fun SelectionScreen(
 
                         )
                     } else {
-                        Text("Seleziona Metadati")
+                        Text("Select Metadatas")
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -330,7 +330,7 @@ fun SelectionScreen(
                             searchQuery = ""
                             searchResults = emptyList()
                         }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Cancella ricerca")
+                            Icon(Icons.Default.Clear, contentDescription = "Erase search")
                         }
                     }
                     IconButton(onClick = {
@@ -340,7 +340,7 @@ fun SelectionScreen(
                             searchResults = emptyList()
                         }
                     }) {
-                        Icon(Icons.Default.Search, contentDescription = "Cerca")
+                        Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                 }
             )
@@ -348,7 +348,7 @@ fun SelectionScreen(
         floatingActionButton = {
             if (currentFile == "personale.json") {
                 FloatingActionButton(onClick = { showAddPersonalNoteDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Aggiungi nota personale")
+                    Icon(Icons.Default.Add, contentDescription = "Add personal category")
                 }
             }
         },
@@ -360,12 +360,12 @@ fun SelectionScreen(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = onBackPressed) { Text("Indietro") }
-                TextButton(onClick = onDismiss) { Text("Annulla") }
+                TextButton(onClick = onBackPressed) { Text("Back") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
                 Button(onClick = onSaveClicked, enabled = anySelected) {
                     Icon(Icons.Default.Check, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Salva")
+                    Text("Save")
                 }
             }
         }
@@ -389,9 +389,9 @@ fun SelectionScreen(
                 ) {
                     Text(
                         text = if (searchQuery.length < 2) {
-                            "Inserisci almeno 2 caratteri"
+                            "Search with a t least 2 characters"
                         } else {
-                            "${searchResults.size} risultati trovati"
+                            "${searchResults.size} category found"
                         },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.bodySmall,
@@ -434,20 +434,20 @@ fun AddPersonalNoteDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Aggiungi Nota Personale") },
+        title = { Text("Add Personal Category") },
         text = {
             Column {
                 OutlinedTextField(
                     value = nota,
                     onValueChange = { nota = it },
-                    label = { Text("Nota") },
+                    label = { Text("Notation A") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = notaB,
                     onValueChange = { notaB = it },
-                    label = { Text("Nota B") },
+                    label = { Text("Notation B") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -457,12 +457,12 @@ fun AddPersonalNoteDialog(
                 onClick = { onSave(nota, notaB) },
                 enabled = nota.isNotBlank()
             ) {
-                Text("Salva")
+                Text("Save")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annulla")
+                Text("Cancel")
             }
         }
     )
@@ -535,7 +535,7 @@ fun SelectionRowItem(
             Spacer(modifier = Modifier.width(12.dp))
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = if (state == SelectionState.PERSISTENT) "Persistente" else "Selezionato",
+                contentDescription = if (state == SelectionState.PERSISTENT) "Persistent" else "Selected",
                 tint = if (state == SelectionState.PERSISTENT) Color(0xFF388E3C) else Color(0xFFB8860B)
             )
         }

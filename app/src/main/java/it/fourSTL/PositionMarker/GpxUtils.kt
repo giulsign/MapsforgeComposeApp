@@ -15,7 +15,7 @@ object GpxUtils {
 
     fun saveTrackAsGpx(context: Context, trackPoints: List<Location>, fileName: String) {
         if (trackPoints.isEmpty()) {
-            Toast.makeText(context, "Nessun punto da salvare.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "No point to save.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -32,11 +32,11 @@ object GpxUtils {
                 output.write(gpxString.toByteArray())
             }
 
-            Toast.makeText(context, "Traccia salvata in Download/$fileName.gpx", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Gps track saved in Download/$fileName.gpx", Toast.LENGTH_LONG).show()
 
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "Errore durante il salvataggio: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Save error: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

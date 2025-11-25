@@ -2,6 +2,7 @@ package it.fourSTL.PositionMarker
 
 import it.fourSTL.PositionMarker.R
 import android.Manifest
+import android.R.attr.text
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -41,6 +42,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import android.app.Activity
 import android.content.Intent
+import android.graphics.drawable.shapes.Shape
 import android.os.Environment
 import android.widget.Toast
 import java.io.FileInputStream
@@ -82,6 +84,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.window.Dialog
 import it.fourSTL.PositionMarker.ui.theme.Purple40
 
 
@@ -323,67 +329,58 @@ fun VerticalCategoryButton(
     }
 }
 
-    // Composable per il pulsante categoria orizzontale
-    @Composable
-    fun HorizontalCategoryButton(
-        text: String,
-        onClick: () -> Unit,
-        modifier: Modifier = Modifier,
-        backgroundColor: Color = Color.White
-    ) {
-        Box(
-            modifier = modifier
-                .height(50.dp)
-                .width(120.dp)
-                .background(backgroundColor, shape = MaterialTheme.shapes.medium)
-                .clickable(onClick = onClick)
-                .padding(8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                fontFamily = MyCustomFont,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
 
     // Composable per il menu dropdown
     @Composable
     fun CategoryMenu(
         title: String,
         items: List<Pair<String, () -> Unit>>,
-        onDismiss: () -> Unit
+        onDismiss: () -> Unit,
+        titleAlignment: TextAlign = TextAlign.Center,
+        customFont: FontFamily = MyCustomFont
     ) {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(title) },
-            text = {
+        Dialog(
+            onDismissRequest = onDismiss) {
+            Surface(shape = RectangleShape,
+                color = Color.White,
+                tonalElevation = 4.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Text(
+                        text = title,
+                        fontFamily = customFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        textAlign = titleAlignment, // Applica la centratura
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
                     items.forEach { (itemText, itemAction) ->
-                        Button(
+                        TextButton(
                             onClick = {
                                 itemAction()
                                 onDismiss()
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(itemText)
+                            Text(
+                                text = itemText,
+                                fontFamily = customFont, // Applica lo stesso font anche ai bottoni se vuoi
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = onDismiss) {
-                    Text("Chiudi")
                 }
             }
-        )
     }
 
 
@@ -1155,7 +1152,10 @@ fun VerticalCategoryButton(
                                             .align(Alignment.Center)
                                             .fillMaxWidth(0.95f)
                                             .fillMaxHeight(0.85f)
-                                            .background(Color.White, shape = MaterialTheme.shapes.large)
+                                            .background(
+                                                Color.White,
+                                                shape = MaterialTheme.shapes.large
+                                            )
                                             .zIndex(999f)
                                             .clickable(enabled = false) { }
                                     ) {
@@ -1600,8 +1600,8 @@ fun VerticalCategoryButton(
             if (showExitDialog) {
                 AlertDialog(
                     onDismissRequest = { showExitDialog = false },
-                    title = { Text("Chiudi l'app") },
-                    text = { Text("Vuoi davvero chiudere l'applicazione?") },
+                    title = { Text("Close app") },
+                    text = { Text("Do you really want to close the app?") },
                     confirmButton = {
                         TextButton(
                             onClick = {
@@ -1609,12 +1609,12 @@ fun VerticalCategoryButton(
                                 (context as? Activity)?.finishAffinity()
                             }
                         ) {
-                            Text("Conferma")
+                            Text("Ok")
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showExitDialog = false }) {
-                            Text("Annulla")
+                            Text("Cancel")
                         }
                     }
                 )
@@ -1624,11 +1624,11 @@ fun VerticalCategoryButton(
             if (showGpsDialog) {
                 AlertDialog(
                     onDismissRequest = { showGpsDialog = false },
-                    title = { Text("Segnale GPS assente") },
+                    title = { Text("Gps signal not found") },
                     text = {
                         Text(
-                            "⚠️ Nessun segnale GPS rilevato.\n\n" +
-                                    "Assicurati che il GPS sia attivo e che il dispositivo abbia visibilità diretta del cielo."
+                            "⚠️ No Gps signal found.\n\n" +
+                                    "Check your device settings and try again."
                         )
                     },
                     confirmButton = {

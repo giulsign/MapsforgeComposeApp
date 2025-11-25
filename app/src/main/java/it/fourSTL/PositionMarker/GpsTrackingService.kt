@@ -50,7 +50,7 @@ class GpsTrackingService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 Log.d(TAG, "Starting tracking and acquiring WakeLock")
-                Toast.makeText(this, "Inizio registrazione tracciato", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Start Gps tracking service", Toast.LENGTH_SHORT).show()
                 // Acquisisce il WakeLock per tenere attiva la CPU
                 val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GpsTrackingService::lock").apply {
@@ -64,7 +64,7 @@ class GpsTrackingService : Service() {
             }
             ACTION_STOP -> {
                 Log.d(TAG, "Stopping tracking")
-                Toast.makeText(this, "Fine registrazione tracciato", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Stop Gps tracking service", Toast.LENGTH_SHORT).show()
                 stopTrackingAndReleaseResources()
             }
             ACTION_SAVE -> {
@@ -118,8 +118,8 @@ class GpsTrackingService : Service() {
         createNotificationChannel()
 
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Registrazione GPS Attiva")
-            .setContentText("La traccia è in corso di registrazione...")
+            .setContentTitle("Recording GPS tracking active")
+            .setContentText("The service is running in the foreground...")
             .setSmallIcon(R.drawable.ic_marker_blue)
             .setOngoing(true)
             .build()
@@ -129,8 +129,8 @@ class GpsTrackingService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Canale Registrazione GPS"
-            val descriptionText = "Notifiche per il servizio di registrazione traccia GPS"
+            val name = "Gps recording canal"
+            val descriptionText = "Gps recording canal description"
             val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
                 description = descriptionText
