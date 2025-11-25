@@ -1,8 +1,11 @@
 package it.fourSTL.PositionMarker
 
+import android.content.ContentValues
 import android.content.Context
 import android.location.Location
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.widget.Toast
 import java.io.File
 import java.io.FileOutputStream
@@ -22,17 +25,37 @@ object GpxUtils {
         val gpxString = generateGpxString(trackPoints, fileName)
         
         try {
-            val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            if (!downloadDir.exists()) {
-                downloadDir.mkdirs()
-            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.gpx")
+                    put(MediaStore.MediaColumns.MIME_TYPE, "application/gpx+xml")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                }
 
-            val file = File(downloadDir, "$fileName.gpx")
-            FileOutputStream(file).use { output ->
-                output.write(gpxString.toByteArray())
-            }
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
 
-            Toast.makeText(context, "Gps track saved in Download/$fileName.gpx", Toast.LENGTH_LONG).show()
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { output ->
+                        output.write(gpxString.toByteArray())
+                    }
+                    Toast.makeText(context, "Gps track saved in Downloads/$fileName.gpx", Toast.LENGTH_LONG).show()
+                } else {
+                    throw Exception("Could not create file in MediaStore")
+                }
+            } else {
+                val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                if (!downloadDir.exists()) {
+                    downloadDir.mkdirs()
+                }
+
+                val file = File(downloadDir, "$fileName.gpx")
+                FileOutputStream(file).use { output ->
+                    output.write(gpxString.toByteArray())
+                }
+
+                Toast.makeText(context, "Gps track saved in Download/$fileName.gpx", Toast.LENGTH_LONG).show()
+            }
 
         } catch (e: Exception) {
             e.printStackTrace()

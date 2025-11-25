@@ -37,7 +37,7 @@ class GpsTrackingService : Service() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let {
-                    Log.d(TAG, "New location: ${it.latitude}, ${it.longitude}")
+                    // Log removed for security reasons (privacy)
                     trackPoints.add(it)
                     _trackPointsFlow.value = ArrayList(trackPoints)
                 }
