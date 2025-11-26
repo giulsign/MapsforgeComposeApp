@@ -132,14 +132,14 @@ fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android
     val file = File(context.filesDir, "auto_locations.json")
 
     if (!file.exists() || file.length() == 0L) {
-        Toast.makeText(context, "⚠️ Nessun punto salvato trovato.", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "⚠️ No start point saved found.", Toast.LENGTH_LONG).show()
         return
     }
 
     try {
         val jsonArray = JSONArray(file.readText())
         if (jsonArray.length() == 0) {
-            Toast.makeText(context, "⚠️ Nessun punto valido nel file JSON.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "⚠️ No valid point in file JSON.", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -155,11 +155,11 @@ fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android
         map.layerManager.layers.add(marker)
         map.model.mapViewPosition.setCenter(geoPoint)
 
-        Toast.makeText(context, "📍 Punto di partenza visualizzato sulla mappa", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "📍 Start point visible on map", Toast.LENGTH_LONG).show()
 
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "❌ Errore nella lettura del punto salvato.", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "❌ Error reading start point.", Toast.LENGTH_LONG).show()
     }
 }
 
@@ -189,7 +189,7 @@ fun clearSavedLocationsAuto(context: Context) {
     if (file.exists()) {
         file.writeText("[]")
     }
-    Toast.makeText(context, "Dati posizione di partenza cancellati", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, "Start point deleted", Toast.LENGTH_LONG).show()
 }
 
 
@@ -220,7 +220,7 @@ fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<St
     jsonArray.put(locationJson)
     file.writeText(jsonArray.toString(2))
 
-    Toast.makeText(context, "Nuovo punto aggiunto a tabella JSON", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, "New point added to JSON table", Toast.LENGTH_LONG).show()
 }
 
 
@@ -234,7 +234,7 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
             if (jsonArray.length() > 0) {
                 Toast.makeText(
                     context,
-                    "⚠️ Esiste già un punto salvato. Eliminare prima di aggiungerne un altro.",
+                    "⚠️ Start point already saved.",
                     Toast.LENGTH_LONG
                 ).show()
                 return
@@ -260,7 +260,7 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
     val jsonArray = JSONArray().apply { put(locationJson) }
     file.writeText(jsonArray.toString(2))
 
-    Toast.makeText(context, "✅ Nuovo punto di partenza salvato.", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, "✅ New start point saved.", Toast.LENGTH_LONG).show()
 }
 
 
@@ -270,7 +270,7 @@ fun exportJsonToDownload(context: Context) {
         val sourceFile = File(context.filesDir, "locations.json")
 
         if (!sourceFile.exists()) {
-            Toast.makeText(context, "Nessun file JSON trovato", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "No JSON file found", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -288,11 +288,11 @@ fun exportJsonToDownload(context: Context) {
             }
         }
 
-        Toast.makeText(context, "File copiato in Download come $fileName", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "File saved in Download folder as $fileName", Toast.LENGTH_LONG).show()
 
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "Errore durante la copia: ${e.message}", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "Error exporting JSON file: ${e.message}", Toast.LENGTH_LONG).show()
     }
 }
 
@@ -475,13 +475,13 @@ fun VerticalCategoryButton(
                         showLoadedGpxTrack = true
                         Toast.makeText(
                             context,
-                            "Percorso GPX caricato con ${points.size} punti",
+                            "GPX track loaded with ${points.size} points",
                             Toast.LENGTH_LONG
                         ).show()
                     } else {
                         Toast.makeText(
                             context,
-                            "Errore: Impossibile leggere il file GPX o file vuoto",
+                            "Error: Cannot load GPX track from file",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -500,7 +500,7 @@ fun VerticalCategoryButton(
                     .border(25.dp, Color.Black),
                 contentAlignment = Alignment.Center
             ) {
-                Text("File mappa non trovato: ${mapFile.absolutePath}")
+                Text("Map file not found: ${mapFile.absolutePath}")
             }
             return
         }
@@ -666,7 +666,7 @@ fun VerticalCategoryButton(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.my_location),
-                    contentDescription = "Vai alla mia posizione",
+                    contentDescription = "Go to my location",
                     tint = Color.Unspecified
                 )
             }
@@ -701,7 +701,7 @@ fun VerticalCategoryButton(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.save),
-                    contentDescription = "Salva",
+                    contentDescription = "Save",
                     tint = Color.Unspecified
                 )
             }
@@ -729,7 +729,7 @@ fun VerticalCategoryButton(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.save_car),
-                    contentDescription = "Salva posizione partenza",
+                    contentDescription = "Save start point",
                     tint = Color.Unspecified
                 )
             }
@@ -747,17 +747,17 @@ fun VerticalCategoryButton(
                                 showConfirmMessage = true
                             }
                         ) {
-                            Text("Conferma")
+                            Text("Confirm")
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showConfirmDialog = false }) {
-                            Text("Annulla")
+                            Text("Cancel")
                         }
                     },
-                    title = { Text("Conferma eliminazione dei punti salvati") },
+                    title = { Text("Confirm deletion of points") },
                     text = {
-                        Text("Vuoi davvero cancellare la tabella dei punti salvati? Questa azione non può essere annullata.")
+                        Text("Do you really want to delete the saved points? This action cannot be undone.")
                     }
                 )
             }
@@ -767,8 +767,8 @@ fun VerticalCategoryButton(
             if (showConfirmMessage) {
                 AlertDialog(
                     onDismissRequest = { showConfirmMessage = false },
-                    title = { Text("Cancellazione completata") },
-                    text = { Text("La tabella dei punti salvati è stata cancellata.") },
+                    title = { Text("Data deletion completed") },
+                    text = { Text("The saved points table has been cleared.") },
                     confirmButton = {
                         TextButton(onClick = { showConfirmMessage = false }) {
                             Text("OK")
@@ -790,17 +790,17 @@ fun VerticalCategoryButton(
                                 showConfirmMessageAuto = true
                             }
                         ) {
-                            Text("Conferma")
+                            Text("Confirm")
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showConfirmDialogAuto = false }) {
-                            Text("Annulla")
+                            Text("Cancel")
                         }
                     },
-                    title = { Text("Conferma eliminazione posizione auto") },
+                    title = { Text("Confirm start point deletion") },
                     text = {
-                        Text("Vuoi davvero cancellare la posizione salvata? Questa azione non può essere annullata.")
+                        Text("Do you really want to delete the saved start point? This action cannot be undone.")
                     }
                 )
             }
@@ -809,8 +809,8 @@ fun VerticalCategoryButton(
             if (showConfirmMessageAuto) {
                 AlertDialog(
                     onDismissRequest = { showConfirmMessageAuto = false },
-                    title = { Text("Cancellazione completata") },
-                    text = { Text("La posizione di partenza è stata cancellata.") },
+                    title = { Text("Start point deletion completed") },
+                    text = { Text("The start point has been cleared.") },
                     confirmButton = {
                         TextButton(onClick = { showConfirmMessageAuto = false }) {
                             Text("OK")
@@ -1229,7 +1229,7 @@ fun VerticalCategoryButton(
                                                                 context,
                                                                 String.format(
                                                                     Locale.getDefault(),
-                                                                    "📍 Punto di partenza visualizzato. Distanza: %.2f km",
+                                                                    "📍 Start point visible. Distance: %.2f km",
                                                                     distance
                                                                 ),
                                                                 Toast.LENGTH_LONG
@@ -1237,7 +1237,7 @@ fun VerticalCategoryButton(
                                                         } ?: run {
                                                             Toast.makeText(
                                                                 context,
-                                                                "📍 Punto di partenza visualizzato.",
+                                                                "📍 Start point visible.",
                                                                 Toast.LENGTH_LONG
                                                             ).show()
                                                         }
@@ -1283,7 +1283,7 @@ fun VerticalCategoryButton(
                                             showCarMarker = false
                                             Toast.makeText(
                                                 context,
-                                                "Punto di partenza nascosto.",
+                                                "Start point hided.",
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }
