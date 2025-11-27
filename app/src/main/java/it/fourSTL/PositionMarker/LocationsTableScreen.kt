@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ImageSearch // <-- Icona per la ricerca immagini
+import androidx.compose.material.icons.filled.ImageSearch
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext // <-- Necessario per usare il context nel Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -30,7 +30,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
 
-// Data class per rappresentare una posizione salvata (invariata)
+// Data class to represent a location
 data class LocationDatas(
     val id: Int,
     val latitude: Double,
@@ -43,27 +43,21 @@ data class LocationDatas(
     val nomeLatino: String? = null
 )
 
-/**
- * NUOVA FUNZIONE: Avvia la ricerca web del metadato salvato
- */
+
 fun searchImageOnWeb(context: Context, query: String) {
-    // Codifica la query per assicurarsi che sia un URL valido
+
     val encodedQuery = Uri.encode(query)
-    // Costruisce l'URL per la ricerca di immagini su Google
+
     val searchUrl = "https://www.google.com/search?tbm=isch&q=$encodedQuery"
 
-    // Crea un Intent per aprire il browser web
     val intent = Intent(Intent.ACTION_VIEW).apply {
         data = Uri.parse(searchUrl)
     }
 
-    // Avvia l'attività del browser
     context.startActivity(intent)
 }
 
-/**
- * Legge le posizioni dal file JSON salvato (invariata)
- */
+
 fun readLocationsFromJsons(context: Context): List<LocationDatas> {
     val file = File(context.filesDir, "locations.json")
 
@@ -101,9 +95,7 @@ fun readLocationsFromJsons(context: Context): List<LocationDatas> {
     }
 }
 
-/**
- * Elimina una posizione dal file JSON (invariata)
- */
+
 fun deleteLocationFromJson(context: Context, locationId: Int): Boolean {
     val file = File(context.filesDir, "locations.json")
 
@@ -156,7 +148,7 @@ fun LocationsTableScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(WindowInsets.systemBars.asPaddingValues()) // ⬅️ AGGIUNGI QUESTA RIGA
+            .padding(WindowInsets.systemBars.asPaddingValues())
             .padding(16.dp)
     ) {
         // Header
@@ -192,7 +184,7 @@ fun LocationsTableScreen(
         Spacer(Modifier.height(16.dp))
 
 
-        // Lista dei punti
+        // Points list
         if (locations.isEmpty()) {
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -234,7 +226,7 @@ fun LocationsTableScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // Pulsante chiudi
+        // Button close
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -243,7 +235,7 @@ fun LocationsTableScreen(
         }
     }
 
-    // Dialog di conferma eliminazione
+    // Dialog confirm
     if (showDeleteDialog && locationToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -288,31 +280,31 @@ fun LocationCard(
             containerColor = backgroundColor
         )
     ) {
-        // Row principale che separa le info a sinistra dai pulsanti a destra
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 16.dp), // Padding applicato qui
+                .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // --- SEZIONE SINISTRA: INFORMAZIONI ( occupa tutto lo spazio disponibile) ---
+
             Column(
                 modifier = Modifier
-                    .weight(1f) // Occupa tutto lo spazio rimanente
-                    .clickable { onClick() } // Cliccare qui porta alla mappa
+                    .weight(1f)
+                    .clickable { onClick() }
             ) {
-                // Header della card
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top // Allinea in alto per date e ID
+                    verticalAlignment = Alignment.Top //
                 ) {
                     Text(
                         text = "Punto #${location.id}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f, fill = false) // Evita che il testo vada a capo inutilmente
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     Column(horizontalAlignment = Alignment.End) {
                         Text(location.date, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
@@ -322,7 +314,7 @@ fun LocationCard(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Coordinate GPS
+
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row {
                         Text("📍 Lat: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
@@ -334,7 +326,7 @@ fun LocationCard(
                     }
                 }
 
-                // Metadati (se presenti)
+
                 location.nomeItaliano?.let { nome ->
                     Spacer(Modifier.height(12.dp))
                     Divider(color = Color.Gray.copy(alpha = 0.3f))
@@ -354,15 +346,14 @@ fun LocationCard(
                 }
             }
 
-            // --- SEZIONE DESTRA: PULSANTI IN COLONNA ---
-            // Spacer per separare visivamente le info dai pulsanti
+
             Spacer(Modifier.width(8.dp))
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Pulsante "Vai al punto" (ora solo icona per risparmiare spazio)
+
                 IconButton(onClick = onClick) {
                     Icon(
                         Icons.Default.MyLocation,
@@ -371,8 +362,7 @@ fun LocationCard(
                     )
                 }
 
-                // Pulsante "Cerca Web" (solo icona)
-                // Appare solo se il metadato esiste
+
                 location.nomeLatino?.let { query ->
                     if (query.isNotBlank()) {
                         IconButton(onClick = { searchImageOnWeb(context, query) }) {
@@ -385,7 +375,7 @@ fun LocationCard(
                     }
                 }
 
-                // Pulsante "Elimina" (solo icona)
+
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete,

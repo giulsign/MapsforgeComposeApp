@@ -91,7 +91,7 @@ import androidx.compose.ui.window.Dialog
 import it.fourSTL.PositionMarker.ui.theme.Purple40
 
 
-//  memorizzare metadati persistenti
+//  memorize selected metadata
 fun savePersistentMetadata(context: Context, metadata: Map<String, String>) {
     val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
     val json = JSONObject(metadata).toString()
@@ -111,7 +111,7 @@ fun clearPersistentMetadata(context: Context) {
 }
 
 
-// Copia italy.map nella cartella di destinazione
+// Copy file italy.map from assets
 private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
     val destFile = File(context.getExternalFilesDir("maps"), mapFileName)
 
@@ -127,7 +127,7 @@ private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
 }
 
 
-// Mostra la posizione di partenza sulla mappa
+// Show saved location on map
 fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android.view.MapView) {
     val file = File(context.filesDir, "auto_locations.json")
 
@@ -164,7 +164,7 @@ fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android
 }
 
 
-// ID sequenziale
+// ID sequential
 fun getNextId(context: Context): Int {
     val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     val nextId = prefs.getInt("last_id", 0) + 1
@@ -173,7 +173,7 @@ fun getNextId(context: Context): Int {
 }
 
 
-// Cancella dati tabella JSON
+// Delete JSON data table
 fun clearSavedLocations(context: Context) {
     val file = File(context.filesDir, "locations.json")
     if (file.exists()) {
@@ -183,7 +183,7 @@ fun clearSavedLocations(context: Context) {
 }
 
 
-// Cancella posizione auto
+// Delete start position
 fun clearSavedLocationsAuto(context: Context) {
     val file = File(context.filesDir, "auto_locations.json")
     if (file.exists()) {
@@ -193,7 +193,7 @@ fun clearSavedLocationsAuto(context: Context) {
 }
 
 
-// Salva posizione GPS su file JSON
+// Save location to JSON
 fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<String, String> = emptyMap()) {
     val pointId = getNextId(context)
     val file = File(context.filesDir, "locations.json")
@@ -224,7 +224,7 @@ fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<St
 }
 
 
-// Salva posizione di partenza (una sola volta)
+// Save start point (once - delete to save new one)
 fun saveLocationToJsonAuto(context: Context, location: Location) {
     val file = File(context.filesDir, "auto_locations.json")
 
@@ -264,7 +264,7 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
 }
 
 
-// Esporta JSON in Download
+// Export JSON in Download
 fun exportJsonToDownload(context: Context) {
     try {
         val sourceFile = File(context.filesDir, "locations.json")
@@ -297,7 +297,7 @@ fun exportJsonToDownload(context: Context) {
 }
 
 
-// Composable per il pulsante categoria verticale
+// Composable for vertical buttons
 @Composable
 fun VerticalCategoryButton(
     text: String,
@@ -330,7 +330,7 @@ fun VerticalCategoryButton(
 }
 
 
-    // Composable per il menu dropdown
+    // Composable for dropdown menu
     @Composable
     fun CategoryMenu(
         title: String,
@@ -342,11 +342,12 @@ fun VerticalCategoryButton(
         Dialog(
             onDismissRequest = onDismiss) {
             Surface(shape = RectangleShape,
-                color = Color.White,
-                tonalElevation = 4.dp,
+                color = Color.White, //Color(0xB3E0E0E0),
+                //tonalElevation = 0.dp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
+                    .border((1.dp), Color(0xFF99CCFF))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -357,8 +358,9 @@ fun VerticalCategoryButton(
                         text = title,
                         fontFamily = customFont,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        textAlign = titleAlignment, // Applica la centratura
+                        fontSize = 25.sp,
+                        textAlign = titleAlignment,
+                        color = Color.DarkGray,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp)
@@ -370,10 +372,13 @@ fun VerticalCategoryButton(
                                 onDismiss()
                             },
                             modifier = Modifier.fillMaxWidth()
+                                .border((1.dp), Color(0xFF99CCFF))
                         ) {
                             Text(
                                 text = itemText,
-                                fontFamily = customFont, // Applica lo stesso font anche ai bottoni se vuoi
+                                fontFamily = customFont,
+                                fontSize = 20.sp,
+                                color = Color.Blue,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -410,7 +415,7 @@ fun VerticalCategoryButton(
         var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
         var showLicenses by remember { mutableStateOf(false) }
 
-        // 🔹 Carica le selezioni persistenti all'avvio
+        // 🔹 Load persistent metadatas selections
         val persistentSelectionsState = remember {
             mutableStateOf(loadPersistentSelectionsSet(context))
         }
@@ -421,7 +426,7 @@ fun VerticalCategoryButton(
         val fusedLocationClient: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(context)
 
-        // 🔹 NUOVO: Stati per il tracciato in tempo reale dal servizio
+        // 🔹 real time tracking service state run
         val realTimeTrackPoints by GpsTrackingService.trackPointsFlow.collectAsState()
         var realTimePolyline by remember { mutableStateOf<Polyline?>(null) }
         var isTracking by remember { mutableStateOf(false) }
@@ -429,15 +434,15 @@ fun VerticalCategoryButton(
         var showSaveDialog by remember { mutableStateOf(false) }
 
 
-        // 🔹 Raccoglie i punti della traccia dal servizio come uno stato
+        // 🔹 Collect real time tracking points
         val trackPoints by GpsTrackingService.trackPointsFlow.collectAsState()
 
-        // 🔹 Stati per il percorso GPX caricato
+        // 🔹 Show GPX track
         var loadedGpxTrack by remember { mutableStateOf<List<LatLong>>(emptyList()) }
         var loadedGpxPolyline by remember { mutableStateOf<Polyline?>(null) }
         var showLoadedGpxTrack by remember { mutableStateOf(true) }
 
-        // Stati per i menu delle categorie
+        // Show buttons menu
         var showPosizioneMenu by remember { mutableStateOf(false) }
         var showPartenzaMenu by remember { mutableStateOf(false) }
         var showDatiMenu by remember { mutableStateOf(false) }
@@ -449,7 +454,7 @@ fun VerticalCategoryButton(
         val screenHeight = configuration.screenHeightDp.dp
 
 
-        // Launcher per chiedere permessi
+        // Launcher for location permission
         val permissionLauncher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { granted ->
@@ -464,7 +469,7 @@ fun VerticalCategoryButton(
         }
 
 
-        // 🔹 NUOVO: Launcher per selezionare un file GPX dal dispositivo
+        // 🔹 Launcher for GPX file picker
         val gpxFilePickerLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
             onResult = { uri: Uri? ->
@@ -490,7 +495,7 @@ fun VerticalCategoryButton(
         )
 
 
-        // Verifica file mappa
+        // Check map file
         val mapFile = copyMapFileIfNeeded(context, mapFileName)
         if (!mapFile.exists()) {
             Box(
@@ -505,19 +510,16 @@ fun VerticalCategoryButton(
             return
         }
 
-        // Marker rosso per la posizione utente
+        // Marker for user location
         var userMarker: Marker? by remember { mutableStateOf(null) }
 
         fun createRedMarker(context: Context, latLong: LatLong): Marker {
-            //val drawable = ContextCompat.getDrawable(context, R.drawable.presence_online)
-            //val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
             val drawable = ContextCompat.getDrawable(context, R.drawable.ic_marker_red)
             val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-            //return Marker(latLong, bitmap, 0, -bitmap.height / 2)
             return Marker(latLong, bitmap, 0, -bitmap.height / 2)
         }
 
-        // Gestione permessi e aggiornamento continuo posizione
+        // Perpetual location updates
         LaunchedEffect(Unit) {
             when {
                 ContextCompat.checkSelfPermission(
@@ -532,7 +534,7 @@ fun VerticalCategoryButton(
                         }
                     }
 
-                    // Aggiornamento continuo in tempo reale
+                    // Perpetual location updates
                     val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
                         com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY,
                         2000
@@ -553,7 +555,7 @@ fun VerticalCategoryButton(
                         android.os.Looper.getMainLooper()
                     )
 
-                    // Timeout GPS: 20 secondi
+                    // Timeout GPS: 20 seconds
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                         if (userLocation == null) {
                             showGpsDialog = true
@@ -567,11 +569,11 @@ fun VerticalCategoryButton(
             }
         }
 
-        // Crea e mostra MapView
+        // Create and show mapview
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .padding(WindowInsets.systemBars.asPaddingValues()) // ⬅️ AGGIUNGI QUESTA RIGA
+                .padding(WindowInsets.systemBars.asPaddingValues())
                 .border(6.dp, Color.Black)
         ) {
             AndroidView(
@@ -603,12 +605,12 @@ fun VerticalCategoryButton(
                     }
                     mapView.layerManager.layers.add(renderer)
 
-                    // Posizione iniziale di fallback: Milano. Corretto.
+                    // Start location without permission
                     val startLatLong = LatLong(45.4642, 9.19)
                     mapView.model.mapViewPosition.setCenter(startLatLong)
                     mapView.model.mapViewPosition.setZoomLevel(15.toByte())
 
-                    // Crea il marker iniziale a Milano, che poi verrà spostato.
+                    // Create marker for user location when GPS service is not running
                     userMarker = createRedMarker(context, startLatLong)
                     mapView.layerManager.layers.add(userMarker)
 
@@ -619,25 +621,22 @@ fun VerticalCategoryButton(
                     userLocation?.let { loc ->
                         val latLong = LatLong(loc.latitude, loc.longitude)
 
-                        // Sposta la posizione del marker esistente.
+                        // Set user location on realtime position when GPS service is runnign
                         userMarker?.latLong = latLong
 
-                        // Se non abbiamo ancora impostato la posizione iniziale,
-                        // centra la mappa sulla posizione GPS e imposta il flag a true.
                         if (!isInitialLocationSet) {
                             mapView.model.mapViewPosition.setCenter(latLong)
                             mapView.model.mapViewPosition.setZoomLevel(15.toByte())
                             isInitialLocationSet = true
                         }
 
-                        // Forza il ridisegno della mappa.
                         mapView.invalidate()
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Pulsante MyLocation
+            // Button MyLocation
             FloatingActionButton(
                 onClick = {
                     userLocation?.let { loc ->
@@ -671,17 +670,16 @@ fun VerticalCategoryButton(
                 )
             }
 
-            // 🔹 Pulsante salva posizione
+            // 🔹 Button save position
             FloatingActionButton(
                 onClick = {
                     userLocation?.let { loc ->
-                        // ✅ RICARICA i metadati persistenti PRIMA di salvare
                         persistentMetadata = loadPersistentMetadata(context)
 
                         val finalMetadata = persistentMetadata + selectedMetadata
                         saveLocationToJson(context, loc, finalMetadata)
 
-                        // Reset SOLO dei temporanei
+                        // Reset temporary metadata selection
                         selectedMetadata = emptyMap()
                     }
                 },
@@ -706,7 +704,7 @@ fun VerticalCategoryButton(
                 )
             }
 
-            // Pulsante salva posizione auto
+            // Button save start point
             FloatingActionButton(
                 onClick = {
                     userLocation?.let { loc ->
@@ -735,7 +733,7 @@ fun VerticalCategoryButton(
             }
 
 
-            // Dialogo conferma cancellazione punti
+            // Dialog: Delete points
             if (showConfirmDialog) {
                 AlertDialog(
                     onDismissRequest = { showConfirmDialog = false },
@@ -763,7 +761,7 @@ fun VerticalCategoryButton(
             }
 
 
-            // Messaggio finale dopo cancellazione
+            // Alert after points deletion
             if (showConfirmMessage) {
                 AlertDialog(
                     onDismissRequest = { showConfirmMessage = false },
@@ -778,7 +776,7 @@ fun VerticalCategoryButton(
             }
 
 
-            // Dialogo conferma cancellazione auto
+            // Dialog: confirmo start point deletion
             if (showConfirmDialogAuto) {
                 AlertDialog(
                     onDismissRequest = { showConfirmDialogAuto = false },
@@ -805,7 +803,7 @@ fun VerticalCategoryButton(
                 )
             }
 
-            // Messaggio finale dopo cancellazione auto
+            // Final alert after start point deletion
             if (showConfirmMessageAuto) {
                 AlertDialog(
                     onDismissRequest = { showConfirmMessageAuto = false },
@@ -819,7 +817,7 @@ fun VerticalCategoryButton(
                 )
             }
 
-            // Pulsanti Zoom
+            // Buttons Zoom
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -866,7 +864,7 @@ fun VerticalCategoryButton(
             }
 
 
-            // ========== CATEGORIA POSIZIONE (Bordo Sinistro) ==========
+            // ========== LOCATIONS (LEFT SIDE) ==========
             if (buttonsVisible) {
                 VerticalCategoryButton(
                     text = "METADATAS MENU",
@@ -915,7 +913,7 @@ fun VerticalCategoryButton(
         }
 
 
-// ========== CATEGORIA PERCORSI GPS (Bordo Sinistro) ==========
+// ========== GPS TRACKS (LEFT SIDE) ==========
             if (buttonsVisible) {
                 VerticalCategoryButton(
                     text = "GPS TRACK MENU",
@@ -931,7 +929,7 @@ fun VerticalCategoryButton(
             if (showTracciaMenu) {
                 val trackingItems = mutableListOf<Pair<String, () -> Unit>>()
 
-                // Avvia/Ferma registrazione
+                // Start/End recording
                 trackingItems.add(
                     (if (isTracking) "Stop Gps Tracking" else "Start GPS Tracking") to {
                         isTracking = !isTracking
@@ -946,7 +944,7 @@ fun VerticalCategoryButton(
                     }
                 )
 
-                // Salva traccia (solo se in registrazione)
+                // Save track (only when recording)
                 if (isTracking) {
                     trackingItems.add(
                         "Save GPX Track" to {
@@ -957,12 +955,12 @@ fun VerticalCategoryButton(
                     )
                 }
 
-                // Carica traccia
+                // Load track
                 trackingItems.add(
                     "Load GPX Track" to {gpxFilePickerLauncher.launch("*/*")}
                     )
 
-                // Mostra/Nascondi traccia caricata (solo se esiste)
+                // Show/Hide track (if loaded)
                 if (loadedGpxTrack.isNotEmpty()) {
                     trackingItems.add(
                         (if (showLoadedGpxTrack) "Hide GPX track uploaded" else "Show GPX Track Uploaded") to {
@@ -980,7 +978,7 @@ fun VerticalCategoryButton(
             }
 
 
-                // ========== CATEGORIA PARTENZA (Bordo Destro) ==========
+                // ========== START POINT (RIGHT SIDE) ==========
                             if (buttonsVisible) {
                                 VerticalCategoryButton(
                                     text = "START MENU",
@@ -1074,7 +1072,7 @@ fun VerticalCategoryButton(
                         }
 
 
-                            // Marker GPS aggiornato
+                            // Marker GPS uploaded
                             LaunchedEffect(userLocation) {
                                 userLocation?.let { loc ->
                                     val latLong = LatLong(loc.latitude, loc.longitude)
@@ -1089,7 +1087,7 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // 🔹 NUOVO: LaunchedEffect per disegnare la traccia BLU in tempo reale
+                            // 🔹 Draw real time track in blue color
                             LaunchedEffect(realTimeTrackPoints, mapViewRef) {
                                 val mapView = mapViewRef ?: return@LaunchedEffect
                                 realTimePolyline?.let { mapView.layerManager.layers.remove(it) }
@@ -1112,7 +1110,7 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // 🔹 NUOVO: LaunchedEffect per disegnare la traccia VIOLA caricata da GPX
+                            // 🔹 Draw loaded GPS track in purple color
                             LaunchedEffect(loadedGpxTrack, showLoadedGpxTrack, mapViewRef) {
                                 val mapView = mapViewRef ?: return@LaunchedEffect
                                 loadedGpxPolyline?.let { mapView.layerManager.layers.remove(it) }
@@ -1127,7 +1125,6 @@ fun VerticalCategoryButton(
                                     val newPolyline = Polyline(paint, AndroidGraphicFactory.INSTANCE).apply {
                                         loadedGpxTrack.forEach { point -> addPoint(point) }
                                     }
-                                    // Inserisce il layer sotto il marker utente per non coprirlo
                                     val layerIndex = if (mapView.layerManager.layers.size() > 0) {
                                         mapView.layerManager.layers.size() - 1
                                     } else {
@@ -1202,7 +1199,7 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // Pulsante mostra/nascondi punto auto
+                            // Button Show/Hide start point
                             FloatingActionButton(
                                 onClick = {
                                     mapViewRef?.let { map ->
@@ -1217,7 +1214,7 @@ fun VerticalCategoryButton(
                                                         val longitude = locationJson.getDouble("longitude")
                                                         val geoPoint = LatLong(latitude, longitude)
 
-                                                        // Calcola la distanza
+                                                        // Measure distance from start point
                                                         userLocation?.let { currentLoc ->
                                                             val startLocation = Location("").apply {
                                                                 setLatitude(latitude)
@@ -1311,7 +1308,7 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // 🔹 Pulsante apertura SelectionScreen
+                            // 🔹 Button open metadatas SelectionScreen
                             FloatingActionButton(
                                 onClick = { showSelectionScreen = true },
                                 modifier = Modifier
@@ -1348,16 +1345,16 @@ fun VerticalCategoryButton(
                                         onSave = { metadataMap: Map<String, String>, _ ->
                                             showSelectionScreen = false
 
-                                            // Metadata temporanei (gialli)
+                                            // Temporary metadatas (yellow)
                                             selectedMetadata = metadataMap
 
-                                            // ✅ RICARICA i metadati e le selezioni persistenti
+                                            // Reload temporary and persistent metadatas
                                             persistentMetadata = loadPersistentMetadata(context)
                                             persistentSelectionsState.value = loadPersistentSelectionsSet(context)
 
                                             Toast.makeText(
                                                 context,
-                                                "✅ Temporanei: ${metadataMap.size} | Persistenti: ${persistentMetadata.size}",
+                                                "✅ Temporary: ${metadataMap.size} | Persistent: ${persistentMetadata.size}",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                         },
@@ -1367,7 +1364,7 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // Pulsante toggle visibilità pulsanti
+                            // Button toggle visible buttons
                             Button(
                                 onClick = {
                                     buttonsVisible = !buttonsVisible
@@ -1386,7 +1383,7 @@ fun VerticalCategoryButton(
                             ) {
                                 if (buttonsVisible)
                                     Text(
-                                        text = "Hide buttons",
+                                        text = "Hide Menus",
                                         color = Color.Red,
                                         fontSize = 27.sp,
                                         textAlign = TextAlign.Center,
@@ -1395,7 +1392,7 @@ fun VerticalCategoryButton(
                                     )
                                 else
                                     Text(
-                                        text = "Show buttons",
+                                        text = "Show Menus",
                                         color = Color.Green,
                                         fontSize = 27.sp,
                                         textAlign = TextAlign.Center,
@@ -1405,7 +1402,7 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // Pulsante per le licenze
+                            // Button licenses and infos
                             Button(
                                 onClick = { showLicenses = true },
                                 modifier = Modifier
@@ -1431,31 +1428,29 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // Schermata delle licenze (mostrata come un overlay)
+                            // licensees page
                             if (showLicenses) {
-                                // Stato per tenere traccia della scheda selezionata
                                 var tabIndex by remember { mutableStateOf(0) }
                                 val tabs = listOf("Dependencies", "App License", "Third Party License", "Readme")
 
                                 Scaffold(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .zIndex(1001f), // zIndex altissimo per stare sopra a tutto
+                                        .zIndex(1001f),
                                     topBar = {
                                         Column {
-                                            // Barra del titolo con pulsante indietro
                                             TopAppBar(
-                                                title = { Text("Informazioni e Licenze") },
+                                                title = { Text("Licenses and Info") },
                                                 navigationIcon = {
                                                     IconButton(onClick = { showLicenses = false }) {
                                                         Icon(
                                                             imageVector = Icons.Default.ArrowBack,
-                                                            contentDescription = "Indietro"
+                                                            contentDescription = "Back"
                                                         )
                                                     }
                                                 }
                                             )
-                                            // Barra delle schede (Tab)
+
                                             TabRow(selectedTabIndex = tabIndex) {
                                                 tabs.forEachIndexed { index, title ->
                                                     Tab(
@@ -1468,7 +1463,7 @@ fun VerticalCategoryButton(
                                         }
                                     }
                                 ) { paddingValues ->
-                                    // Contenuto della scheda selezionata
+
                                     Column(modifier = Modifier.padding(paddingValues)) {
                                         when (tabIndex) {
                                             0 -> LibrariesContainer(
@@ -1495,17 +1490,17 @@ fun VerticalCategoryButton(
                             }
 
 
-                            // Dialog per il salvataggio del file
+                            // Dialog for track save
                             if (showSaveDialog) {
                                 AlertDialog(
                                     onDismissRequest = { showSaveDialog = false },
-                                    title = { Text("Salva Traccia GPX") },
+                                    title = { Text("Save Track GPX") },
                                     text = {
-                                        // Campo di testo per inserire il nome del file
+
                                         androidx.compose.material3.TextField(
                                             value = fileName,
                                             onValueChange = { fileName = it },
-                                            label = { Text("Nome del file") },
+                                            label = { Text("File name") },
                                             singleLine = true
                                         )
                                     },
@@ -1520,56 +1515,21 @@ fun VerticalCategoryButton(
                                                 showSaveDialog = false
                                             }
                                         ) {
-                                            Text("Salva")
+                                            Text("Save")
                                         }
                                     },
                                     dismissButton = {
                                         TextButton(onClick = { showSaveDialog = false }) {
-                                            Text("Annulla")
+                                            Text("Cancel")
                                         }
                                     }
                                 )
                             }
 
 
-            // 🔹 NUOVO: Pulsante per mostrare/nascondere il percorso GPX caricato
-            /*if (loadedGpxTrack.isNotEmpty() && buttonsVisible) {
-                FloatingActionButton(
-                    onClick = { showLoadedGpxTrack = !showLoadedGpxTrack },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd) // Puoi cambiare questa posizione
-                        .padding(
-                            horizontal = 30.dp,
-                            vertical = 125.dp
-                        ) // Puoi cambiare questa posizione
-                        .zIndex(2f),
-                    containerColor = Color(0xB3E0E0E0),
-                    contentColor = Color.Transparent,
-                    shape = RectangleShape,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 0.dp,
-                        focusedElevation = 0.dp,
-                        hoveredElevation = 0.dp
-                    )
-                ) {
-                    Icon(
-                        painter = if (showLoadedGpxTrack) {
-                            painterResource(id = R.drawable.ic_visibility_off) // Aggiungi icona
-                        } else {
-                            painterResource(id = R.drawable.ic_visibility) // Aggiungi icona
-                        },
-                        contentDescription = "Mostra/Nascondi percorso caricato",
-                        tint = Color.Black
-                    )
-                }
-            }*/
-
-
-            // Pulsante chiusura app
+            // Button close app
             var showExitDialog by remember { mutableStateOf(false) }
 
-            //if (buttonsVisible) {
             Button(
                 onClick = { showExitDialog = true },
                 modifier = Modifier
@@ -1592,11 +1552,10 @@ fun VerticalCategoryButton(
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Bold
                 )
-                //}
             }
 
 
-            // Dialog conferma chiusura app
+            // Dialog close app
             if (showExitDialog) {
                 AlertDialog(
                     onDismissRequest = { showExitDialog = false },
@@ -1620,7 +1579,7 @@ fun VerticalCategoryButton(
                 )
             }
 
-            // Dialog GPS assente
+            // Dialog GPS service down
             if (showGpsDialog) {
                 AlertDialog(
                     onDismissRequest = { showGpsDialog = false },
@@ -1642,20 +1601,19 @@ fun VerticalCategoryButton(
     }
 
 
-    // Funzione helper per leggere e mostrare un file di testo dagli assets
+    // Helper function to load text from assets
     @Composable
     private fun AssetTextView(assetFileName: String, modifier: Modifier = Modifier) {
         val context = LocalContext.current
-        // Legge il testo una sola volta e lo "ricorda"
+
         val text = remember(assetFileName) {
             try {
                 context.assets.open(assetFileName).bufferedReader().use { it.readText() }
             } catch (e: Exception) {
-                "Errore nel caricamento del file: ${e.message}"
+                "File load error: ${e.message}"
             }
         }
 
-        // LazyColumn rende il testo scorrevole in modo efficiente
         LazyColumn(modifier = modifier.padding(16.dp)) {
             item {
                 Text(text = text, style = MaterialTheme.typography.bodyMedium)

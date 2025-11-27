@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-        // Abilita la visualizzazione edge-to-edge
+        // edge-to-edge visualization
         enableEdgeToEdge()
 
         setContent {
@@ -29,21 +29,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-/*
-@Composable
-fun MapsforgeMapComposable() {
-    // Aggiunge padding per rispettare le barre di sistema
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF2F2F2))
-            .padding(WindowInsets.systemBars.asPaddingValues())
-    ) {
-        Text(
-            text = "Contenuto dell’app",
-            fontSize = 20.sp,
-            color = Color.Black,
-            modifier = Modifier.align(Alignment.Center)
-        )
-    }
-}*/

@@ -7,33 +7,22 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.InputStream
 
-/**
- * Un oggetto di utility per analizzare (fare il "parsing") dei file GPX.
- */
 object GpxParser {
 
-    /**
-     * Legge un file GPX da un URI (fornito dal selettore di file) e restituisce una lista di coordinate.
-     *
-     * @param context Il contesto dell'applicazione.
-     * @param uri L'URI del file GPX selezionato.
-     * @return Una lista di oggetti LatLong che rappresentano il percorso, o una lista vuota in caso di errore.
-     */
     fun parse(context: Context, uri: Uri): List<LatLong> {
         val trackPoints = mutableListOf<LatLong>()
         var stream: InputStream? = null
         try {
-            // Apre un flusso di dati dal file scelto dall'utente
-            stream = context.contentResolver.openInputStream(uri)
+                        stream = context.contentResolver.openInputStream(uri)
             if (stream == null) return emptyList()
 
-            // Inizializza il parser XML
+
             val factory = XmlPullParserFactory.newInstance()
             factory.isNamespaceAware = true
             val parser = factory.newPullParser()
             parser.setInput(stream, null)
 
-            // Scorre il file XML alla ricerca dei tag "trkpt" (track point)
+
             var eventType = parser.eventType
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 if (eventType == XmlPullParser.START_TAG && parser.name == "trkpt") {
@@ -48,11 +37,11 @@ object GpxParser {
                 eventType = parser.next()
             }
         } catch (e: Exception) {
-            e.printStackTrace() // Stampa l'errore nel Logcat per debug
-            // In caso di errore (file non valido, ecc.), restituisce una lista vuota
+            e.printStackTrace()
+
             return emptyList()
         } finally {
-            // Chiude il flusso in modo sicuro
+
             stream?.close()
         }
         return trackPoints

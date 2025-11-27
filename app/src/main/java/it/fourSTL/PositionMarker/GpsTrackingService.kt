@@ -51,7 +51,7 @@ class GpsTrackingService : Service() {
             ACTION_START -> {
                 Log.d(TAG, "Starting tracking and acquiring WakeLock")
                 Toast.makeText(this, "Start Gps tracking service", Toast.LENGTH_SHORT).show()
-                // Acquisisce il WakeLock per tenere attiva la CPU
+
                 val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GpsTrackingService::lock").apply {
                     acquire()
@@ -84,7 +84,7 @@ class GpsTrackingService : Service() {
         stopLocationUpdates()
         trackPoints.clear()
         _trackPointsFlow.value = emptyList()
-        // Rilascia il WakeLock quando la registrazione si ferma
+
         wakeLock?.let {
             if (it.isHeld) {
                 it.release()
@@ -146,7 +146,7 @@ class GpsTrackingService : Service() {
     }
 
     override fun onDestroy() {
-        // Assicura che le risorse vengano rilasciate anche se il servizio viene terminato in modo anomalo
+
         stopTrackingAndReleaseResources()
         super.onDestroy()
     }

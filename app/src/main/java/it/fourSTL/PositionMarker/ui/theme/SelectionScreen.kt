@@ -24,13 +24,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
-// Selezioni: NONE = non selezionato, SINGLE = giallo (valido 1 salvataggio), PERSISTENT = verde (persistente)
+// Selezioni: NONE = NOT SELECTED, SINGLE = YELLOW (SELECTED FOR ONE SAVE), PERSISTENT = GREEN (PERSISTENT SELECTION)
 enum class SelectionState { NONE, SINGLE, PERSISTENT }
 
-// Data class per la riga
+// Data class FOR ROW
 data class SelectRow(val id: String, val title: String, val note: String = "", val ref: String? = null)
 
-// 🔹 FUNZIONI per salvare/caricare le selezioni persistenti
+// 🔹 Save load persistent selections
 fun savePersistentSelectionsSet(context: Context, selections: Set<String>) {
     val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
     prefs.edit().putStringSet("persistent_selections_set", selections).apply()
@@ -42,7 +42,7 @@ fun loadPersistentSelectionsSet(context: Context): MutableSet<String> {
     return saved.toMutableSet()
 }
 
-// 🔹 Funzione per salvare i DETTAGLI di ogni elemento persistente
+// 🔹 Save data for persistent selection
 fun savePersistentItemDetails(context: Context, itemId: String, title: String, note: String) {
     val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
     val detailsKey = "persistent_item_$itemId"
@@ -62,16 +62,16 @@ fun removePersistentItemDetails(context: Context, itemId: String) {
 fun clearAllPersistentData(context: Context) {
     val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
 
-    // Carica tutti gli ID persistenti per pulire i loro dettagli
+    // Load all persistent IDs
     val persistentIds = loadPersistentSelectionsSet(context)
     persistentIds.forEach { id ->
         prefs.edit().remove("persistent_item_$id").apply()
     }
 
-    // Pulisci il set di selezioni
+    // Clear the persistent selections set
     prefs.edit().remove("persistent_selections_set").apply()
 
-    // Pulisci anche i metadati persistenti (vecchio sistema)
+    // Clear the persistent metadata
     prefs.edit().remove("persistent_metadata").apply()
 }
 
@@ -90,13 +90,13 @@ fun SelectionScreen(
     var currentFile by remember { mutableStateOf(startFile) }
     var currentRows by remember { mutableStateOf<List<PositionItem>>(emptyList()) }
 
-    // Stack per la navigazione
+    // Stack for navigating
     var navigationStack by remember { mutableStateOf(listOf<String>()) }
 
-    // stato per ogni id -> SelectionState
+    // Id state
     var selectionStates by remember { mutableStateOf(mapOf<String, SelectionState>()) }
 
-    // Stati per la ricerca
+    // Search State
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     var searchResults by remember { mutableStateOf<List<PositionItem>>(emptyList()) }
@@ -108,7 +108,7 @@ fun SelectionScreen(
         scope.launch {
             currentRows = repo.loadItems(currentFile)
 
-            // Inizializza selectionStates: se l'id è in persistentSelections -> PERSISTENT
+            // Initialize selection states
             selectionStates = currentRows.associate { row ->
                 val st = if (persistentSelections.contains(row.id)) SelectionState.PERSISTENT else SelectionState.NONE
                 row.id to st
@@ -117,12 +117,12 @@ fun SelectionScreen(
     }
 
 
-    // 🔹 FUNZIONE CORRETTA: Salva TUTTE le selezioni persistenti
+    // 🔹 save all persistent selections to prefs
     fun savePersistentSelectionsToPrefs() {
-        // Salva il set di ID persistenti
+        // save all persistent selections to prefs
         savePersistentSelectionsSet(context, persistentSelections)
 
-        // Per retrocompatibilità, salva anche la mappa metadati del primo elemento
+        // save metadatas map for each persistent selection
         val persistentIds = selectionStates.filterValues { it == SelectionState.PERSISTENT }.keys
         val map = mutableMapOf<String, String>()
 
@@ -146,7 +146,7 @@ fun SelectionScreen(
 
 
 
-    // Funzione di ricerca ricorsiva
+    // Recursive research
     suspend fun searchInAllFiles(query: String): List<PositionItem> {
         if (query.isBlank()) return emptyList()
 
@@ -162,7 +162,7 @@ fun SelectionScreen(
 
             val items = repo.loadItems(file)
             items.forEach { item ->
-                // Cerca solo nei metadati (righe senza ref)
+                // Search only in title and note
                 if (item.ref.isNullOrEmpty()) {
                     val titleMatch = item.title.lowercase().contains(queryLower)
                     val noteMatch = item.note.lowercase().contains(queryLower)
@@ -171,7 +171,7 @@ fun SelectionScreen(
                         results.add(item)
                     }
                 }
-                // Aggiungi sottocategorie da visitare
+                // Add ref to visit
                 if (!item.ref.isNullOrEmpty()) {
                     filesToVisit.add(item.ref!!)
                 }
@@ -197,11 +197,11 @@ fun SelectionScreen(
 
     val onRowClick: (PositionItem) -> Unit = { row ->
         if (!row.ref.isNullOrEmpty()) {
-            // Navigazione verso sottocategoria
+            // navigate to
             navigationStack = navigationStack + currentFile
             currentFile = row.ref!!
         } else {
-            // Toggle dello stato
+            // Toggle state
             val current = selectionStates[row.id] ?: SelectionState.NONE
             val next = when (current) {
                 SelectionState.NONE -> SelectionState.SINGLE
@@ -210,7 +210,7 @@ fun SelectionScreen(
             }
             selectionStates = selectionStates.toMutableMap().apply { put(row.id, next) }
 
-            // 🔹 AGGIORNA persistentSelections e salva i dettagli
+            // 🔹 Upload persistent selections
             if (next == SelectionState.PERSISTENT) {
                 persistentSelections.add(row.id)
                 savePersistentItemDetails(context, row.id, row.title, row.note)
@@ -222,13 +222,13 @@ fun SelectionScreen(
     }
 
     val onSaveClicked = {
-        // Prendi TUTTI gli id selezionati (SINGLE + PERSISTENT)
+        // Select all selected items
         val selectedIds = selectionStates.filterValues {
             it == SelectionState.SINGLE || it == SelectionState.PERSISTENT
         }.keys
 
         if (selectedIds.isNotEmpty()) {
-            // Cerca l'elemento nei risultati correnti o di ricerca
+            // search elements
             val itemsToSearch = if (isSearchActive)
                 (currentRows + searchResults).distinctBy { it.id }
             else
@@ -237,7 +237,7 @@ fun SelectionScreen(
             val selectedItem = itemsToSearch.firstOrNull { selectedIds.contains(it.id) }
 
             if (selectedItem != null) {
-                // Crea la mappa con tutti i campi
+                // Create metadata map
                 val metadataMap = mutableMapOf<String, String>()
                 metadataMap["idsp"] = selectedItem.id
                 if (selectedItem.title.isNotEmpty()) {
@@ -251,11 +251,11 @@ fun SelectionScreen(
             }
         }
 
-        // Resetta solo gli stati SINGLE (gialli)
+        // Reset only single selections
         selectionStates = selectionStates.mapValues { (_, st) ->
             if (st == SelectionState.SINGLE) SelectionState.NONE else st
         }
-        // Salva nuovamente le selezioni persistenti
+        // Save persistent selection
         savePersistentSelectionsToPrefs()
     }
 
@@ -288,7 +288,7 @@ fun SelectionScreen(
                                     isSearching = true
                                     scope.launch {
                                         searchResults = searchInAllFiles(newQuery)
-                                        // Inizializza gli stati per i risultati di ricerca
+                                        // Start with the current rows
                                         searchResults.forEach { item ->
                                             if (!selectionStates.containsKey(item.id)) {
                                                 val st = if (persistentSelections.contains(item.id))
@@ -375,12 +375,12 @@ fun SelectionScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Indicatore di caricamento
+            // Load info
             if (isSearching) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
-            // Info risultati ricerca
+            // Info search
             if (isSearchActive && searchQuery.isNotEmpty()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -400,7 +400,7 @@ fun SelectionScreen(
                 }
             }
 
-            // Lista dei risultati
+            // Results list
             val displayItems = if (isSearchActive && searchQuery.length >= 2) {
                 searchResults
             } else {
@@ -508,8 +508,8 @@ fun SelectionRowItem(
 ) {
     val backgroundColor = when (state) {
         SelectionState.NONE -> Color.Transparent
-        SelectionState.SINGLE -> Color(0xFFFFEB3B)    // giallo
-        SelectionState.PERSISTENT -> Color(0xFFB2FF59) // verde chiaro
+        SelectionState.SINGLE -> Color(0xFFFFEB3B)    // yellow
+        SelectionState.PERSISTENT -> Color(0xFFB2FF59) // green
     }
 
     Row(

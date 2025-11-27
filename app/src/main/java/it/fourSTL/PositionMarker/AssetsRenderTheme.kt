@@ -24,7 +24,7 @@ class AssetsRenderTheme(private val context: Context) : XmlRenderTheme {
         this.resourceProvider = resourceProvider
     }
 
-    override fun getRelativePathPrefix(): String = "" // nessun prefisso richiesto
+    override fun getRelativePathPrefix(): String = ""
 
     override fun getRenderThemeAsStream(): InputStream {
         return try {

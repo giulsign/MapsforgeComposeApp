@@ -1,6 +1,6 @@
 // root build.gradle.kts (minimale)
 plugins {
-    // nessun plugin globale obbligatorio qui — plugin dichiarati in settings.gradle.kts
+    // no global plugin available
 }
 
 tasks.register("clean", Delete::class) {

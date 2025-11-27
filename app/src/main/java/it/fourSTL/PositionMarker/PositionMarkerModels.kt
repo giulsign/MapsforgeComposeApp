@@ -4,10 +4,6 @@ import android.content.Context
 import org.json.JSONObject
 import kotlin.collections.remove
 
-/**
- * Rappresenta un elemento generico (categoria, sottocategoria, metadato)
- * letto dai file JSON presenti in assets/position_markers/.
- */
 data class PositionItem(
     val id: String,
     val title: String,

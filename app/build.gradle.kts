@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "it.fourSTL.PositionMarker"
-        minSdk = 27 // API level minimo modificato per recuperare miei smartphone
+        minSdk = 27 //  Min API level for Google Maps SDK
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
@@ -30,7 +30,7 @@ android {
     }
 
     composeOptions {
-        // Compiler compatibile con Kotlin 1.9.25 (vedi note)
+        // Compiler compatible with the latest Jetpack version
         kotlinCompilerExtensionVersion = "1.5.15"
     }
 
@@ -38,7 +38,7 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/versions/9/previous-compilation-data.bin"
-            // Aggiungi qui altri pattern se necessario, ma questo è un buon punto di partenza
+
         }
     }
 }
@@ -89,14 +89,14 @@ dependencies {
     implementation("com.caverock:androidsvg:1.4")
 
 
-    implementation ("androidx.appcompat:appcompat:1.6.1") // o una versione più recente
-    implementation ("androidx.recyclerview:recyclerview:1.3.2") // o una versione più recent
+    implementation ("androidx.appcompat:appcompat:1.6.1")
+    implementation ("androidx.recyclerview:recyclerview:1.3.2")
 
-    implementation ("androidx.constraintlayout:constraintlayout:2.1.4") // O la versione più recente
+    implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
 
     implementation("com.google.android.material:material:1.11.0")
 
-    // AboutLibraries - Per la gestione delle licenze open source
+    // AboutLibraries - For open source licenses automatic compilation
     implementation("com.mikepenz:aboutlibraries-compose:11.1.0")
     implementation("com.mikepenz:aboutlibraries:11.1.0")
 
