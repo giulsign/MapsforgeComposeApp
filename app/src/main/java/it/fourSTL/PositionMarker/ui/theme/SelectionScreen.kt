@@ -222,41 +222,37 @@ fun SelectionScreen(
     }
 
     val onSaveClicked = {
-        // Select all selected items
         val selectedIds = selectionStates.filterValues {
-            it == SelectionState.SINGLE || it == SelectionState.PERSISTENT
-        }.keys
+            it == SelectionState.SINGLE || it == SelectionState.PERSISTENT}.keys
 
-        if (selectedIds.isNotEmpty()) {
-            // search elements
-            val itemsToSearch = if (isSearchActive)
-                (currentRows + searchResults).distinctBy { it.id }
-            else
-                currentRows
+        val itemsToSearch = if (isSearchActive)
+            (currentRows + searchResults).distinctBy { it.id }
+        else
+            currentRows
 
-            val selectedItem = itemsToSearch.firstOrNull { selectedIds.contains(it.id) }
+        val selectedItem = itemsToSearch.firstOrNull { selectedIds.contains(it.id) }
 
-            if (selectedItem != null) {
-                // Create metadata map
-                val metadataMap = mutableMapOf<String, String>()
-                metadataMap["idsp"] = selectedItem.id
-                if (selectedItem.title.isNotEmpty()) {
-                    metadataMap["nome italiano"] = selectedItem.title
-                }
-                if (selectedItem.note.isNotEmpty()) {
-                    metadataMap["nome latino"] = selectedItem.note
-                }
+        if (selectedItem != null) {
+            val metadataMap = mutableMapOf<String, String>()
+            metadataMap["idsp"] = selectedItem.id
+            if (selectedItem.title.isNotEmpty()) metadataMap["nome italiano"] = selectedItem.title
+            if (selectedItem.note.isNotEmpty()) metadataMap["nome latino"] = selectedItem.note
 
-                onSave(metadataMap, false)
-            }
+            onSave(metadataMap, false)
+        } else {
+            onSave(emptyMap(), false)
         }
+
+        val persistentItems = selectionStates.filterValues { it == SelectionState.PERSISTENT }.keys
 
         // Reset only single selections
         selectionStates = selectionStates.mapValues { (_, st) ->
             if (st == SelectionState.SINGLE) SelectionState.NONE else st
         }
-        // Save persistent selection
+
         savePersistentSelectionsToPrefs()
+
+        onDismiss()
     }
 
     if (showAddPersonalNoteDialog) {

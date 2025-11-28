@@ -71,11 +71,11 @@ import androidx.compose.runtime.collectAsState
 import org.mapsforge.core.graphics.Cap
 import org.mapsforge.core.graphics.Join
 import android.net.Uri
+import android.os.Looper
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
@@ -86,8 +86,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.window.Dialog
+//import androidx.preference.isNotEmpty
 import it.fourSTL.PositionMarker.ui.theme.Purple40
 
 
@@ -371,7 +374,8 @@ fun VerticalCategoryButton(
                                 itemAction()
                                 onDismiss()
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .border((1.dp), Color(0xFF99CCFF))
                         ) {
                             Text(
@@ -441,6 +445,9 @@ fun VerticalCategoryButton(
         var loadedGpxTrack by remember { mutableStateOf<List<LatLong>>(emptyList()) }
         var loadedGpxPolyline by remember { mutableStateOf<Polyline?>(null) }
         var showLoadedGpxTrack by remember { mutableStateOf(true) }
+        var isTrackingActive by remember {mutableStateOf(false)}
+        var loadedGpxFileName by remember { mutableStateOf("") }
+
 
         // Show buttons menu
         var showPosizioneMenu by remember { mutableStateOf(false) }
@@ -469,12 +476,29 @@ fun VerticalCategoryButton(
         }
 
 
-        // 🔹 Launcher for GPX file picker
+        // Launcher for GPX file picker
         val gpxFilePickerLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
             onResult = { uri: Uri? ->
                 if (uri != null) {
                     val points = GpxParser.parse(context, uri)
+
+                    var name = "Track.gpx"
+                    if (uri.scheme == "content") {
+                        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                            if (cursor.moveToFirst()) {
+                                val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                                if (index >= 0) {
+                                    name = cursor.getString(index)
+                                }
+                            }
+                        }
+                    } else {
+                        // Fallback per i rari casi di file://
+                        name = uri.lastPathSegment ?: "Track.gpx"
+                    }
+                    loadedGpxFileName = name
+
                     if (points.isNotEmpty()) {
                         loadedGpxTrack = points
                         showLoadedGpxTrack = true
@@ -554,6 +578,9 @@ fun VerticalCategoryButton(
                         locationCallback,
                         android.os.Looper.getMainLooper()
                     )
+
+
+                    isTrackingActive = true
 
                     // Timeout GPS: 20 seconds
                     android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -968,6 +995,16 @@ fun VerticalCategoryButton(
                         }
                     )
 
+                    // Clear Loaded GPX
+                    trackingItems.add(
+                        "Clear Loaded GPX" to {
+                            loadedGpxTrack = emptyList()
+                            showLoadedGpxTrack = false
+                            loadedGpxFileName = ""
+                            Toast.makeText(context, "Track cleared from map", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+
                 }
 
                 CategoryMenu(
@@ -1340,26 +1377,65 @@ fun VerticalCategoryButton(
                                         .background(MaterialTheme.colorScheme.background)
                                         .zIndex(1000f)
                                 ) {
-                                    SelectionScreen(
-                                        onDismiss = { showSelectionScreen = false },
-                                        onSave = { metadataMap: Map<String, String>, _ ->
-                                            showSelectionScreen = false
+                                    Box {
+                                        SelectionScreen(
+                                            onDismiss = {
+                                                showSelectionScreen = false
 
-                                            // Temporary metadatas (yellow)
-                                            selectedMetadata = metadataMap
+                                                val prefs = context.getSharedPreferences(
+                                                    "metadata_prefs",
+                                                    Context.MODE_PRIVATE
+                                                )
+                                                val savedIds = prefs.getStringSet(
+                                                    "persistent_selections_set",
+                                                    emptySet()
+                                                ) ?: emptySet()
 
-                                            // Reload temporary and persistent metadatas
-                                            persistentMetadata = loadPersistentMetadata(context)
-                                            persistentSelectionsState.value = loadPersistentSelectionsSet(context)
+                                                val newPersistentList = mutableListOf<String>()
+                                                savedIds.forEach { id ->
 
-                                            Toast.makeText(
-                                                context,
-                                                "✅ Temporary: ${metadataMap.size} | Persistent: ${persistentMetadata.size}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        },
-                                        persistentSelections = persistentSelectionsState.value
-                                    )
+                                                    val jsonString =
+                                                        prefs.getString("persistent_item_$id", null)
+                                                    if (jsonString != null) {
+                                                        try {
+                                                            val json = JSONObject(jsonString)
+                                                            val title = json.optString("title")
+                                                            val note = json.optString("note")
+
+                                                            val displayText =
+                                                                if (title.isNotEmpty()) "$title $note" else note
+                                                            if (displayText.isNotBlank()) {
+                                                                newPersistentList.add(displayText)
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            newPersistentList.add(id)
+                                                        }
+                                                    } else {
+                                                        newPersistentList.add(id)
+                                                    }
+                                                }
+                                                persistentSelectionsState.value = newPersistentList.toMutableSet()
+                                            },
+                                            onSave = { metadata, isPersistent ->
+                                                showSelectionScreen = false
+
+                                                // Temporary metadatas (yellow)
+                                                selectedMetadata = metadata
+
+                                                // Reload temporary and persistent metadatas
+                                                persistentMetadata = loadPersistentMetadata(context)
+                                                persistentSelectionsState.value =
+                                                    loadPersistentSelectionsSet(context)
+
+                                                Toast.makeText(
+                                                    context,
+                                                    "✅ Temporary: ${metadata.size} | Persistent: ${persistentMetadata.size}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            },
+                                            persistentSelections = persistentSelectionsState.value
+                                        )
+                                    }
                                 }
                             }
 
@@ -1551,6 +1627,77 @@ fun VerticalCategoryButton(
                     textAlign = TextAlign.Center,
                     fontFamily = MyCustomFont,
                     fontWeight = FontWeight.Bold
+                )
+            }
+
+
+            // Advisor GPX loaded
+            if (loadedGpxTrack.isNotEmpty()) {
+                Text(
+                    text = "Loaded GPX: $loadedGpxFileName",
+                    color = Color.Blue,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = MyCustomFont,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 240.dp)
+                        .background(
+                            color = Color.White.copy(alpha = 0.3f),
+                            shape = RectangleShape
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+
+
+            // GPS tracking advisor
+            if (realTimeTrackPoints.isNotEmpty()) {
+                Text(
+                    text = "GPS track recording ON",
+                    color = Color.Red,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = MyCustomFont,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 200.dp)
+                        .background(
+                            color = Color.White.copy(alpha = 0.3f),
+                            shape = RectangleShape
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+
+
+            // Advisor Metadata selected (Temporary or Persistent)
+            val activeMetadataText = if (selectedMetadata.isNotEmpty()) {
+                "Selection: " + selectedMetadata.entries.joinToString(", ") { "${it.value}" } // Mostra solo i valori per brevità
+            } else {
+                val validItems = persistentSelectionsState.value.filter { it.isNotBlank() }
+                if (validItems.isNotEmpty()) {
+                    "Selection: " + validItems.joinToString(", ")
+                } else {
+                    ""
+                }
+            }
+
+            if (activeMetadataText.isNotEmpty()) {
+                Text(
+                    text = activeMetadataText,
+                    color = Color(0xFF006400),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = MyCustomFont,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 160.dp)
+                        .background(
+                            color = Color.White.copy(alpha = 0.5f),
+                            shape = RectangleShape
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
 
