@@ -1641,7 +1641,7 @@ fun VerticalCategoryButton(
                     fontFamily = MyCustomFont,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 240.dp)
+                        .padding(bottom = 270.dp)
                         .background(
                             color = Color.White.copy(alpha = 0.3f),
                             shape = RectangleShape
@@ -1661,7 +1661,7 @@ fun VerticalCategoryButton(
                     fontFamily = MyCustomFont,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = 200.dp)
+                        .padding(bottom = 310.dp)
                         .background(
                             color = Color.White.copy(alpha = 0.3f),
                             shape = RectangleShape

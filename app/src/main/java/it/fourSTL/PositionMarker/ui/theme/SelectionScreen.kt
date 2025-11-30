@@ -113,6 +113,14 @@ fun SelectionScreen(
                 val st = if (persistentSelections.contains(row.id)) SelectionState.PERSISTENT else SelectionState.NONE
                 row.id to st
             }
+
+            val persistents = selectionStates.filterValues {it == SelectionState.PERSISTENT}
+            if (persistents.size > 1) {
+                val firstId = persistents.keys.first()
+                selectionStates = mapOf(firstId to SelectionState.PERSISTENT)
+                persistentSelections.clear()
+                persistentSelections.add(firstId)
+            }
         }
     }
 
@@ -202,20 +210,25 @@ fun SelectionScreen(
             currentFile = row.ref!!
         } else {
             // Toggle state
-            val current = selectionStates[row.id] ?: SelectionState.NONE
-            val next = when (current) {
+            val currentState = selectionStates[row.id] ?: SelectionState.NONE
+            val nextState = when (currentState) {
                 SelectionState.NONE -> SelectionState.SINGLE
                 SelectionState.SINGLE -> SelectionState.PERSISTENT
                 SelectionState.PERSISTENT -> SelectionState.NONE
             }
-            selectionStates = selectionStates.toMutableMap().apply { put(row.id, next) }
 
+            val newSelectionMap = if (nextState == SelectionState.NONE) {
+                emptyMap<String, SelectionState>()
+            } else {
+                mapOf(row.id to nextState)
+            }
+            selectionStates = newSelectionMap
+            persistentSelections.clear()
             // 🔹 Upload persistent selections
-            if (next == SelectionState.PERSISTENT) {
+            if (nextState == SelectionState.PERSISTENT) {
                 persistentSelections.add(row.id)
                 savePersistentItemDetails(context, row.id, row.title, row.note)
             } else {
-                persistentSelections.remove(row.id)
                 removePersistentItemDetails(context, row.id)
             }
         }
