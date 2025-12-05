@@ -1686,10 +1686,22 @@ fun VerticalCategoryButton(
                 )
             }
 
-
             // Advisor Metadata selected (Temporary or Persistent)
             val activeMetadataText = if (selectedMetadata.isNotEmpty()) {
-                "Selection: " + selectedMetadata.entries.joinToString(", ") { "${it.value}" } // Mostra solo i valori per brevità
+                if (selectedMetadata.size == 1 && selectedMetadata.containsKey("Number")) {
+                    val validItems = persistentSelectionsState.value.filter { it.isNotBlank() }
+                    if (validItems.isNotEmpty()) {
+                        "Selection: " + validItems.joinToString(", ") + " (Num: ${selectedMetadata["Number"]})"
+                    } else {
+                        "Selection: " + selectedMetadata["Number"]
+                    }
+                } else {
+                    // Caso normale (selezione completa o temporanea)
+                    "Selection: " + selectedMetadata.entries
+                        .filter { it.key != "idsp" && it.key != "Number" }
+                        .joinToString(", ") { it.value } +
+                            (if (selectedMetadata.containsKey("Number")) " (Num: ${selectedMetadata["Number"]})" else "")
+                }
             } else {
                 val validItems = persistentSelectionsState.value.filter { it.isNotBlank() }
                 if (validItems.isNotEmpty()) {
