@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -14,10 +15,13 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -104,17 +108,24 @@ fun SelectionScreen(
 
     var showAddPersonalNoteDialog by remember { mutableStateOf(false) }
 
+    // variable for quantity dialog
+    var isCustomQuantityEnabled by remember { mutableStateOf(false) }
+    var showQuantityDialog by remember { mutableStateOf(false) }
+    var quantityInput by remember { mutableStateOf("1") }
+
+
     LaunchedEffect(currentFile) {
         scope.launch {
             currentRows = repo.loadItems(currentFile)
 
             // Initialize selection states
             selectionStates = currentRows.associate { row ->
-                val st = if (persistentSelections.contains(row.id)) SelectionState.PERSISTENT else SelectionState.NONE
+                val st =
+                    if (persistentSelections.contains(row.id)) SelectionState.PERSISTENT else SelectionState.NONE
                 row.id to st
             }
 
-            val persistents = selectionStates.filterValues {it == SelectionState.PERSISTENT}
+            val persistents = selectionStates.filterValues { it == SelectionState.PERSISTENT }
             if (persistents.size > 1) {
                 val firstId = persistents.keys.first()
                 selectionStates = mapOf(firstId to SelectionState.PERSISTENT)
@@ -123,6 +134,7 @@ fun SelectionScreen(
             }
         }
     }
+
 
 
     // 🔹 save all persistent selections to prefs
@@ -151,7 +163,6 @@ fun SelectionScreen(
 
         savePersistentMetadata(context, map)
     }
-
 
 
     // Recursive research
@@ -234,39 +245,95 @@ fun SelectionScreen(
         }
     }
 
-    val onSaveClicked = {
-        val selectedIds = selectionStates.filterValues {
-            it == SelectionState.SINGLE || it == SelectionState.PERSISTENT}.keys
+    val performFinalSave = { quantity: String ->
+            val selectedIds = selectionStates.filterValues {
+                it == SelectionState.SINGLE || it == SelectionState.PERSISTENT
+            }.keys
 
-        val itemsToSearch = if (isSearchActive)
-            (currentRows + searchResults).distinctBy { it.id }
-        else
-            currentRows
+            val itemsToSearch = if (isSearchActive)
+                (currentRows + searchResults).distinctBy { it.id }
+            else
+                currentRows
 
-        val selectedItem = itemsToSearch.firstOrNull { selectedIds.contains(it.id) }
+            val selectedItem = itemsToSearch.firstOrNull { selectedIds.contains(it.id) }
 
-        if (selectedItem != null) {
             val metadataMap = mutableMapOf<String, String>()
-            metadataMap["idsp"] = selectedItem.id
-            if (selectedItem.title.isNotEmpty()) metadataMap["nome italiano"] = selectedItem.title
-            if (selectedItem.note.isNotEmpty()) metadataMap["nome latino"] = selectedItem.note
 
-            onSave(metadataMap, false)
-        } else {
-            onSave(emptyMap(), false)
+            metadataMap["Number"] = quantity
+
+            if (selectedItem != null) {
+                //val metadataMap = mutableMapOf<String, String>()
+                metadataMap["idsp"] = selectedItem.id
+                if (selectedItem.title.isNotEmpty()) metadataMap["nome italiano"] =
+                    selectedItem.title
+                if (selectedItem.note.isNotEmpty()) metadataMap["nome latino"] = selectedItem.note
+
+                metadataMap["Number"] = quantity
+
+                onSave(metadataMap, false)
+            }
+
+            val persistentItems =
+                selectionStates.filterValues { it == SelectionState.PERSISTENT }.keys
+            selectionStates = selectionStates.mapValues { (_, st) ->
+                if (st == SelectionState.SINGLE) SelectionState.NONE else st
+            }
+            savePersistentSelectionsToPrefs()
+            onDismiss()
         }
 
-        val persistentItems = selectionStates.filterValues { it == SelectionState.PERSISTENT }.keys
-
-        // Reset only single selections
-        selectionStates = selectionStates.mapValues { (_, st) ->
-            if (st == SelectionState.SINGLE) SelectionState.NONE else st
+        val onSaveClicked = {
+            if (isCustomQuantityEnabled) {
+                quantityInput = "1"
+                showQuantityDialog = true
+            } else {
+                performFinalSave("1")
+            }
         }
 
-        savePersistentSelectionsToPrefs()
 
-        onDismiss()
-    }
+        if (showQuantityDialog) {
+            AlertDialog(
+                onDismissRequest = { showQuantityDialog = false },
+                title = { Text(text = "Number:") },
+                text = {
+                    Column {
+                        Text("Insert number:")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextField(
+                            value = quantityInput,
+                            onValueChange = { newValue ->
+                                if (newValue.all { it.isDigit() }) {
+                                    quantityInput = newValue
+                                }
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showQuantityDialog = false
+                            val finalQty = if (quantityInput.isBlank()) "1" else quantityInput
+                            performFinalSave(finalQty)
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showQuantityDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+
+
 
     if (showAddPersonalNoteDialog) {
         AddPersonalNoteDialog(
@@ -283,6 +350,7 @@ fun SelectionScreen(
             }
         )
     }
+
 
     Scaffold(
         topBar = {
@@ -363,26 +431,45 @@ fun SelectionScreen(
         },
         bottomBar = {
             val anySelected = selectionStates.any { it.value != SelectionState.NONE }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                TextButton(onClick = onBackPressed) { Text("Back") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
-                Button(onClick = onSaveClicked, enabled = anySelected) {
-                    Icon(Icons.Default.Check, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Save")
+
+            Column(Modifier.fillMaxWidth()) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isCustomQuantityEnabled = !isCustomQuantityEnabled }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isCustomQuantityEnabled,
+                        onCheckedChange = { isCustomQuantityEnabled = it }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Insert number (Default: 1)")
+                }
+
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextButton(onClick = onBackPressed) { Text("Back") }
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Button(onClick = onSaveClicked, enabled = anySelected) {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Save")
+                    }
                 }
             }
         }
-    ) { padding ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
         ) {
             // Load info
             if (isSearching) {

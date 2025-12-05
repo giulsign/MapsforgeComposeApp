@@ -706,8 +706,16 @@ fun VerticalCategoryButton(
                         val finalMetadata = persistentMetadata + selectedMetadata
                         saveLocationToJson(context, loc, finalMetadata)
 
-                        // Reset temporary metadata selection
-                        selectedMetadata = emptyMap()
+                        // Logic to save metadata
+                        if (persistentMetadata.isNotEmpty()) {
+                            selectedMetadata = mapOf("Number" to "1")
+
+                            Toast.makeText(context, "Point saved.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            selectedMetadata = emptyMap()
+
+                            Toast.makeText(context, "Point saved.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 },
                 modifier = Modifier
@@ -1419,8 +1427,16 @@ fun VerticalCategoryButton(
                                             onSave = { metadata, isPersistent ->
                                                 showSelectionScreen = false
 
+                                                val finalMetadata = metadata.toMutableMap()
+
+
+                                                if (!finalMetadata.containsKey("Number") || finalMetadata["Number"].isNullOrBlank()) {
+                                                finalMetadata["Number"] = "1"
+                                            }
+
+
                                                 // Temporary metadatas (yellow)
-                                                selectedMetadata = metadata
+                                                selectedMetadata = finalMetadata
 
                                                 // Reload temporary and persistent metadatas
                                                 persistentMetadata = loadPersistentMetadata(context)
