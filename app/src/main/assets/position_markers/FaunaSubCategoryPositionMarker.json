@@ -7,10 +7,10 @@
   {"id": 6, "idFA": "FAAR", "title": "Aracnidi", "Ref": "FaunaAracnidiCategoryPositionMarker.json"},
   {"id": 7, "idFA": "FACR", "title": "Crostacei", "Ref": "FaunaCrostaceiCategoryPositionMarker.json"},
   {"id": 8, "idFA": "FAGA", "title": "Gasteropodi", "Ref": "FaunaGasteropodiCategoryPositionMarker.json"},
-  {"id": 9, "idFA": "FABI", "title": "Bivalvi", "Ref": "FaunaBivalviCategoryPositionMarker.json"},
+  {"id": 9, "idFA": "FABV", "title": "Bivalvi", "Ref": "FaunaBivalviCategoryPositionMarker.json"},
   {"id": 10, "idFA": "FAAE", "title": "Anellidi", "Ref": "FaunaAnellidiCategoryPositionMarker.json"},
   {"id": 11, "idFA": "FAEC", "title": "Echinodermi", "Ref": "FaunaEchinodermiCategoryPositionMarker.json"},
   {"id": 12, "idFA": "FACN", "title": "Cnidari", "Ref": "FaunaCnidariCategoryPositionMarker.json"},
-  {"id": 13, "idFA": "FAPO", "title": "Poriferi", "Ref": "FaunaPoriferiCategoryPositionMarker.json"}
+  {"id": 13, "idFA": "FAPO", "title": "Poriferi", "Ref": "FaunaPoriferiCategoryPositionMarker.json"},
+  {"id": 14, "idFA": "FAPE", "title": "Pesci", "Ref": "FaunaPesciCategoryPositionMarker.json"}
 ]
-

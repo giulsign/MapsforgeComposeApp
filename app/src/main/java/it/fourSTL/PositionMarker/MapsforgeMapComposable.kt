@@ -1,8 +1,6 @@
 package it.fourSTL.PositionMarker
 
-import it.fourSTL.PositionMarker.R
 import android.Manifest
-import android.R.attr.text
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -42,7 +40,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import android.app.Activity
 import android.content.Intent
-import android.graphics.drawable.shapes.Shape
 import android.os.Environment
 import android.widget.Toast
 import java.io.FileInputStream
@@ -71,7 +68,6 @@ import androidx.compose.runtime.collectAsState
 import org.mapsforge.core.graphics.Cap
 import org.mapsforge.core.graphics.Join
 import android.net.Uri
-import android.os.Looper
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
@@ -84,13 +80,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.input.key.key
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.window.Dialog
-//import androidx.preference.isNotEmpty
+import android.graphics.drawable.BitmapDrawable
+import androidx.compose.ui.graphics.asAndroidBitmap
 import it.fourSTL.PositionMarker.ui.theme.Purple40
 
 
@@ -151,6 +146,7 @@ fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android
         val longitude = locationJson.getDouble("longitude")
 
         val geoPoint = LatLong(latitude, longitude)
+
         val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker_red, null)
         val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
         val marker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
@@ -1091,7 +1087,7 @@ fun VerticalCategoryButton(
                                                             map.layerManager.layers.add(carMarker)
                                                             map.model.mapViewPosition.setCenter(geoPoint)
                                                             showCarMarker = true
-                                                        }
+                                                                                                                    }
                                                     } catch (e: Exception) {
                                                         Toast.makeText(context, "❌ Start point reading error", Toast.LENGTH_LONG).show()
                                                     }
@@ -1205,31 +1201,111 @@ fun VerticalCategoryButton(
                                             context = context,
                                             onBack = { showTable = false },
                                             onPointClick = { locations ->
+                                                //Remove markers from map
                                                 filteredMarkers.forEach {
-                                                    mapViewRef?.layerManager?.layers?.remove(
-                                                        it
-                                                    )
+                                                    mapViewRef?.layerManager?.layers?.remove(it)
                                                 }
 
-                                                val markers = locations.map { loc ->
-                                                    val latLong = LatLong(loc.latitude, loc.longitude)
-                                                    val drawable = ResourcesCompat.getDrawable(
-                                                        context.resources,
-                                                        R.drawable.ic_marker_blue,
-                                                        null
-                                                    )
-                                                    val markerBitmap =
-                                                        AndroidGraphicFactory.convertToBitmap(drawable)
-                                                    Marker(latLong, markerBitmap, 0, -markerBitmap.height / 2)
+                                                // Pre charge icons
+                                                // Animals
+
+                                                val loadBitmap: (Int) -> org.mapsforge.core.graphics.Bitmap? = { resId ->
+                                                    val drawable = ResourcesCompat.getDrawable(context.resources, resId, null)
+                                                    drawable?.let { AndroidGraphicFactory.convertToBitmap(it) }
                                                 }
 
-                                                markers.forEach { mapViewRef?.layerManager?.layers?.add(it) }
-                                                filteredMarkers = markers
+                                                val iconMammals = loadBitmap(R.drawable.ic_mammals)
+                                                val iconBird = loadBitmap(R.drawable.ic_birds)
+                                                val iconReptilians = loadBitmap(R.drawable.ic_reptilians)
+                                                val iconFrog = loadBitmap(R.drawable.ic_frog)
+                                                val iconBugs = loadBitmap(R.drawable.ic_bugs)
+                                                val iconSpider = loadBitmap(R.drawable.ic_spider)
+                                                val iconCrostac = loadBitmap(R.drawable.ic_cancer)
+                                                val iconGaster = loadBitmap(R.drawable.ic_gaster)
+                                                val iconBivalv = loadBitmap(R.drawable.ic_bivalv)
+                                                val iconWorm = loadBitmap(R.drawable.ic_worm)
+                                                val iconEchin = loadBitmap(R.drawable.ic_echin)
+                                                val iconCnidar = loadBitmap(R.drawable.ic_cnidar)
+                                                val iconPorifer = loadBitmap(R.drawable.ic_porifer)
+                                                val iconFish = loadBitmap(R.drawable.ic_fish)
 
+                                                // Personal
+                                                val iconPers = loadBitmap(R.drawable.ic_marker_pers)
+
+                                                // Truffle
+                                                val iconTruffle = loadBitmap(R.drawable.ic_truffle)
+
+                                                // Mushrooms
+                                                val iconMushroom = loadBitmap(R.drawable.ic_mushroom)
+                                                val iconVenomous = loadBitmap(R.drawable.ic_mushroom_venomous)
+
+                                                // Plants
+                                                val iconBush = loadBitmap(R.drawable.ic_bush)
+                                                val iconFlower = loadBitmap(R.drawable.ic_flower)
+                                                val iconPlant = loadBitmap(R.drawable.ic_plant)
+                                                val iconSucculent = loadBitmap(R.drawable.ic_succulent)
+
+                                                // Default
+                                                val iconDef = loadBitmap(R.drawable.ic_marker_blue)
+
+                                                // Create new icon mao
+                                                val newMarkers = locations.mapNotNull { loc ->
+                                                    val idsp = loc.idsp ?: ""
+                                                    val prefix = if (idsp.length >= 4) idsp.substring(0, 4).uppercase() else "DEFAULT"
+
+                                                    // Selezione Bitmap
+                                                    val selectedBitmap = when (prefix) {
+                                                        "FAMA" -> iconMammals
+                                                        "FAUC" -> iconBird
+                                                        "FARE" -> iconReptilians
+                                                        "FAAN" -> iconFrog
+                                                        "FAIN" -> iconBugs
+                                                        "FAAR" -> iconSpider
+                                                        "FACR" -> iconCrostac
+                                                        "FAGA" -> iconGaster
+                                                        "FABV" -> iconBivalv
+                                                        "FAAE" -> iconWorm
+                                                        "FAEC" -> iconEchin
+                                                        "FACN" -> iconCnidar
+                                                        "FAPO" -> iconPorifer
+                                                        "FAPE" -> iconFish
+                                                        "PERS" -> iconPers
+                                                        "TART" -> iconTruffle
+                                                        "FUED" -> iconMushroom
+                                                        "FUVE" -> iconVenomous
+                                                        "FLAL" -> iconPlant
+                                                        "FLAR" -> iconBush
+                                                        "FLER" -> iconFlower
+                                                        "FLSU" -> iconSucculent
+                                                        else -> iconDef
+                                                    }
+
+                                                    // Create marker
+                                                    if (selectedBitmap != null) {
+                                                        val latLong = LatLong(loc.latitude, loc.longitude)
+                                                        Marker(
+                                                            latLong,
+                                                            selectedBitmap,
+                                                            0,
+                                                            -selectedBitmap.height / 2
+                                                        )
+                                                    } else {
+                                                        null // If  bitmap null
+                                                    }
+                                                }
+
+                                                //Add new markers to map
+                                                newMarkers.forEach { marker ->
+                                                    mapViewRef?.layerManager?.layers?.add(marker)
+                                                }
+
+                                                // Update list
+                                                filteredMarkers = newMarkers
+
+                                                // 5. center map on first marker
                                                 if (locations.isNotEmpty()) {
                                                     val firstLocation = locations.first()
-                                                    val latLong =
-                                                        LatLong(firstLocation.latitude, firstLocation.longitude)
+                                                    val latLong = LatLong(firstLocation.latitude, firstLocation.longitude)
                                                     mapViewRef?.model?.mapViewPosition?.apply {
                                                         setCenter(latLong)
                                                         setZoomLevel(17.toByte())
@@ -1239,6 +1315,7 @@ fun VerticalCategoryButton(
                                                 showTable = false
                                             }
                                         )
+
                                     }
                                 }
                             }
@@ -1696,7 +1773,6 @@ fun VerticalCategoryButton(
                         "Selection: " + selectedMetadata["Number"]
                     }
                 } else {
-                    // Caso normale (selezione completa o temporanea)
                     "Selection: " + selectedMetadata.entries
                         .filter { it.key != "idsp" && it.key != "Number" }
                         .joinToString(", ") { it.value } +
