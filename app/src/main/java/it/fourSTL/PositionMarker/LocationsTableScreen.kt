@@ -29,6 +29,7 @@ import java.io.File
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.ui.res.painterResource
 
 // Data class to represent a location
 data class LocationDatas(
@@ -218,6 +219,12 @@ fun LocationsTableScreen(
                         onDelete = {
                             locationToDelete = location
                             showDeleteDialog = true
+                        },
+                        onShowCategory = {
+                            location.idsp?.let { idsp ->
+                                val sameIdspLocations = locations.filter { it.idsp == idsp }
+                                onPointClick(sameIdspLocations)
+                            }
                         }
                     )
                 }
@@ -268,7 +275,8 @@ fun LocationCard(
     location: LocationDatas,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShowCategory: () -> Unit
 ) {
     val context = LocalContext.current
     val backgroundColor = if (isSelected) Color(0xFF81D4FA) else if (location.idsp != null) Color(0xFFFFF9C4) else MaterialTheme.colorScheme.surface
@@ -360,6 +368,17 @@ fun LocationCard(
                         contentDescription = "Show Point Location",
                         tint = MaterialTheme.colorScheme.primary
                     )
+                }
+
+
+                if (!location.idsp.isNullOrBlank()) {
+                    IconButton(onClick = onShowCategory) {
+                        Icon(
+                            painterResource(R.drawable.my_multiple_location),
+                            contentDescription = "Show all with same IDSP",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
 
