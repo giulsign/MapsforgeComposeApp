@@ -1,0 +1,14 @@
+[
+  {"id":"1","idsp":"GARB1","label":"Plastics (packaging, bottles, films)","CER_code":"15 01 02"},
+  {"id":"2","idsp":"GARB2","label":"Paper and cardboard","CER_code":"15 01 01"},
+  {"id":"3","idsp":"GARB3","label":"Glass","CER_code":"15 01 07"},
+  {"id":"4","idsp":"GARB4","label":"Metals (ferrous / non-ferrous)","CER_code":"15 01 04"},
+  {"id":"5","idsp":"GARB5","label":"WEEE / Electronic waste","CER_code":"20 01 36"},
+  {"id":"6","idsp":"GARB6","label":"Organic waste / food waste","CER_code":"20 01 08"},
+  {"id":"7","idsp":"GARB7","label":"Bulky waste (furniture, mattresses)","CER_code":"20 03 07"},
+  {"id":"8","idsp":"GARB8","label":"Construction and demolition waste (rubble, soil)","CER_code":"17 09 04"},
+  {"id":"9","idsp":"GARB9","label":"Hazardous waste (chemicals, solvents, batteries)","CER_code":"20 01 27*"},
+  {"id":"10","idsp":"GARB10","label":"Medical / biohazard waste","CER_code":"18 01 03*"},
+  {"id":"11","idsp":"GARB11","label":"End-of-life tyres","CER_code":"16 01 03"},
+  {"id":"12","idsp":"GARB12","label":"Other / unclassified waste","CER_code":"20 03 99"}
+]

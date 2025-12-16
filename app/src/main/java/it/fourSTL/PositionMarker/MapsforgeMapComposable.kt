@@ -467,6 +467,7 @@ fun VerticalCategoryButton(
         var buttonsVisible by remember { mutableStateOf(false) }
         var isInitialLocationSet by remember { mutableStateOf(false) }
         var showTable by remember { mutableStateOf(false) }
+        var onShowCategory by remember { mutableStateOf(false) }
         var showSelectionScreen by remember { mutableStateOf(false) }
         var showTableAuto by remember { mutableStateOf(false) }
         var showConfirmDialog by remember { mutableStateOf(false) }
@@ -989,6 +990,7 @@ fun VerticalCategoryButton(
                     },
                     "Show metadatas point saved" to {
                         showTable = true
+                        //onShowCategory = true
                     },
                     "Reset metadatas selecions" to {
                         clearAllPersistentData(context)
@@ -1241,148 +1243,410 @@ fun VerticalCategoryButton(
                             }
 
 
-                            if (showTable) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(Color.Black.copy(alpha = 0.5f))
-                                        .zIndex(998f)
-                                        .clickable { showTable = false }
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .fillMaxWidth(0.95f)
-                                            .fillMaxHeight(0.85f)
-                                            .background(
-                                                Color.White,
-                                                shape = MaterialTheme.shapes.large
-                                            )
-                                            .zIndex(999f)
-                                            .clickable(enabled = false) { }
-                                    ) {
-                                        LocationsTableScreen(
-                                            context = context,
-                                            onBack = { showTable = false },
-                                            onPointClick = { locations ->
-                                                //Remove markers from map
-                                                filteredMarkers.forEach {
-                                                    mapViewRef?.layerManager?.layers?.remove(it)
-                                                }
+            if (showTable) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .zIndex(998f)
+                        .clickable { showTable = false }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .fillMaxWidth(0.95f)
+                            .fillMaxHeight(0.85f)
+                            .background(
+                                Color.White,
+                                shape = MaterialTheme.shapes.large
+                            )
+                            .zIndex(999f)
+                            .clickable(enabled = false) { }
+                    ) {
+                        LocationsTableScreen(
+                            context = context,
+                            onBack = { showTable = false },
+                            onPointClick = { locations ->
 
-                                                // Pre charge icons
-                                                // Animals
+                                filteredMarkers.forEach {
+                                    mapViewRef?.layerManager?.layers?.remove(it)
+                                }
 
-                                                val loadBitmap: (Int) -> org.mapsforge.core.graphics.Bitmap? = { resId ->
-                                                    val drawable = ResourcesCompat.getDrawable(context.resources, resId, null)
-                                                    drawable?.let { AndroidGraphicFactory.convertToBitmap(it) }
-                                                }
 
-                                                val iconMammals = loadBitmap(R.drawable.ic_mammals)
-                                                val iconBird = loadBitmap(R.drawable.ic_birds)
-                                                val iconReptilians = loadBitmap(R.drawable.ic_reptilians)
-                                                val iconFrog = loadBitmap(R.drawable.ic_frog)
-                                                val iconBugs = loadBitmap(R.drawable.ic_bugs)
-                                                val iconSpider = loadBitmap(R.drawable.ic_spider)
-                                                val iconCrostac = loadBitmap(R.drawable.ic_cancer)
-                                                val iconGaster = loadBitmap(R.drawable.ic_gaster)
-                                                val iconBivalv = loadBitmap(R.drawable.ic_bivalv)
-                                                val iconWorm = loadBitmap(R.drawable.ic_worm)
-                                                val iconEchin = loadBitmap(R.drawable.ic_echin)
-                                                val iconCnidar = loadBitmap(R.drawable.ic_cnidar)
-                                                val iconPorifer = loadBitmap(R.drawable.ic_porifer)
-                                                val iconFish = loadBitmap(R.drawable.ic_fish)
-
-                                                // Personal
-                                                val iconPers = loadBitmap(R.drawable.ic_marker_pers)
-
-                                                // Truffle
-                                                val iconTruffle = loadBitmap(R.drawable.ic_truffle)
-
-                                                // Mushrooms
-                                                val iconMushroom = loadBitmap(R.drawable.ic_mushroom)
-                                                val iconVenomous = loadBitmap(R.drawable.ic_mushroom_venomous)
-
-                                                // Plants
-                                                val iconBush = loadBitmap(R.drawable.ic_bush)
-                                                val iconFlower = loadBitmap(R.drawable.ic_flower)
-                                                val iconPlant = loadBitmap(R.drawable.ic_plant)
-                                                val iconSucculent = loadBitmap(R.drawable.ic_succulent)
-
-                                                // Default
-                                                val iconDef = loadBitmap(R.drawable.ic_marker_blue)
-
-                                                // Create new icon mao
-                                                val newMarkers = locations.mapNotNull { loc ->
-                                                    val idsp = loc.idsp ?: ""
-                                                    val prefix = if (idsp.length >= 4) idsp.substring(0, 4).uppercase() else "DEFAULT"
-
-                                                    // Selezione Bitmap
-                                                    val selectedBitmap = when (prefix) {
-                                                        "FAMA" -> iconMammals
-                                                        "FAUC" -> iconBird
-                                                        "FARE" -> iconReptilians
-                                                        "FAAN" -> iconFrog
-                                                        "FAIN" -> iconBugs
-                                                        "FAAR" -> iconSpider
-                                                        "FACR" -> iconCrostac
-                                                        "FAGA" -> iconGaster
-                                                        "FABV" -> iconBivalv
-                                                        "FAAE" -> iconWorm
-                                                        "FAEC" -> iconEchin
-                                                        "FACN" -> iconCnidar
-                                                        "FAPO" -> iconPorifer
-                                                        "FAPE" -> iconFish
-                                                        "PERS" -> iconPers
-                                                        "TART" -> iconTruffle
-                                                        "FUED" -> iconMushroom
-                                                        "FUVE" -> iconVenomous
-                                                        "FLAL" -> iconPlant
-                                                        "FLAR" -> iconBush
-                                                        "FLER" -> iconFlower
-                                                        "FLSU" -> iconSucculent
-                                                        else -> iconDef
-                                                    }
-
-                                                    // Create marker
-                                                    if (selectedBitmap != null) {
-                                                        val latLong = LatLong(loc.latitude, loc.longitude)
-                                                        Marker(
-                                                            latLong,
-                                                            selectedBitmap,
-                                                            0,
-                                                            -selectedBitmap.height / 2
-                                                        )
-                                                    } else {
-                                                        null // If  bitmap null
-                                                    }
-                                                }
-
-                                                //Add new markers to map
-                                                newMarkers.forEach { marker ->
-                                                    mapViewRef?.layerManager?.layers?.add(marker)
-                                                }
-
-                                                // Update list
-                                                filteredMarkers = newMarkers
-
-                                                // 5. center map on first marker
-                                                if (locations.isNotEmpty()) {
-                                                    val firstLocation = locations.first()
-                                                    val latLong = LatLong(firstLocation.latitude, firstLocation.longitude)
-                                                    mapViewRef?.model?.mapViewPosition?.apply {
-                                                        setCenter(latLong)
-                                                        setZoomLevel(17.toByte())
-                                                    }
-                                                }
-
-                                                showTable = false
-                                            }
+                                val loadBitmap: (Int) -> org.mapsforge.core.graphics.Bitmap? =
+                                    { resId ->
+                                        val drawable = ResourcesCompat.getDrawable(
+                                            context.resources,
+                                            resId,
+                                            null
                                         )
+                                        drawable?.let {
+                                            AndroidGraphicFactory.convertToBitmap(it)
+                                        }
+                                    }
 
+                                // Icons
+                                val iconMammals = loadBitmap(R.drawable.ic_mammals)
+                                val iconBird = loadBitmap(R.drawable.ic_birds)
+                                val iconReptilians = loadBitmap(R.drawable.ic_reptilians)
+                                val iconFrog = loadBitmap(R.drawable.ic_frog)
+                                val iconBugs = loadBitmap(R.drawable.ic_bugs)
+                                val iconSpider = loadBitmap(R.drawable.ic_spider)
+                                val iconCrostac = loadBitmap(R.drawable.ic_cancer)
+                                val iconGaster = loadBitmap(R.drawable.ic_gaster)
+                                val iconBivalv = loadBitmap(R.drawable.ic_bivalv)
+                                val iconWorm = loadBitmap(R.drawable.ic_worm)
+                                val iconEchin = loadBitmap(R.drawable.ic_echin)
+                                val iconCnidar = loadBitmap(R.drawable.ic_cnidar)
+                                val iconPorifer = loadBitmap(R.drawable.ic_porifer)
+                                val iconFish = loadBitmap(R.drawable.ic_fish)
+                                val iconPers = loadBitmap(R.drawable.ic_marker_pers)
+                                val iconTruffle = loadBitmap(R.drawable.ic_truffle)
+                                val iconMushroom = loadBitmap(R.drawable.ic_mushroom)
+                                val iconVenomous = loadBitmap(R.drawable.ic_mushroom_venomous)
+                                val iconBush = loadBitmap(R.drawable.ic_bush)
+                                val iconFlower = loadBitmap(R.drawable.ic_flower)
+                                val iconPlant = loadBitmap(R.drawable.ic_plant)
+                                val iconSucculent = loadBitmap(R.drawable.ic_succulent)
+                                val iconGarbage = loadBitmap(R.drawable.ic_garbage)
+                                val iconFossil = loadBitmap(R.drawable.ic_fossil)
+                                val iconDef = loadBitmap(R.drawable.ic_marker_blue)
+
+                                val newMarkers = locations.mapNotNull { loc ->
+                                    val idsp = loc.idsp ?: ""
+                                    val prefix = if (idsp.length >= 4) idsp.substring(0, 4).uppercase() else "DEFAULT"
+
+
+                                    val selectedBitmap = when (prefix) {
+                                        "FAMA" -> iconMammals
+                                        "FAUC" -> iconBird
+                                        "FARE" -> iconReptilians
+                                        "FAAN" -> iconFrog
+                                        "FAIN" -> iconBugs
+                                        "FAAR" -> iconSpider
+                                        "FACR" -> iconCrostac
+                                        "FAGA" -> iconGaster
+                                        "FABV" -> iconBivalv
+                                        "FAAE" -> iconWorm
+                                        "FAEC" -> iconEchin
+                                        "FACN" -> iconCnidar
+                                        "FAPO" -> iconPorifer
+                                        "FAPE" -> iconFish
+                                        "PERS" -> iconPers
+                                        "TART" -> iconTruffle
+                                        "FUED" -> iconMushroom
+                                        "FUVE" -> iconVenomous
+                                        "FLAL" -> iconPlant
+                                        "FLAR" -> iconBush
+                                        "FLER" -> iconFlower
+                                        "FLSU" -> iconSucculent
+                                        "GARB" -> iconGarbage
+                                        "FOSS" -> iconFossil
+                                        else -> iconDef
+                                    }
+
+
+                                    if (selectedBitmap != null) {
+                                        val latLong = LatLong(loc.latitude, loc.longitude)
+                                        Marker(
+                                            latLong,
+                                            selectedBitmap,
+                                            0,
+                                            -selectedBitmap.height / 2
+                                        )
+                                    } else {
+                                        null
                                     }
                                 }
+
+
+                                newMarkers.forEach { marker ->
+                                    mapViewRef?.layerManager?.layers?.add(marker)
+                                }
+
+
+                                filteredMarkers = newMarkers
+
+                                if (locations.isNotEmpty()) {
+                                    val firstLocation = locations.first()
+                                    val latLong = LatLong(
+                                        firstLocation.latitude,
+                                        firstLocation.longitude
+                                    )
+                                    mapViewRef?.model?.mapViewPosition?.apply {
+                                        setCenter(latLong)
+                                        setZoomLevel(17.toByte())
+                                    }
+                                }
+
+                                showTable = false
                             }
+                        )
+                    }
+                }
+            }
+
+
+            if (showTable) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .zIndex(998f)
+                        .clickable { showTable = false }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .fillMaxWidth(0.95f)
+                            .fillMaxHeight(0.85f)
+                            .background(
+                                Color.White,
+                                shape = MaterialTheme.shapes.large
+                            )
+                            .zIndex(999f)
+                            .clickable(enabled = false) { }
+                    ) {
+                        LocationsTableScreen(
+                            context = context,
+                            onBack = { showTable = false },
+                            onPointClick = { locations ->
+                                // Remove old markers
+                                filteredMarkers.forEach {
+                                    mapViewRef?.layerManager?.layers?.remove(it)
+                                }
+
+                                // Helper function to upload bitmap
+                                val loadBitmap: (Int) -> org.mapsforge.core.graphics.Bitmap? =
+                                    { resId ->
+                                        val drawable = ResourcesCompat.getDrawable(
+                                            context.resources,
+                                            resId,
+                                            null
+                                        )
+                                        drawable?.let {
+                                            AndroidGraphicFactory.convertToBitmap(it)
+                                        }
+                                    }
+
+                                // Check if are single or mulitple points
+                                val isSinglePoint = locations.size == 1
+
+                                if (isSinglePoint) {
+                                    // ===== SINGLE POINT - NORMAL ICONS) =====
+                                    val iconMammals = loadBitmap(R.drawable.ic_mammals)
+                                    val iconBird = loadBitmap(R.drawable.ic_birds)
+                                    val iconReptilians = loadBitmap(R.drawable.ic_reptilians)
+                                    val iconFrog = loadBitmap(R.drawable.ic_frog)
+                                    val iconBugs = loadBitmap(R.drawable.ic_bugs)
+                                    val iconSpider = loadBitmap(R.drawable.ic_spider)
+                                    val iconCrostac = loadBitmap(R.drawable.ic_cancer)
+                                    val iconGaster = loadBitmap(R.drawable.ic_gaster)
+                                    val iconBivalv = loadBitmap(R.drawable.ic_bivalv)
+                                    val iconWorm = loadBitmap(R.drawable.ic_worm)
+                                    val iconEchin = loadBitmap(R.drawable.ic_echin)
+                                    val iconCnidar = loadBitmap(R.drawable.ic_cnidar)
+                                    val iconPorifer = loadBitmap(R.drawable.ic_porifer)
+                                    val iconFish = loadBitmap(R.drawable.ic_fish)
+                                    val iconPers = loadBitmap(R.drawable.ic_marker_pers)
+                                    val iconTruffle = loadBitmap(R.drawable.ic_truffle)
+                                    val iconMushroom = loadBitmap(R.drawable.ic_mushroom)
+                                    val iconVenomous = loadBitmap(R.drawable.ic_mushroom_venomous)
+                                    val iconBush = loadBitmap(R.drawable.ic_bush)
+                                    val iconFlower = loadBitmap(R.drawable.ic_flower)
+                                    val iconPlant = loadBitmap(R.drawable.ic_plant)
+                                    val iconSucculent = loadBitmap(R.drawable.ic_succulent)
+                                    val iconGarbage = loadBitmap(R.drawable.ic_garbage)
+                                    val iconFossil = loadBitmap(R.drawable.ic_fossil)
+                                    val iconDef = loadBitmap(R.drawable.ic_marker_blue)
+
+                                    val newMarkers = locations.mapNotNull { loc ->
+                                        val idsp = loc.idsp ?: ""
+                                        val prefix = if (idsp.length >= 4) idsp.substring(0, 4).uppercase() else "DEFAULT"
+
+                                        val selectedBitmap = when (prefix) {
+                                            "FAMA" -> iconMammals
+                                            "FAUC" -> iconBird
+                                            "FARE" -> iconReptilians
+                                            "FAAN" -> iconFrog
+                                            "FAIN" -> iconBugs
+                                            "FAAR" -> iconSpider
+                                            "FACR" -> iconCrostac
+                                            "FAGA" -> iconGaster
+                                            "FABV" -> iconBivalv
+                                            "FAAE" -> iconWorm
+                                            "FAEC" -> iconEchin
+                                            "FACN" -> iconCnidar
+                                            "FAPO" -> iconPorifer
+                                            "FAPE" -> iconFish
+                                            "PERS" -> iconPers
+                                            "TART" -> iconTruffle
+                                            "FUED" -> iconMushroom
+                                            "FUVE" -> iconVenomous
+                                            "FLAL" -> iconPlant
+                                            "FLAR" -> iconBush
+                                            "FLER" -> iconFlower
+                                            "FLSU" -> iconSucculent
+                                            "GARB" -> iconGarbage
+                                            "FOSS" -> iconFossil
+                                            else -> iconDef
+                                        }
+
+                                        if (selectedBitmap != null) {
+                                            val latLong = LatLong(loc.latitude, loc.longitude)
+                                            Marker(latLong, selectedBitmap, 0, -selectedBitmap.height / 2)
+                                        } else null
+                                    }
+
+                                    newMarkers.forEach { marker ->
+                                        mapViewRef?.layerManager?.layers?.add(marker)
+                                    }
+                                    filteredMarkers = newMarkers
+
+                                } else {
+                                    // ===== MULTIPLE POINTS - MIN ICONS =====
+                                    val iconMammalsMin = loadBitmap(R.drawable.ic_mammals_min)
+                                    val iconBirdMin = loadBitmap(R.drawable.ic_birds_min)
+                                    val iconReptiliansMin = loadBitmap(R.drawable.ic_reptilians_min)
+                                    val iconFrogMin = loadBitmap(R.drawable.ic_frog_min)
+                                    val iconBugsMin = loadBitmap(R.drawable.ic_bugs_min)
+                                    val iconSpiderMin = loadBitmap(R.drawable.ic_spider_min)
+                                    val iconCrostacMin = loadBitmap(R.drawable.ic_cancer_min)
+                                    val iconGasterMin = loadBitmap(R.drawable.ic_gaster_min)
+                                    val iconBivalvMin = loadBitmap(R.drawable.ic_bivalv_min)
+                                    val iconWormMin = loadBitmap(R.drawable.ic_worm_min)
+                                    val iconEchinMin = loadBitmap(R.drawable.ic_echin_min)
+                                    val iconCnidarMin = loadBitmap(R.drawable.ic_cnidar_min)
+                                    val iconPoriferMin = loadBitmap(R.drawable.ic_porifer_min)
+                                    val iconFishMin = loadBitmap(R.drawable.ic_fish_min)
+                                    val iconPersMin = loadBitmap(R.drawable.ic_marker_pers_min)
+                                    val iconTruffleMin = loadBitmap(R.drawable.ic_truffle_min)
+                                    val iconMushroomMin = loadBitmap(R.drawable.ic_mushroom_min)
+                                    val iconVenomousMin = loadBitmap(R.drawable.ic_mushroom_venomous_min)
+                                    val iconBushMin = loadBitmap(R.drawable.ic_bush_min)
+                                    val iconFlowerMin = loadBitmap(R.drawable.ic_flower_min)
+                                    val iconPlantMin = loadBitmap(R.drawable.ic_plant_min)
+                                    val iconSucculentMin = loadBitmap(R.drawable.ic_succulent_min)
+                                    val iconGarbageMin = loadBitmap(R.drawable.ic_garbage_min)
+                                    val iconFossilMin = loadBitmap(R.drawable.ic_fossil_min)
+                                    val iconDef = loadBitmap(R.drawable.ic_marker_blue)
+
+                                    val newMarkersMin = locations.mapNotNull { loc ->
+                                        val idsp = loc.idsp ?: ""
+                                        val prefix = if (idsp.length >= 4) idsp.substring(0, 4).uppercase() else "DEFAULT"
+
+                                        val selectedBitmap = when (prefix) {
+                                            "FAMA" -> iconMammalsMin
+                                            "FAUC" -> iconBirdMin
+                                            "FARE" -> iconReptiliansMin
+                                            "FAAN" -> iconFrogMin
+                                            "FAIN" -> iconBugsMin
+                                            "FAAR" -> iconSpiderMin
+                                            "FACR" -> iconCrostacMin
+                                            "FAGA" -> iconGasterMin
+                                            "FABV" -> iconBivalvMin
+                                            "FAAE" -> iconWormMin
+                                            "FAEC" -> iconEchinMin
+                                            "FACN" -> iconCnidarMin
+                                            "FAPO" -> iconPoriferMin
+                                            "FAPE" -> iconFishMin
+                                            "PERS" -> iconPersMin
+                                            "TART" -> iconTruffleMin
+                                            "FUED" -> iconMushroomMin
+                                            "FUVE" -> iconVenomousMin
+                                            "FLAL" -> iconPlantMin
+                                            "FLAR" -> iconBushMin
+                                            "FLER" -> iconFlowerMin
+                                            "FLSU" -> iconSucculentMin
+                                            "GARB" -> iconGarbageMin
+                                            "FOSS" -> iconFossilMin
+                                            else -> iconDef
+                                        }
+
+                                        if (selectedBitmap != null) {
+                                            val latLong = LatLong(loc.latitude, loc.longitude)
+                                            Marker(latLong, selectedBitmap, 0, -selectedBitmap.height / 2)
+                                        } else null
+                                    }
+
+                                    newMarkersMin.forEach { marker ->
+                                        mapViewRef?.layerManager?.layers?.add(marker)
+                                    }
+                                    filteredMarkers = newMarkersMin
+                                }
+
+                                userLocation?.let { currentUserLoc ->
+                                    val radiusInMeters = 5000f
+                                    val userLatLong = LatLong(currentUserLoc.latitude, currentUserLoc.longitude)
+
+                                    // FILTER POINTS
+                                    val pointsToShow = locations.mapNotNull { loc ->
+                                        val targetLoc = Location("").apply {
+                                            latitude = loc.latitude
+                                            longitude = loc.longitude
+                                        }
+                                        if (currentUserLoc.distanceTo(targetLoc) <= radiusInMeters) {
+                                            LatLong(loc.latitude, loc.longitude)
+                                        } else {
+                                            null
+                                        }
+                                    }.toMutableList()
+
+                                    // ADD USER POSITION
+                                    pointsToShow.add(userLatLong)
+
+                                    // SET BOUNDING BOX
+                                    if (pointsToShow.isNotEmpty()) {
+                                        var minLat = 180.0
+                                        var maxLat = -180.0
+                                        var minLon = 180.0
+                                        var maxLon = -180.0
+
+                                        for (p in pointsToShow) {
+                                            if (p.latitude < minLat) minLat = p.latitude
+                                            if (p.latitude > maxLat) maxLat = p.latitude
+                                            if (p.longitude < minLon) minLon = p.longitude
+                                            if (p.longitude > maxLon) maxLon = p.longitude
+                                        }
+
+                                        val boundingBox = org.mapsforge.core.model.BoundingBox(minLat, minLon, maxLat, maxLon)
+
+                                        // 4. UPDATE MAP VIEW BOUNDING BOX
+                                        mapViewRef?.let { map ->
+                                            val dimension = map.model.mapViewDimension.dimension
+                                            if (dimension != null) {
+                                                val calculatedZoom = org.mapsforge.core.util.LatLongUtils.zoomForBounds(
+                                                    dimension,
+                                                    boundingBox,
+                                                    map.model.displayModel.tileSize
+                                                )
+
+                                                val finalZoom = if (calculatedZoom > 17) 17.toByte() else calculatedZoom
+
+                                                map.model.mapViewPosition.setCenter(boundingBox.centerPoint)
+                                                map.model.mapViewPosition.setZoomLevel(finalZoom)
+                                            }
+                                        }
+                                    }
+                                } ?: run {
+                                    // FALLBACK: IF NO USER LOCATION
+                                    if (locations.isNotEmpty()) {
+                                        val firstLocation = locations.first()
+                                        val latLong = LatLong(firstLocation.latitude, firstLocation.longitude)
+                                        mapViewRef?.model?.mapViewPosition?.apply {
+                                            setCenter(latLong)
+                                            setZoomLevel(17.toByte())
+                                        }
+                                    }
+                                }
+
+                                // CLOSE TABLE
+                                showTable = false
+                            }
+                        )
+                    }
+                }
+            }
 
 
                             // Button Show/Hide start point

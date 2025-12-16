@@ -3,5 +3,7 @@
   {"id": 2, "idM": "M2", "title": "Fauna", "ref": "FaunaSubCategoryPositionMarker.json"},
   {"id": 3, "idM": "M3", "title": "Funghi", "ref": "FunghiSubCategoryPositionMarker.json"},
   {"id": 4, "idM": "M4", "title": "Tartufi", "ref": "TartufiSubCategoryPositionMarker.json"},
-  {"id": 5000, "idM": "MP", "title": "Personale", "ref": "personale.json"}
+  {"id": 5, "idM": "M5", "title": "Fossili", "ref": "FossiliSubCategoryPositionMarker.json"},
+  {"id": 6, "idM": "M6", "title": "Rifiuti", "ref": "RifiutiSubCategoryPositionMarker.json"},
+  {"id": 7, "idM": "M7", "title": "Personale", "ref": "personale.json"}
 ]
