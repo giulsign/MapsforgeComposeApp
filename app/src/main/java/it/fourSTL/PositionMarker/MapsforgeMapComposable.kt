@@ -101,11 +101,6 @@ fun loadPersistentMetadata(context: Context): Map<String, String> {
     return obj.keys().asSequence().associateWith { obj.getString(it) }
 }
 
-/*fun clearPersistentMetadata(context: Context) {
-    val prefs = context.getSharedPreferences("metadata_prefs", Context.MODE_PRIVATE)
-    prefs.edit().remove("persistent_metadata").apply()
-}*/
-
 
 // Copy file italy.map from assets
 private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
@@ -121,110 +116,6 @@ private fun copyMapFileIfNeeded(context: Context, mapFileName: String): File {
     }
     return destFile
 }
-
-
-// Show saved location on map
-/*fun showSavedLocationOnMapForge(context: Context, map: org.mapsforge.map.android.view.MapView) {
-    val file = File(context.filesDir, "auto_locations.json")
-
-    if (!file.exists() || file.length() == 0L) {
-        Toast.makeText(context, "⚠️ No start point saved found.", Toast.LENGTH_LONG).show()
-        return
-    }
-
-    try {
-        val jsonArray = JSONArray(file.readText())
-        if (jsonArray.length() == 0) {
-            Toast.makeText(context, "⚠️ No valid point in file JSON.", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        val locationJson = jsonArray.getJSONObject(0)
-        val latitude = locationJson.getDouble("latitude")
-        val longitude = locationJson.getDouble("longitude")
-
-        val geoPoint = LatLong(latitude, longitude)
-
-        val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker_red, null)
-        val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-        val marker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
-
-        map.layerManager.layers.add(marker)
-        map.model.mapViewPosition.setCenter(geoPoint)
-
-        Toast.makeText(context, "📍 Start point visible on map", Toast.LENGTH_LONG).show()
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-        Toast.makeText(context, "❌ Error reading start point.", Toast.LENGTH_LONG).show()
-    }
-}*/
-
-
-// Show all saved location with same idsp on map
-/*fun showAllSavedLocationOnMapForge(
-    context: Context,
-    map: org.mapsforge.map.android.view.MapView,
-    targetIdsp: String
-) {
-    val file = File(context.filesDir, "locations.json")
-
-    if (!file.exists() || file.length() == 0L) {
-        Toast.makeText(context, "⚠️ No data found.", Toast.LENGTH_LONG).show()
-        return
-    }
-
-    try {
-        val jsonArray = JSONArray(file.readText())
-        if (jsonArray.length() == 0) {
-            Toast.makeText(context, "⚠️ JSON file is empty.", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        // Prepare the marker bitmap once
-        val drawable = ResourcesCompat.getDrawable(context.resources, R.drawable.ic_marker_red, null)
-        val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-
-        var pointsFound = false
-        var lastPoint: LatLong? = null
-
-        // Iterate through all points
-        for (i in 0 until jsonArray.length()) {
-            val locationJson = jsonArray.getJSONObject(i)
-
-            // Check if the point has the requested IDSP
-            if (locationJson.has("idsp") && locationJson.getString("idsp") == targetIdsp) {
-
-                val latitude = locationJson.getDouble("latitude")
-                val longitude = locationJson.getDouble("longitude")
-                val geoPoint = LatLong(latitude, longitude)
-
-                // Create and add marker
-                val marker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
-                map.layerManager.layers.add(marker)
-
-                lastPoint = geoPoint
-                pointsFound = true
-            }
-        }
-
-        if (pointsFound) {
-            // Center map on the last found point
-            lastPoint?.let {
-                map.model.mapViewPosition.setCenter(it)
-                map.model.mapViewPosition.zoomLevel = 15.toByte()
-            }
-            map.layerManager.redrawLayers()
-            Toast.makeText(context, "📍 Points for IDSP $targetIdsp visible on map", Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(context, "⚠️ No points found with IDSP: $targetIdsp", Toast.LENGTH_LONG).show()
-        }
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-        Toast.makeText(context, "❌ Error reading points.", Toast.LENGTH_LONG).show()
-    }
-}*/
 
 
 // ID sequential
@@ -327,7 +218,103 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
 }
 
 
-// Export JSON in Download
+// Export Start Point in Download
+fun exportStartPointToDownload(context: Context) {
+    try {
+        val sourceFile = File(context.filesDir, "auto_locations.json")
+
+        if (!sourceFile.exists()) {
+            Toast.makeText(context, "No Start Point file found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(Date())
+        val fileName = "fourSTLPositionMarker_Start_Point_$timestamp.json"
+
+        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        if (!downloadDir.exists()) downloadDir.mkdirs()
+
+        val destFile = File(downloadDir, fileName)
+
+        FileInputStream(sourceFile).use { input ->
+            FileOutputStream(destFile).use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        Toast.makeText(context, "File saved in Download folder as $fileName", Toast.LENGTH_LONG).show()
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "Error exporting Start Point position file: ${e.message}", Toast.LENGTH_LONG).show()
+    }
+}
+
+
+// Import start point from file
+fun importStartPointFromFile(
+    context: Context,
+    uri: Uri,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+) {
+    try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        if (inputStream == null) {
+            onError("Cannot open file")
+            return
+        }
+
+        val content = inputStream.bufferedReader().use { it.readText() }
+
+        // Check json
+        try {
+            val jsonArray = JSONArray(content)
+            if (jsonArray.length() == 0) {
+                onError("File is empty")
+                return
+            }
+
+            // Check Objects
+            val firstObj = jsonArray.getJSONObject(0)
+            if (!firstObj.has("latitude") || !firstObj.has("longitude")) {
+                onError("Invalid file format: missing coordinates")
+                return
+            }
+
+            // Save in auto_locations.json
+            val destFile = File(context.filesDir, "auto_locations.json")
+            destFile.writeText(content)
+
+            onSuccess()
+
+        } catch (e: Exception) {
+            onError("Invalid JSON format: ${e.message}")
+        }
+
+    } catch (e: Exception) {
+        onError("Error reading file: ${e.message}")
+    }
+}
+
+
+// Search and check for existing start point
+fun hasExistingStartPoint(context: Context): Boolean {
+    val file = File(context.filesDir, "auto_locations.json")
+    if (!file.exists() || file.length() == 0L) {
+        return false
+    }
+
+    try {
+        val jsonArray = JSONArray(file.readText())
+        return jsonArray.length() > 0
+    } catch (e: Exception) {
+        return false
+    }
+}
+
+
+// Export json in Download
 fun exportJsonToDownload(context: Context) {
     try {
         val sourceFile = File(context.filesDir, "locations.json")
@@ -479,6 +466,7 @@ fun VerticalCategoryButton(
         var showCarMarker by remember { mutableStateOf(false) }
         var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
         var showLicenses by remember { mutableStateOf(false) }
+        var showStartPointReport by remember { mutableStateOf(false) }
 
         // 🔹 Load persistent metadatas selections
         val persistentSelectionsState = remember {
@@ -508,6 +496,11 @@ fun VerticalCategoryButton(
         var showLoadedGpxTrack by remember { mutableStateOf(true) }
         var isTrackingActive by remember {mutableStateOf(false)}
         var loadedGpxFileName by remember { mutableStateOf("") }
+
+        // 🔹 Show loaded start point from file
+        var showImportStartPointDialog by remember { mutableStateOf(false) }
+        var showOverwriteConfirmDialog by remember { mutableStateOf(false) }
+        var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
 
 
         // Show buttons menu
@@ -574,6 +567,41 @@ fun VerticalCategoryButton(
                             "Error: Cannot load GPX track from file",
                             Toast.LENGTH_LONG
                         ).show()
+                    }
+                }
+            }
+        )
+
+
+        // Launcher for start point file picker
+        val startPointFilePickerLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+            onResult = { uri: Uri? ->
+                if (uri != null) {
+                    // Check if start point exixsts
+                    if (hasExistingStartPoint(context)) {
+                        pendingImportUri = uri
+                        showOverwriteConfirmDialog = true
+                    } else {
+                        // Import
+                        importStartPointFromFile(
+                            context = context,
+                            uri = uri,
+                            onSuccess = {
+                                Toast.makeText(
+                                    context,
+                                    "✅ Start point imported successfully",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            },
+                            onError = { error ->
+                                Toast.makeText(
+                                    context,
+                                    "❌ Error: $error",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        )
                     }
                 }
             }
@@ -1107,6 +1135,11 @@ fun VerticalCategoryButton(
                                             saveLocationToJsonAuto(context, loc)
                                         }
                                     },
+
+                                    "Import start point from file" to {
+                                        startPointFilePickerLauncher.launch("application/json")
+                                    },
+
                                     (if (showCarMarker) "Hide start point" else "Show start point") to {
                                         mapViewRef?.let { map ->
                                             if (!showCarMarker) {
@@ -1169,6 +1202,27 @@ fun VerticalCategoryButton(
                                                 Toast.makeText(context, "Start point removed.", Toast.LENGTH_SHORT).show()
                                             }
                                         }
+                                    },
+
+                                    "Start point report" to {
+                                        val file = File(context.filesDir, "auto_locations.json")
+                                        if (file.exists() && file.length() > 0) {
+                                            try {
+                                                val jsonArray = JSONArray(file.readText())
+                                                if (jsonArray.length() > 0) {
+                                                    showStartPointReport = true
+                                                } else {
+                                                    Toast.makeText(context, "⚠️ No start point saved.", Toast.LENGTH_LONG).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "❌ Error reading start point.", Toast.LENGTH_LONG).show()
+                                            }
+                                        } else {
+                                            Toast.makeText(context, "⚠️ No start point saved.", Toast.LENGTH_LONG).show()
+                                        }
+                                    },
+                                    "Export start point" to {
+                                        exportStartPointToDownload(context)
                                     },
                                     "Remove start point" to {
                                         showConfirmDialogAuto = true
@@ -1243,6 +1297,7 @@ fun VerticalCategoryButton(
                             }
 
 
+            // Icon selection logic for multiple points visualization
             if (showTable) {
                 Box(
                     modifier = Modifier
@@ -1387,6 +1442,7 @@ fun VerticalCategoryButton(
             }
 
 
+            // Icon selection logic for multiple points visualization
             if (showTable) {
                 Box(
                     modifier = Modifier
@@ -2172,6 +2228,164 @@ fun VerticalCategoryButton(
                     confirmButton = {
                         TextButton(onClick = { showGpsDialog = false }) {
                             Text("OK")
+                        }
+                    }
+                )
+            }
+
+            // Dialog show start point report
+            if (showStartPointReport) {
+                val file = File(context.filesDir, "auto_locations.json")
+                var reportText = "Error loading data"
+
+                if (file.exists() && file.length() > 0) {
+                    try {
+                        val jsonArray = JSONArray(file.readText())
+                        if (jsonArray.length() > 0) {
+                            val locationJson = jsonArray.getJSONObject(0)
+                            val startLat = locationJson.getDouble("latitude")
+                            val startLon = locationJson.getDouble("longitude")
+                            val startDate = locationJson.getString("date")
+                            val startHour = locationJson.getString("hour")
+
+                            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                            val currentHour = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault()).format(Date())
+
+                            val distanceText = userLocation?.let { currentLoc ->
+                                val startLocation = Location("").apply {
+                                    latitude = startLat
+                                    longitude = startLon
+                                }
+                                val distance = currentLoc.distanceTo(startLocation) / 1000f
+                                String.format(Locale.getDefault(), "%.3f km", distance)
+                            } ?: "N/A"
+
+                            val currentLatText = userLocation?.latitude?.let {
+                                String.format(Locale.getDefault(), "%.6f", it)
+                            } ?: "N/A"
+
+                            val currentLonText = userLocation?.longitude?.let {
+                                String.format(Locale.getDefault(), "%.6f", it)
+                            } ?: "N/A"
+
+                            reportText = """
+                    📍 START POINT REPORT
+                    
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                    START POINT DATA
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                    📅 Date: $startDate
+                    🕐 Time: $startHour
+                    🌐 Latitude: ${String.format(Locale.getDefault(), "%.6f", startLat)}
+                    🌐 Longitude: ${String.format(Locale.getDefault(), "%.6f", startLon)}
+                    
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                    CURRENT POSITION DATA
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                    📅 Date: $currentDate
+                    🕐 Time: $currentHour
+                    🌐 Latitude: $currentLatText
+                    🌐 Longitude: $currentLonText
+                    
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                    📏 Distance: $distanceText
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                """.trimIndent()
+                        }
+                    } catch (e: Exception) {
+                        reportText = "❌ Error loading report:\n${e.message}"
+                    }
+                }
+
+                AlertDialog(
+                    onDismissRequest = { showStartPointReport = false },
+                    shape = RectangleShape,
+                    title = {
+                        Text(
+                            "Start Point Report",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        LazyColumn {
+                            item {
+                                Text(
+                                    text = reportText,
+                                    fontFamily = MyCustomFont,
+                                    fontSize = 16.sp,
+                                    lineHeight = 20.sp
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showStartPointReport = false }) {
+                            Text("OK", fontFamily = MyCustomFont)
+                        }
+                    }
+                )
+            }
+
+            // Dialog upload start point from file
+            if (showOverwriteConfirmDialog) {
+                AlertDialog(
+                    onDismissRequest = {
+                        showOverwriteConfirmDialog = false
+                        pendingImportUri = null
+                    },
+                    shape = RectangleShape,
+                    title = {
+                        Text(
+                            "Overwrite existing start point?",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Text(
+                            "A start point is already saved. Do you want to overwrite it with the imported file?",
+                            fontFamily = MyCustomFont
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                pendingImportUri?.let { uri ->
+                                    importStartPointFromFile(
+                                        context = context,
+                                        uri = uri,
+                                        onSuccess = {
+                                            Toast.makeText(
+                                                context,
+                                                "✅ Start point overwritten successfully",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        },
+                                        onError = { error ->
+                                            Toast.makeText(
+                                                context,
+                                                "❌ Error: $error",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    )
+                                }
+                                showOverwriteConfirmDialog = false
+                                pendingImportUri = null
+                            }
+                        ) {
+                            Text("Overwrite", fontFamily = MyCustomFont)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = {
+                                showOverwriteConfirmDialog = false
+                                pendingImportUri = null
+                            }
+                        ) {
+                            Text("Cancel", fontFamily = MyCustomFont)
                         }
                     }
                 )

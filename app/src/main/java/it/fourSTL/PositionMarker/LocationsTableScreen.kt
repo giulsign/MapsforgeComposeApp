@@ -29,6 +29,7 @@ import java.io.File
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 
 // Data class to represent a location
@@ -246,6 +247,7 @@ fun LocationsTableScreen(
     if (showDeleteDialog && locationToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
+            shape = RectangleShape,
             title = { Text("Delete point") },
             text = { Text("Do you want to delete this point? #${locationToDelete?.id}?\nThis action cannot be undone.") },
             confirmButton = {
