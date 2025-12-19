@@ -100,4 +100,10 @@ dependencies {
     implementation("com.mikepenz:aboutlibraries-compose:11.1.0")
     implementation("com.mikepenz:aboutlibraries:11.1.0")
 
+    // libraries for group sharing
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("org.java-websocket:Java-WebSocket:1.5.4")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
 }

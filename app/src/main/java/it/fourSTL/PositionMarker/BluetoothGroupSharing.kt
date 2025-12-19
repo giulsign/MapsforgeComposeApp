@@ -1,0 +1,767 @@
+package it.fourSTL.PositionMarker
+
+import android.Manifest
+import android.bluetooth.*
+import android.bluetooth.le.*
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.ParcelUuid
+import android.util.Base64
+import android.util.Log
+import androidx.core.app.ActivityCompat
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import java.nio.ByteBuffer
+import java.security.*
+import java.security.spec.X509EncodedKeySpec
+import java.util.UUID
+import javax.crypto.KeyAgreement
+import javax.crypto.spec.SecretKeySpec
+
+/**
+ * BluetoothGroupSharing.kt
+ * Gestisce la condivisione dei gruppi via Bluetooth Low Energy con handshake ECDH sicuro
+ */
+
+class BluetoothGroupSharing(
+    private val context: Context,
+    private val groupManager: GroupManager
+) {
+
+    companion object {
+        private const val TAG = "BLEGroupSharing"
+
+        // UUID del servizio BLE personalizzato per group sharing
+        private val SERVICE_UUID = UUID.fromString("12345678-1234-5678-1234-567812345678")
+        private val CHARACTERISTIC_UUID = UUID.fromString("87654321-4321-8765-4321-876543218765")
+
+        // Costanti
+        private const val MAX_MTU_SIZE = 512
+        private const val SCAN_TIMEOUT_MS = 30_000L // 30 secondi
+        private const val CONNECTION_TIMEOUT_MS = 20_000L // 20 secondi
+        private const val HANDSHAKE_TIMEOUT_MS = 15_000L // 15 secondi
+    }
+
+    private val json = Json { ignoreUnknownKeys = true }
+    private val bluetoothManager: BluetoothManager =
+        context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
+
+    // BLE Scanner e Advertiser
+    private var bleScanner: BluetoothLeScanner? = null
+    private var bleAdvertiser: BluetoothLeAdvertiser? = null
+
+    // GATT Server (per Host) e Client (per Guest)
+    private var gattServer: BluetoothGattServer? = null
+    private var gattClient: BluetoothGatt? = null
+
+    // Chiavi ECDH per handshake
+    private var localKeyPair: KeyPair? = null
+    private var sharedSecret: ByteArray? = null
+
+    // Coroutine scope
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    // Stati
+    private val _sharingState = MutableStateFlow<SharingState>(SharingState.Idle)
+    val sharingState: StateFlow<SharingState> = _sharingState
+
+    private val _discoveredGroups = MutableStateFlow<List<DiscoveredGroup>>(emptyList())
+    val discoveredGroups: StateFlow<List<DiscoveredGroup>> = _discoveredGroups
+
+    // ==================== DATA CLASSES ====================
+
+    sealed class SharingState {
+        object Idle : SharingState()
+        object Advertising : SharingState()
+        object Scanning : SharingState()
+        object Connecting : SharingState()
+        object Handshaking : SharingState()
+        data class Success(val groupName: String) : SharingState()
+        data class Error(val message: String) : SharingState()
+    }
+
+    @Serializable
+    data class DiscoveredGroup(
+        val groupName: String,
+        val deviceName: String,
+        val rssi: Int,
+        val bluetoothDevice: String // Address del device BLE
+    )
+
+    @Serializable
+    data class HandshakeMessage(
+        val type: String, // "HELLO", "KEY_EXCHANGE", "GROUP_DATA"
+        val publicKey: String? = null,
+        val encryptedData: String? = null,
+        val iv: String? = null,
+        val deviceName: String? = null,
+        val groupName: String? = null
+    )
+
+    // ==================== PERMISSION CHECK ====================
+
+    fun hasBluetoothPermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) ==
+                    PackageManager.PERMISSION_GRANTED
+        } else {
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADMIN) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    // ==================== HOST: START ADVERTISING ====================
+
+    /**
+     * Avvia advertising BLE come HOST per permettere ai GUEST di scoprire il gruppo
+     */
+    fun startAdvertising(group: Group) {
+        if (!hasBluetoothPermissions()) {
+            _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
+            return
+        }
+
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            _sharingState.value = SharingState.Error("Bluetooth is disabled")
+            return
+        }
+
+        try {
+            // Genera coppia di chiavi ECDH
+            generateKeyPair()
+
+            // Configura GATT Server
+            setupGattServer(group)
+
+            // Avvia advertising
+            bleAdvertiser = bluetoothAdapter.bluetoothLeAdvertiser
+
+            val settings = AdvertiseSettings.Builder()
+                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+                .setConnectable(true)
+                .setTimeout(0) // Nessun timeout
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+                .build()
+
+            val data = AdvertiseData.Builder()
+                .setIncludeDeviceName(false)
+                .addServiceUuid(ParcelUuid(SERVICE_UUID))
+                .addServiceData(
+                    ParcelUuid(SERVICE_UUID),
+                    group.name.toByteArray(Charsets.UTF_8).take(20).toByteArray() // Max 20 bytes
+                )
+                .build()
+
+            bleAdvertiser?.startAdvertising(settings, data, advertiseCallback)
+            _sharingState.value = SharingState.Advertising
+            Log.d(TAG, "Started advertising group: ${group.name}")
+
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception during advertising", e)
+            _sharingState.value = SharingState.Error("Security error: ${e.message}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start advertising", e)
+            _sharingState.value = SharingState.Error("Failed to advertise: ${e.message}")
+        }
+    }
+
+    /**
+     * Ferma advertising BLE
+     */
+    fun stopAdvertising() {
+        try {
+            bleAdvertiser?.stopAdvertising(advertiseCallback)
+            gattServer?.close()
+            gattServer = null
+            _sharingState.value = SharingState.Idle
+            Log.d(TAG, "Stopped advertising")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception stopping advertising", e)
+        }
+    }
+
+    // ==================== GUEST: START SCANNING ====================
+
+    /**
+     * Avvia scansione BLE per scoprire gruppi disponibili
+     */
+    fun startScanning() {
+        if (!hasBluetoothPermissions()) {
+            _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
+            return
+        }
+
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            _sharingState.value = SharingState.Error("Bluetooth is disabled")
+            return
+        }
+
+        try {
+            generateKeyPair()
+
+            bleScanner = bluetoothAdapter.bluetoothLeScanner
+
+            val scanFilter = ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(SERVICE_UUID))
+                .build()
+
+            val scanSettings = ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .build()
+
+            bleScanner?.startScan(listOf(scanFilter), scanSettings, scanCallback)
+            _sharingState.value = SharingState.Scanning
+            Log.d(TAG, "Started scanning for groups")
+
+            // Timeout automatico dopo 30 secondi
+            scope.launch {
+                delay(SCAN_TIMEOUT_MS)
+                stopScanning()
+            }
+
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception during scanning", e)
+            _sharingState.value = SharingState.Error("Security error: ${e.message}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start scanning", e)
+            _sharingState.value = SharingState.Error("Failed to scan: ${e.message}")
+        }
+    }
+
+    /**
+     * Ferma scansione BLE
+     */
+    fun stopScanning() {
+        try {
+            bleScanner?.stopScan(scanCallback)
+            if (_sharingState.value is SharingState.Scanning) {
+                _sharingState.value = SharingState.Idle
+            }
+            Log.d(TAG, "Stopped scanning")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception stopping scan", e)
+        }
+    }
+
+    /**
+     * Connetti a un gruppo scoperto
+     */
+    fun connectToGroup(discoveredGroup: DiscoveredGroup) {
+        if (!hasBluetoothPermissions()) {
+            _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
+            return
+        }
+
+        stopScanning()
+        _sharingState.value = SharingState.Connecting
+
+        try {
+            val device = bluetoothAdapter?.getRemoteDevice(discoveredGroup.bluetoothDevice)
+
+            gattClient = device?.connectGatt(
+                context,
+                false,
+                gattClientCallback,
+                BluetoothDevice.TRANSPORT_LE
+            )
+
+            Log.d(TAG, "Connecting to group: ${discoveredGroup.groupName}")
+
+            // Timeout connessione
+            scope.launch {
+                delay(CONNECTION_TIMEOUT_MS)
+                if (_sharingState.value is SharingState.Connecting) {
+                    gattClient?.disconnect()
+                    _sharingState.value = SharingState.Error("Connection timeout")
+                }
+            }
+
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception connecting", e)
+            _sharingState.value = SharingState.Error("Security error: ${e.message}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to connect", e)
+            _sharingState.value = SharingState.Error("Connection failed: ${e.message}")
+        }
+    }
+
+    // ==================== ECDH KEY EXCHANGE ====================
+
+    /**
+     * Genera coppia di chiavi ECDH per handshake
+     */
+    private fun generateKeyPair() {
+        try {
+            val keyPairGen = KeyPairGenerator.getInstance("EC")
+            keyPairGen.initialize(256) // Curve secp256r1
+            localKeyPair = keyPairGen.generateKeyPair()
+            Log.d(TAG, "Generated ECDH key pair")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to generate key pair", e)
+            throw e
+        }
+    }
+
+    /**
+     * Calcola segreto condiviso ECDH
+     */
+    private fun computeSharedSecret(remotePublicKeyBytes: ByteArray): ByteArray {
+        try {
+            val keyFactory = KeyFactory.getInstance("EC")
+            val publicKeySpec = X509EncodedKeySpec(remotePublicKeyBytes)
+            val remotePublicKey = keyFactory.generatePublic(publicKeySpec)
+
+            val keyAgreement = KeyAgreement.getInstance("ECDH")
+            keyAgreement.init(localKeyPair?.private)
+            keyAgreement.doPhase(remotePublicKey, true)
+
+            return keyAgreement.generateSecret()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to compute shared secret", e)
+            throw e
+        }
+    }
+
+    /**
+     * Deriva chiave AES da segreto condiviso ECDH
+     */
+    private fun deriveAESKey(sharedSecret: ByteArray): SecretKeySpec {
+        // Usa SHA-256 per derivare chiave AES-256
+        val digest = MessageDigest.getInstance("SHA-256")
+        val keyBytes = digest.digest(sharedSecret)
+        return SecretKeySpec(keyBytes, "AES")
+    }
+
+    // ==================== GATT SERVER (HOST) ====================
+
+    private fun setupGattServer(group: Group) {
+        try {
+            val characteristic = BluetoothGattCharacteristic(
+                CHARACTERISTIC_UUID,
+                BluetoothGattCharacteristic.PROPERTY_READ or
+                        BluetoothGattCharacteristic.PROPERTY_WRITE or
+                        BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+                BluetoothGattCharacteristic.PERMISSION_READ or
+                        BluetoothGattCharacteristic.PERMISSION_WRITE
+            )
+
+            val service = BluetoothGattService(
+                SERVICE_UUID,
+                BluetoothGattService.SERVICE_TYPE_PRIMARY
+            )
+            service.addCharacteristic(characteristic)
+
+            gattServer = bluetoothManager.openGattServer(context, object : BluetoothGattServerCallback() {
+
+                override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
+                    super.onConnectionStateChange(device, status, newState)
+
+                    if (newState == BluetoothProfile.STATE_CONNECTED) {
+                        Log.d(TAG, "Guest connected: ${device?.address}")
+                        _sharingState.value = SharingState.Handshaking
+                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        Log.d(TAG, "Guest disconnected")
+                        if (_sharingState.value !is SharingState.Success) {
+                            _sharingState.value = SharingState.Idle
+                        }
+                    }
+                }
+
+                override fun onCharacteristicReadRequest(
+                    device: BluetoothDevice?,
+                    requestId: Int,
+                    offset: Int,
+                    characteristic: BluetoothGattCharacteristic?
+                ) {
+                    if (characteristic?.uuid == CHARACTERISTIC_UUID) {
+                        // Invia chiave pubblica ECDH
+                        val publicKeyBytes = localKeyPair?.public?.encoded ?: byteArrayOf()
+                        val message = HandshakeMessage(
+                            type = "KEY_EXCHANGE",
+                            publicKey = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP),
+                            deviceName = groupManager.getDeviceName(),
+                            groupName = group.name
+                        )
+
+                        val response = json.encodeToString(message).toByteArray(Charsets.UTF_8)
+
+                        try {
+                            gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, response)
+                            Log.d(TAG, "Sent public key to guest")
+                        } catch (e: SecurityException) {
+                            Log.e(TAG, "Security exception sending response", e)
+                        }
+                    }
+                }
+
+                override fun onCharacteristicWriteRequest(
+                    device: BluetoothDevice?,
+                    requestId: Int,
+                    characteristic: BluetoothGattCharacteristic?,
+                    preparedWrite: Boolean,
+                    responseNeeded: Boolean,
+                    offset: Int,
+                    value: ByteArray?
+                ) {
+                    if (characteristic?.uuid == CHARACTERISTIC_UUID && value != null) {
+                        try {
+                            val messageJson = String(value, Charsets.UTF_8)
+                            val message = json.decodeFromString<HandshakeMessage>(messageJson)
+
+                            when (message.type) {
+                                "KEY_EXCHANGE" -> {
+                                    // Ricevi chiave pubblica guest e calcola segreto condiviso
+                                    val guestPublicKey = Base64.decode(message.publicKey, Base64.NO_WRAP)
+                                    sharedSecret = computeSharedSecret(guestPublicKey)
+
+                                    // Cripta e invia dati gruppo
+                                    val groupJson = json.encodeToString(group)
+                                    val encryptedGroup = encryptWithSharedSecret(groupJson)
+
+                                    val responseMsg = HandshakeMessage(
+                                        type = "GROUP_DATA",
+                                        encryptedData = encryptedGroup.first,
+                                        iv = encryptedGroup.second
+                                    )
+
+                                    characteristic.value = json.encodeToString(responseMsg).toByteArray(Charsets.UTF_8)
+
+                                    try {
+                                        gattServer?.notifyCharacteristicChanged(device, characteristic, false)
+                                        _sharingState.value = SharingState.Success(group.name)
+                                        Log.d(TAG, "Group data sent successfully")
+
+                                        // Chiudi connessione dopo 2 secondi
+                                        scope.launch {
+                                            delay(2000)
+                                            gattServer?.cancelConnection(device)
+                                            stopAdvertising()
+                                        }
+                                    } catch (e: SecurityException) {
+                                        Log.e(TAG, "Security exception notifying", e)
+                                    }
+                                }
+                            }
+
+                            if (responseNeeded) {
+                                try {
+                                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                                } catch (e: SecurityException) {
+                                    Log.e(TAG, "Security exception sending response", e)
+                                }
+                            }
+
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to process write request", e)
+                            if (responseNeeded) {
+                                try {
+                                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                                } catch (se: SecurityException) {
+                                    Log.e(TAG, "Security exception sending error response", se)
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+
+            gattServer?.addService(service)
+            Log.d(TAG, "GATT Server setup complete")
+
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception setting up GATT server", e)
+            throw e
+        }
+    }
+
+    // ==================== CALLBACKS ====================
+
+    private val advertiseCallback = object : AdvertiseCallback() {
+        override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
+            Log.d(TAG, "Advertising started successfully")
+        }
+
+        override fun onStartFailure(errorCode: Int) {
+            Log.e(TAG, "Advertising failed: $errorCode")
+            _sharingState.value = SharingState.Error("Advertising failed: $errorCode")
+        }
+    }
+
+    private val scanCallback = object : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult?) {
+            result?.let { scanResult ->
+                try {
+                    val serviceData = scanResult.scanRecord?.getServiceData(ParcelUuid(SERVICE_UUID))
+                    val groupName = serviceData?.let { String(it, Charsets.UTF_8) } ?: "Unknown Group"
+                    val deviceName = scanResult.device.name ?: "Unknown Device"
+
+                    val discovered = DiscoveredGroup(
+                        groupName = groupName,
+                        deviceName = deviceName,
+                        rssi = scanResult.rssi,
+                        bluetoothDevice = scanResult.device.address
+                    )
+
+                    // Aggiungi alla lista se non presente
+                    val currentList = _discoveredGroups.value.toMutableList()
+                    if (currentList.none { it.bluetoothDevice == discovered.bluetoothDevice }) {
+                        currentList.add(discovered)
+                        _discoveredGroups.value = currentList
+                        Log.d(TAG, "Discovered group: $groupName from $deviceName")
+                    }
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "Security exception processing scan result", e)
+                }
+            }
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            Log.e(TAG, "Scan failed: $errorCode")
+            _sharingState.value = SharingState.Error("Scan failed: $errorCode")
+        }
+    }
+
+    private val gattClientCallback = object : BluetoothGattCallback() {
+        override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                Log.d(TAG, "Connected to host, discovering services...")
+                _sharingState.value = SharingState.Handshaking
+
+                try {
+                    gatt?.requestMtu(MAX_MTU_SIZE)
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "Security exception requesting MTU", e)
+                }
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.d(TAG, "Disconnected from host")
+                if (_sharingState.value !is SharingState.Success) {
+                    _sharingState.value = SharingState.Error("Disconnected unexpectedly")
+                }
+            }
+        }
+
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            Log.d(TAG, "MTU changed to: $mtu")
+            try {
+                gatt?.discoverServices()
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Security exception discovering services", e)
+            }
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                val service = gatt?.getService(SERVICE_UUID)
+                val characteristic = service?.getCharacteristic(CHARACTERISTIC_UUID)
+
+                if (characteristic != null) {
+                    // Leggi chiave pubblica host
+                    try {
+                        gatt.readCharacteristic(characteristic)
+                    } catch (e: SecurityException) {
+                        Log.e(TAG, "Security exception reading characteristic", e)
+                    }
+                }
+            }
+        }
+
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            if (status == BluetoothGatt.GATT_SUCCESS && characteristic?.uuid == CHARACTERISTIC_UUID) {
+                try {
+                    val value = characteristic.value
+                    val messageJson = String(value, Charsets.UTF_8)
+                    val message = json.decodeFromString<HandshakeMessage>(messageJson)
+
+                    if (message.type == "KEY_EXCHANGE") {
+                        // Calcola segreto condiviso
+                        val hostPublicKey = Base64.decode(message.publicKey, Base64.NO_WRAP)
+                        sharedSecret = computeSharedSecret(hostPublicKey)
+
+                        // Invia la nostra chiave pubblica
+                        val publicKeyBytes = localKeyPair?.public?.encoded ?: byteArrayOf()
+                        val responseMsg = HandshakeMessage(
+                            type = "KEY_EXCHANGE",
+                            publicKey = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP),
+                            deviceName = groupManager.getDeviceName()
+                        )
+
+                        characteristic.value = json.encodeToString(responseMsg).toByteArray(Charsets.UTF_8)
+                        try {
+                            gatt?.writeCharacteristic(characteristic)
+                        } catch (e: SecurityException) {
+                            Log.e(TAG, "Security exception writing characteristic", e)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to process characteristic read", e)
+                    _sharingState.value = SharingState.Error("Handshake failed")
+                }
+            }
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            if (characteristic?.uuid == CHARACTERISTIC_UUID) {
+                try {
+                    val value = characteristic.value
+                    val messageJson = String(value, Charsets.UTF_8)
+                    val message = json.decodeFromString<HandshakeMessage>(messageJson)
+
+                    if (message.type == "GROUP_DATA" && message.encryptedData != null && message.iv != null) {
+                        // Decripta dati gruppo
+                        val groupJson = decryptWithSharedSecret(message.encryptedData, message.iv)
+                        val group = json.decodeFromString<Group>(groupJson)
+
+                        // Unisciti al gruppo
+                        val joinedGroup = groupManager.joinGroup(group)
+                        if (joinedGroup != null) {
+                            _sharingState.value = SharingState.Success(joinedGroup.name)
+                            Log.d(TAG, "Successfully joined group: ${joinedGroup.name}")
+
+                            // Disconnetti dopo successo
+                            scope.launch {
+                                delay(1000)
+                                try {
+                                    gatt?.disconnect()
+                                } catch (e: SecurityException) {
+                                    Log.e(TAG, "Security exception disconnecting", e)
+                                }
+                            }
+                        } else {
+                            _sharingState.value = SharingState.Error("Failed to join group")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to process group data", e)
+                    _sharingState.value = SharingState.Error("Failed to join group")
+                }
+            }
+        }
+    }
+
+    // ==================== ENCRYPTION HELPERS ====================
+
+    private fun encryptWithSharedSecret(data: String): Pair<String, String> {
+        val aesKey = deriveAESKey(sharedSecret!!)
+
+        // Genera IV casuale
+        val iv = ByteArray(12)
+        SecureRandom().nextBytes(iv)
+
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        val gcmSpec = javax.crypto.spec.GCMParameterSpec(128, iv)
+        cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, aesKey, gcmSpec)
+
+        val encrypted = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
+
+        return Pair(
+            Base64.encodeToString(encrypted, Base64.NO_WRAP),
+            Base64.encodeToString(iv, Base64.NO_WRAP)
+        )
+    }
+
+    private fun decryptWithSharedSecret(encryptedData: String, ivString: String): String {
+        val aesKey = deriveAESKey(sharedSecret!!)
+
+        val encrypted = Base64.decode(encryptedData, Base64.NO_WRAP)
+        val iv = Base64.decode(ivString, Base64.NO_WRAP)
+
+        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+        val gcmSpec = javax.crypto.spec.GCMParameterSpec(128, iv)
+        cipher.init(javax.crypto.Cipher.DECRYPT_MODE, aesKey, gcmSpec)
+
+        val decrypted = cipher.doFinal(encrypted)
+        return String(decrypted, Charsets.UTF_8)
+    }
+
+    // ==================== CLEANUP ====================
+
+    fun cleanup() {
+        stopAdvertising()
+        stopScanning()
+
+        try {
+            gattClient?.disconnect()
+            gattClient?.close()
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception during cleanup", e)
+        }
+
+        gattClient = null
+        localKeyPair = null
+        sharedSecret = null
+        scope.cancel()
+
+        Log.d(TAG, "Bluetooth sharing cleaned up")
+    }
+
+    // ==================== JOIN GROUP HELPER ====================
+
+    /**
+     * Versione helper per unirsi a un gruppo ricevuto via BLE
+     * (delega al GroupManager ma gestisce la logica locale)
+     */
+    private fun GroupManager.joinGroup(group: Group): Group? {
+        return try {
+            // Imposta questo device come guest
+            val guestGroup = group.copy(isHost = false, members = mutableListOf())
+
+            // Aggiungi questo device come membro
+            val guestMember = GroupMember(
+                deviceId = getDeviceId(),
+                deviceName = getDeviceName(),
+                joinedAt = System.currentTimeMillis(),
+                isOnline = true
+            )
+            guestGroup.members.add(guestMember)
+
+            // Salva usando i metodi pubblici di GroupManager
+            // (saveGroup e setActiveGroup sono già implementati in GroupManager)
+            val prefs = context.getSharedPreferences("group_sharing_prefs", Context.MODE_PRIVATE)
+            val jsonInstance = kotlinx.serialization.json.Json {
+                ignoreUnknownKeys = true
+                prettyPrint = true
+            }
+
+            // Salva gruppo
+            val allGroups = getAllGroups().toMutableList()
+            allGroups.removeAll { it.id == guestGroup.id }
+            allGroups.add(guestGroup)
+
+            val groupsJson = jsonInstance.encodeToString(allGroups)
+            prefs.edit().putString("all_groups", groupsJson).apply()
+
+            // Imposta come gruppo attivo
+            val activeGroupJson = jsonInstance.encodeToString(guestGroup)
+            prefs.edit().putString("active_group", activeGroupJson).apply()
+
+            Log.d(TAG, "Joined group via BLE: ${guestGroup.name}")
+            guestGroup
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to join group locally: ${e.message}", e)
+            null
+        }
+    }
+}

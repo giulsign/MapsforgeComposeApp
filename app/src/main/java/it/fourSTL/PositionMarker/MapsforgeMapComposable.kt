@@ -640,7 +640,12 @@ fun calculateGpxStats(points: List<LatLong>): GpxStats? {
         var showPartenzaMenu by remember { mutableStateOf(false) }
         var showDatiMenu by remember { mutableStateOf(false) }
         var showTracciaMenu by remember { mutableStateOf(false) }
-
+/*
+        // Group sharing variables
+        var showGroupMenu by remember { mutableStateOf(false) }
+        var activeGroup by remember { mutableStateOf<Group?>(null) }
+        var groupMembers by remember { mutableStateOf<List<GroupMember>>(emptyList()) }
+*/
 
         val configuration = LocalConfiguration.current
         val screenWidth = configuration.screenWidthDp.dp
@@ -1468,7 +1473,7 @@ fun calculateGpxStats(points: List<LatLong>): GpxStats? {
                     }
                 )
 
-                metadataItems.add(
+                /*metadataItems.add(
                     "Export metadatas to file" to {
                         exportJsonToDownload(context)
                     }
@@ -1478,7 +1483,7 @@ fun calculateGpxStats(points: List<LatLong>): GpxStats? {
                     "View saved metadatas" to {
                         showTable = true
                     }
-                )
+                )*/
 
                 CategoryMenu(
                     title = "Personalized Metadatas Menu",
