@@ -178,6 +178,88 @@ fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<St
 }
 
 
+// Import gps metadatas external point form file
+fun importMetadataFromFile(
+    context: Context,
+    uri: Uri,
+    onSuccess: (Int) -> Unit,
+    onError: (String) -> Unit
+) {
+    try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        if (inputStream == null) {
+            onError("Cannot open file")
+            return
+        }
+
+        val content = inputStream.bufferedReader().use { it.readText() }
+
+        try {
+            val importedArray = JSONArray(content)
+            if (importedArray.length() == 0) {
+                onError("File is empty")
+                return
+            }
+
+            // Read the existing JSON file
+            val existingFile = File(context.filesDir, "locations.json")
+            val existingArray: JSONArray = if (existingFile.exists() && existingFile.length() > 0) {
+                JSONArray(existingFile.readText())
+            } else {
+                JSONArray()
+            }
+
+            // Find last used ID
+            val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            var lastId = prefs.getInt("last_id", 0)
+
+            // Add points with new ID
+            var importedCount = 0
+            for (i in 0 until importedArray.length()) {
+                val importedPoint = importedArray.getJSONObject(i)
+
+                lastId++
+
+                val newPoint = JSONObject().apply {
+                    put("id", lastId)
+                    put("latitude", importedPoint.getDouble("latitude"))
+                    put("longitude", importedPoint.getDouble("longitude"))
+                    put("altitude", importedPoint.optDouble("altitude", 0.0))
+                    put("date", importedPoint.optString("date", ""))
+                    put("hour", importedPoint.optString("hour", ""))
+
+                    // Copia tutti gli altri metadati
+                    val keys = importedPoint.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        if (key !in listOf("id", "latitude", "longitude", "altitude", "date", "hour")) {
+                            put(key, importedPoint.get(key))
+                        }
+                    }
+                }
+
+                existingArray.put(newPoint)
+                importedCount++
+            }
+
+            // Save array
+            existingFile.writeText(existingArray.toString(2))
+
+            // Upload last ID
+            prefs.edit().putInt("last_id", lastId).apply()
+
+            onSuccess(importedCount)
+
+        } catch (e: Exception) {
+            onError("Invalid JSON format: ${e.message}")
+        }
+
+    } catch (e: Exception) {
+        onError("Error reading file: ${e.message}")
+    }
+}
+
+
 // Save start point (once - delete to save new one)
 fun saveLocationToJsonAuto(context: Context, location: Location) {
     val file = File(context.filesDir, "auto_locations.json")
@@ -440,6 +522,48 @@ fun VerticalCategoryButton(
     }
 
 
+// FUNCTION CALCULATE GPX TRACK DATAS FOR REPORT GPX
+data class GpxStats(
+    val startDate: String,
+    val startTime: String,
+    val endDate: String,
+    val endTime: String,
+    val totalDistance: Float
+)
+
+fun calculateGpxStats(points: List<LatLong>): GpxStats? {
+    if (points.isEmpty()) return null
+
+    var totalDistance = 0f
+
+    // Calculate distance and elevation
+    for (i in 0 until points.size - 1) {
+        val current = points[i]
+        val next = points[i + 1]
+
+        // Distance calculation
+        val results = FloatArray(1)
+        Location.distanceBetween(
+            current.latitude, current.longitude,
+            next.latitude, next.longitude,
+            results
+        )
+        totalDistance += results[0]
+    }
+
+    val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+
+    return GpxStats(
+        startDate = currentDate,
+        startTime = currentTime,
+        endDate = currentDate,
+        endTime = currentTime,
+        totalDistance = totalDistance / 1000f
+    )
+}
+
+
     // Main composable
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -479,6 +603,9 @@ fun VerticalCategoryButton(
         val fusedLocationClient: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(context)
 
+        //  Operations on metadatas - imports - create new personal metadatas category
+        var pendingImportMetadataUri by remember { mutableStateOf<Uri?>(null) }
+
         // 🔹 real time tracking service state run
         val realTimeTrackPoints by GpsTrackingService.trackPointsFlow.collectAsState()
         var realTimePolyline by remember { mutableStateOf<Polyline?>(null) }
@@ -496,6 +623,11 @@ fun VerticalCategoryButton(
         var showLoadedGpxTrack by remember { mutableStateOf(true) }
         var isTrackingActive by remember {mutableStateOf(false)}
         var loadedGpxFileName by remember { mutableStateOf("") }
+        var showGpxReport by remember { mutableStateOf(false) }
+        var gpxStats by remember { mutableStateOf<GpxStats?>(null) }
+        var showStopTrackingDialog by remember { mutableStateOf(false) }
+        var gpxStatsRealTime by remember { mutableStateOf<GpxStats?>(null) }
+        var showGpxReportRealTime by remember { mutableStateOf(false) }
 
         // 🔹 Show loaded start point from file
         var showImportStartPointDialog by remember { mutableStateOf(false) }
@@ -528,6 +660,34 @@ fun VerticalCategoryButton(
                 }
             }
         }
+
+
+        // Launcher for metadata file picker
+        val metadataFilePickerLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+            onResult = { uri: Uri? ->
+                if (uri != null) {
+                    importMetadataFromFile(
+                        context = context,
+                        uri = uri,
+                        onSuccess = { count ->
+                            Toast.makeText(
+                                context,
+                                "✅ Successfully imported $count points with updated IDs",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        },
+                        onError = { error ->
+                            Toast.makeText(
+                                context,
+                                "❌ Error: $error",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    )
+                }
+            }
+        )
 
 
         // Launcher for GPX file picker
@@ -1042,10 +1202,10 @@ fun VerticalCategoryButton(
             if (buttonsVisible) {
                 VerticalCategoryButton(
                     text = "GPS TRACK MENU",
-                    alignment = Alignment.TopStart,
+                    alignment = Alignment.TopEnd,
                     onClick = { showTracciaMenu = true },
                     modifier = Modifier
-                        .align(Alignment.TopStart)
+                        .align(Alignment.TopEnd)
                         .padding(vertical = (144.dp + 70.dp + 2.dp))
                         .zIndex(2f)
                 )
@@ -1054,18 +1214,20 @@ fun VerticalCategoryButton(
             if (showTracciaMenu) {
                 val trackingItems = mutableListOf<Pair<String, () -> Unit>>()
 
-                // Start/End recording
+                // Start/Stop recording
                 trackingItems.add(
                     (if (isTracking) "Stop Gps Tracking" else "Start GPS Tracking") to {
-                        isTracking = !isTracking
-                        val intent = Intent(context, GpsTrackingService::class.java).apply {
-                            action = if (isTracking) {
-                                GpsTrackingService.ACTION_START
-                            } else {
-                                GpsTrackingService.ACTION_STOP
+                        if (isTracking) {
+                            // if recording, ask for save options
+                            showStopTrackingDialog = true
+                        } else {
+                            // start recording
+                            isTracking = true
+                            val intent = Intent(context, GpsTrackingService::class.java).apply {
+                                action = GpsTrackingService.ACTION_START
                             }
+                            context.startService(intent)
                         }
-                        context.startService(intent)
                     }
                 )
 
@@ -1078,12 +1240,42 @@ fun VerticalCategoryButton(
                             showSaveDialog = true
                         }
                     )
+
+                    // Report track on recording
+                    trackingItems.add(
+                        "Recording Track Report" to {
+                            if (realTimeTrackPoints.isNotEmpty()) {
+                                gpxStatsRealTime = calculateGpxStats(
+                                    realTimeTrackPoints.map { loc ->
+                                        LatLong(loc.latitude, loc.longitude)
+                                    }
+                                )
+                                showGpxReportRealTime = true
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "No tracking data available yet",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    )
                 }
 
                 // Load track
                 trackingItems.add(
                     "Load GPX Track" to {gpxFilePickerLauncher.launch("*/*")}
+                )
+
+                // Show GPX Report (for loaded track)
+                if (loadedGpxTrack.isNotEmpty()) {
+                    trackingItems.add(
+                        "GPX Track Report" to {
+                            gpxStats = calculateGpxStats(loadedGpxTrack)
+                            showGpxReport = true
+                        }
                     )
+                }
 
                 // Show/Hide track (if loaded)
                 if (loadedGpxTrack.isNotEmpty()) {
@@ -1102,7 +1294,6 @@ fun VerticalCategoryButton(
                             Toast.makeText(context, "Track cleared from map", Toast.LENGTH_SHORT).show()
                         }
                     )
-
                 }
 
                 CategoryMenu(
@@ -1113,124 +1304,188 @@ fun VerticalCategoryButton(
             }
 
 
-                // ========== START POINT (RIGHT SIDE) ==========
-                            if (buttonsVisible) {
-                                VerticalCategoryButton(
-                                    text = "START MENU",
-                                    alignment = Alignment.TopEnd,
-                                    onClick = { showPartenzaMenu = true },
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(vertical = 144.dp)
-                                        .zIndex(2f)
-                                )
-                            }
+            // ========== START POINT (RIGHT SIDE) ==========
+            if (buttonsVisible) {
+                VerticalCategoryButton(
+                    text = "START MENU",
+                    alignment = Alignment.TopEnd,
+                    onClick = { showPartenzaMenu = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(vertical = 144.dp)
+                        .zIndex(2f)
+                )
+            }
 
-                        if (showPartenzaMenu) {
-                            CategoryMenu(
-                                title = "Start point menu",
-                                items = listOf(
-                                    "Save start point" to {
-                                        userLocation?.let { loc ->
-                                            saveLocationToJsonAuto(context, loc)
-                                        }
-                                    },
+            if (showPartenzaMenu) {
+                // Check if start point saved
+                val hasStartPoint = hasExistingStartPoint(context)
 
-                                    "Import start point from file" to {
-                                        startPointFilePickerLauncher.launch("application/json")
-                                    },
+                // Build the item list
+                val startPointItems = mutableListOf<Pair<String, () -> Unit>>()
 
-                                    (if (showCarMarker) "Hide start point" else "Show start point") to {
-                                        mapViewRef?.let { map ->
-                                            if (!showCarMarker) {
-                                                val file = File(context.filesDir, "auto_locations.json")
-                                                if (file.exists() && file.length() > 0) {
-                                                    try {
-                                                        val jsonArray = JSONArray(file.readText())
-                                                        if (jsonArray.length() > 0) {
-                                                            val locationJson = jsonArray.getJSONObject(0)
-                                                            val latitude = locationJson.getDouble("latitude")
-                                                            val longitude = locationJson.getDouble("longitude")
-                                                            val geoPoint = LatLong(latitude, longitude)
-
-                                                            userLocation?.let { currentLoc ->
-                                                                val startLocation = Location("").apply {
-                                                                    setLatitude(latitude)
-                                                                    setLongitude(longitude)
-                                                                }
-                                                                val distance = currentLoc.distanceTo(startLocation) / 1000f
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    String.format(
-                                                                        Locale.getDefault(),
-                                                                        "📍 Start point. Distance: %.2f km",
-                                                                        distance
-                                                                    ),
-                                                                    Toast.LENGTH_LONG
-                                                                ).show()
-                                                            } ?: run {
-                                                                Toast.makeText(
-                                                                    context,
-                                                                    "📍 Start point.",
-                                                                    Toast.LENGTH_LONG
-                                                                ).show()
-                                                            }
-
-                                                            val drawable = ResourcesCompat.getDrawable(
-                                                                context.resources,
-                                                                R.drawable.ic_marker,
-                                                                null
-                                                            )
-                                                            val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-                                                            carMarker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
-                                                            map.layerManager.layers.add(carMarker)
-                                                            map.model.mapViewPosition.setCenter(geoPoint)
-                                                            showCarMarker = true
-                                                                                                                    }
-                                                    } catch (e: Exception) {
-                                                        Toast.makeText(context, "❌ Start point reading error", Toast.LENGTH_LONG).show()
-                                                    }
-                                                } else {
-                                                    Toast.makeText(context, "⚠️ No start point saved.", Toast.LENGTH_LONG).show()
-                                                }
-                                            } else {
-                                                carMarker?.let { marker ->
-                                                    map.layerManager.layers.remove(marker)
-                                                }
-                                                carMarker = null
-                                                showCarMarker = false
-                                                Toast.makeText(context, "Start point removed.", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    },
-
-                                    "Start point report" to {
-                                        val file = File(context.filesDir, "auto_locations.json")
-                                        if (file.exists() && file.length() > 0) {
-                                            try {
-                                                val jsonArray = JSONArray(file.readText())
-                                                if (jsonArray.length() > 0) {
-                                                    showStartPointReport = true
-                                                } else {
-                                                    Toast.makeText(context, "⚠️ No start point saved.", Toast.LENGTH_LONG).show()
-                                                }
-                                            } catch (e: Exception) {
-                                                Toast.makeText(context, "❌ Error reading start point.", Toast.LENGTH_LONG).show()
-                                            }
-                                        } else {
-                                            Toast.makeText(context, "⚠️ No start point saved.", Toast.LENGTH_LONG).show()
-                                        }
-                                    },
-                                    "Export start point" to {
-                                        exportStartPointToDownload(context)
-                                    },
-                                    "Remove start point" to {
-                                        showConfirmDialogAuto = true
-                                    }
-                                ),
-                                onDismiss = { showPartenzaMenu = false }
-                            )
+                // Commands always visibles
+                startPointItems.add(
+                    "Save start point" to {
+                        userLocation?.let { loc ->
+                            saveLocationToJsonAuto(context, loc)
                         }
+                    }
+                )
+
+                startPointItems.add(
+                    "Import start point from file" to {
+                        startPointFilePickerLauncher.launch("application/json")
+                    }
+                )
+
+                startPointItems.add(
+                    (if (showCarMarker) "Hide start point" else "Show start point") to {
+                        mapViewRef?.let { map ->
+                            if (!showCarMarker) {
+                                val file = File(context.filesDir, "auto_locations.json")
+                                if (file.exists() && file.length() > 0) {
+                                    try {
+                                        val jsonArray = JSONArray(file.readText())
+                                        if (jsonArray.length() > 0) {
+                                            val locationJson = jsonArray.getJSONObject(0)
+                                            val latitude = locationJson.getDouble("latitude")
+                                            val longitude = locationJson.getDouble("longitude")
+                                            val geoPoint = LatLong(latitude, longitude)
+
+                                            userLocation?.let { currentLoc ->
+                                                val startLocation = Location("").apply {
+                                                    setLatitude(latitude)
+                                                    setLongitude(longitude)
+                                                }
+                                                val distance = currentLoc.distanceTo(startLocation) / 1000f
+                                                Toast.makeText(
+                                                    context,
+                                                    String.format(
+                                                        Locale.getDefault(),
+                                                        "📍 Start point. Distance: %.2f km",
+                                                        distance
+                                                    ),
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            } ?: run {
+                                                Toast.makeText(
+                                                    context,
+                                                    "📍 Start point.",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+
+                                            val drawable = ResourcesCompat.getDrawable(
+                                                context.resources,
+                                                R.drawable.ic_marker,
+                                                null
+                                            )
+                                            val markerBitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+                                            carMarker = Marker(geoPoint, markerBitmap, 0, -markerBitmap.height / 2)
+                                            map.layerManager.layers.add(carMarker)
+                                            map.model.mapViewPosition.setCenter(geoPoint)
+                                            showCarMarker = true
+                                        }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "❌ Start point reading error", Toast.LENGTH_LONG).show()
+                                    }
+                                } else {
+                                    Toast.makeText(context, "⚠️ No start point saved.", Toast.LENGTH_LONG).show()
+                                }
+                            } else {
+                                carMarker?.let { marker ->
+                                    map.layerManager.layers.remove(marker)
+                                }
+                                carMarker = null
+                                showCarMarker = false
+                                Toast.makeText(context, "Start point removed.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                )
+
+                // Commands visible only if start point exist
+                if (hasStartPoint) {
+                    startPointItems.add(
+                        "Start point report" to {
+                            val file = File(context.filesDir, "auto_locations.json")
+                            if (file.exists() && file.length() > 0) {
+                                try {
+                                    val jsonArray = JSONArray(file.readText())
+                                    if (jsonArray.length() > 0) {
+                                        showStartPointReport = true
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "❌ Error reading start point.", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    )
+
+                    startPointItems.add(
+                        "Export start point" to {
+                            exportStartPointToDownload(context)
+                        }
+                    )
+
+                    startPointItems.add(
+                        "Remove start point" to {
+                            showConfirmDialogAuto = true
+                        }
+                    )
+                }
+
+                CategoryMenu(
+                    title = "Start point menu",
+                    items = startPointItems,
+                    onDismiss = { showPartenzaMenu = false }
+                )
+            }
+
+
+// ========== METADATAS IMPORT AND OPERATIONS ON PERSONAL METADATAS TABLES (RIGHT SIDE) ==========
+            if (buttonsVisible) {
+                VerticalCategoryButton(
+                    text = "PERSONALIZED METADATAS",
+                    alignment = Alignment.TopStart,
+                    onClick = { showDatiMenu = true },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(vertical = (144.dp + 70.dp + 2.dp))
+                        .zIndex(2f)
+                )
+            }
+
+            if (showDatiMenu) {
+                // Build the item list - always visible
+                val metadataItems = mutableListOf<Pair<String, () -> Unit>>()
+
+                // Import metadatas
+                metadataItems.add(
+                    "Import metadatas from file" to {
+                        metadataFilePickerLauncher.launch("application/json")
+                    }
+                )
+
+                metadataItems.add(
+                    "Export metadatas to file" to {
+                        exportJsonToDownload(context)
+                    }
+                )
+
+                metadataItems.add(
+                    "View saved metadatas" to {
+                        showTable = true
+                    }
+                )
+
+                CategoryMenu(
+                    title = "Personalized Metadatas Menu",
+                    items = metadataItems,
+                    onDismiss = { showDatiMenu = false }
+                )
+            }
 
 
                             // Marker GPS uploaded
@@ -2147,6 +2402,7 @@ fun VerticalCategoryButton(
                 )
             }
 
+
             // Advisor Metadata selected (Temporary or Persistent)
             val activeMetadataText = if (selectedMetadata.isNotEmpty()) {
                 if (selectedMetadata.size == 1 && selectedMetadata.containsKey("Number")) {
@@ -2386,6 +2642,205 @@ fun VerticalCategoryButton(
                             }
                         ) {
                             Text("Cancel", fontFamily = MyCustomFont)
+                        }
+                    }
+                )
+            }
+
+
+            // Dialog show GPX track report
+            if (showGpxReport && gpxStats != null) {
+                val stats = gpxStats!!
+
+                val reportText = """
+        📊 GPX TRACK REPORT
+        
+        ━━━━━━━━━━━━━━━━━━━━━━
+        TRACK FILE
+        ━━━━━━━━━━━━━━━━━━━━━━
+        📁 File: $loadedGpxFileName
+        📍 Points: ${loadedGpxTrack.size}
+        
+        ━━━━━━━━━━━━━━━━━━━━━━
+        START DATA
+        ━━━━━━━━━━━━━━━━━━━━━━
+        📅 Date: ${stats.startDate}
+        🕐 Time: ${stats.startTime}
+        🌐 Latitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.first().latitude)}
+        🌐 Longitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.first().longitude)}
+        
+        ━━━━━━━━━━━━━━━━━━━━━━
+        END DATA
+        ━━━━━━━━━━━━━━━━━━━━━━
+        📅 Date: ${stats.endDate}
+        🕐 Time: ${stats.endTime}
+        🌐 Latitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.last().latitude)}
+        🌐 Longitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.last().longitude)}
+        
+        ━━━━━━━━━━━━━━━━━━━━━━
+        TRACK STATISTICS
+        ━━━━━━━━━━━━━━━━━━━━━━
+        📏 Total Distance: ${String.format(Locale.getDefault(), "%.2f km", stats.totalDistance)}
+        ━━━━━━━━━━━━━━━━━━━━━━
+    """.trimIndent()
+
+                AlertDialog(
+                    onDismissRequest = { showGpxReport = false },
+                    shape = RectangleShape,
+                    title = {
+                        Text(
+                            "GPX Track Report",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        LazyColumn {
+                            item {
+                                Text(
+                                    text = reportText,
+                                    fontFamily = MyCustomFont,
+                                    fontSize = 16.sp,
+                                    lineHeight = 20.sp
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showGpxReport = false }) {
+                            Text("OK", fontFamily = MyCustomFont)
+                        }
+                    }
+                )
+            }
+
+
+            // Dialog show Real-Time GPS track report (recording)
+            if (showGpxReportRealTime && gpxStatsRealTime != null) {
+                val stats = gpxStatsRealTime!!
+
+                val reportText = """
+        📊 REAL-TIME GPS TRACK REPORT
+        
+        ┌────────────────────────
+        RECORDING STATUS
+        ┌────────────────────────
+        🔴 Status: RECORDING
+        📍 Points: ${realTimeTrackPoints.size}
+        
+        ┌────────────────────────
+        START DATA
+        ┌────────────────────────
+        📅 Date: ${stats.startDate}
+        🕐 Time: ${stats.startTime}
+        🌍 Latitude: ${String.format(Locale.getDefault(), "%.6f", realTimeTrackPoints.firstOrNull()?.latitude ?: 0.0)}
+        🌍 Longitude: ${String.format(Locale.getDefault(), "%.6f", realTimeTrackPoints.firstOrNull()?.longitude ?: 0.0)}
+        
+        ┌────────────────────────
+        CURRENT DATA
+        ┌────────────────────────
+        📅 Date: ${stats.endDate}
+        🕐 Time: ${stats.endTime}
+        🌍 Latitude: ${String.format(Locale.getDefault(), "%.6f", realTimeTrackPoints.lastOrNull()?.latitude ?: 0.0)}
+        🌍 Longitude: ${String.format(Locale.getDefault(), "%.6f", realTimeTrackPoints.lastOrNull()?.longitude ?: 0.0)}
+        
+        ┌────────────────────────
+        TRACK STATISTICS
+        ┌────────────────────────
+        📏 Total Distance: ${String.format(Locale.getDefault(), "%.2f km", stats.totalDistance)}
+        ┌────────────────────────
+    """.trimIndent()
+
+                AlertDialog(
+                    onDismissRequest = { showGpxReportRealTime = false },
+                    shape = RectangleShape,
+                    title = {
+                        Text(
+                            "Real-Time Track Report",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Red
+                        )
+                    },
+                    text = {
+                        LazyColumn {
+                            item {
+                                Text(
+                                    text = reportText,
+                                    fontFamily = MyCustomFont,
+                                    fontSize = 16.sp,
+                                    lineHeight = 20.sp
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showGpxReportRealTime = false }) {
+                            Text("OK", fontFamily = MyCustomFont)
+                        }
+                    }
+                )
+            }
+
+
+            // Dialog stop tracking with confirm
+            if (showStopTrackingDialog) {
+                AlertDialog(
+                    onDismissRequest = { showStopTrackingDialog = false },
+                    shape = RectangleShape,
+                    title = {
+                        Text(
+                            "Stop GPS Tracking",
+                            fontFamily = MyCustomFont,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Text(
+                            "Do you want to save the GPS track before stopping the recording?",
+                            fontFamily = MyCustomFont
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                // Save before stop
+                                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                                fileName = "track_$timestamp"
+                                showStopTrackingDialog = false
+                                showSaveDialog = true
+                                // After save, stop recording
+                                isTracking = false
+                                val intent = Intent(context, GpsTrackingService::class.java).apply {
+                                    action = GpsTrackingService.ACTION_STOP
+                                }
+                                context.startService(intent)
+                            }
+                        ) {
+                            Text("Save and Stop", fontFamily = MyCustomFont)
+                        }
+                    },
+                    dismissButton = {
+                        Column {
+                            TextButton(
+                                onClick = {
+                                    // Stop without save
+                                    showStopTrackingDialog = false
+                                    isTracking = false
+                                    val intent = Intent(context, GpsTrackingService::class.java).apply {
+                                        action = GpsTrackingService.ACTION_STOP
+                                    }
+                                    context.startService(intent)
+                                    Toast.makeText(context, "Tracking stopped without saving", Toast.LENGTH_SHORT).show()
+                                }
+                            ) {
+                                Text("Stop without saving", fontFamily = MyCustomFont)
+                            }
+                            TextButton(
+                                onClick = { showStopTrackingDialog = false }
+                            ) {
+                                Text("Cancel", fontFamily = MyCustomFont)
+                            }
                         }
                     }
                 )

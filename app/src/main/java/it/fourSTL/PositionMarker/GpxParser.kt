@@ -26,7 +26,7 @@ object GpxParser {
             var eventType = parser.eventType
             while (eventType != XmlPullParser.END_DOCUMENT) {
                 if (eventType == XmlPullParser.START_TAG && parser.name == "trkpt") {
-                    // Quando trova un "trkpt", ne estrae la latitudine e la longitudine
+                    // if it's a track point, parse the high, lat and lon attributes
                     val lat = parser.getAttributeValue(null, "lat")?.toDoubleOrNull()
                     val lon = parser.getAttributeValue(null, "lon")?.toDoubleOrNull()
 
