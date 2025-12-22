@@ -319,12 +319,8 @@ class BluetoothGroupSharing(
     }
 
     // ==================== GATT SERVER (HOST) ====================
-    private fun setupGattServer(group: Group) {
-        if (!hasBluetoothPermissions()) {
-            Log.e(TAG, "Cannot setup GATT server without permissions.")
-            return
-        }
 
+    private fun setupGattServer(group: Group) {
         try {
             val characteristic = BluetoothGattCharacteristic(
                 CHARACTERISTIC_UUID,
@@ -335,109 +331,136 @@ class BluetoothGroupSharing(
                         BluetoothGattCharacteristic.PERMISSION_WRITE
             )
 
-            val service = BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
+            val service = BluetoothGattService(
+                SERVICE_UUID,
+                BluetoothGattService.SERVICE_TYPE_PRIMARY
+            )
             service.addCharacteristic(characteristic)
 
-            gattServer = bluetoothManager.openGattServer(context, gattServerCallback)
+            gattServer = bluetoothManager.openGattServer(context, object : BluetoothGattServerCallback() {
+
+                override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
+                    super.onConnectionStateChange(device, status, newState)
+
+                    if (newState == BluetoothProfile.STATE_CONNECTED) {
+                        Log.d(TAG, "Guest connected: ${device?.address}")
+                        _sharingState.value = SharingState.Handshaking
+                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        Log.d(TAG, "Guest disconnected")
+                        if (_sharingState.value !is SharingState.Success) {
+                            _sharingState.value = SharingState.Idle
+                        }
+                    }
+                }
+
+                override fun onCharacteristicReadRequest(
+                    device: BluetoothDevice?,
+                    requestId: Int,
+                    offset: Int,
+                    characteristic: BluetoothGattCharacteristic?
+                ) {
+                    if (characteristic?.uuid == CHARACTERISTIC_UUID) {
+                        // Invia chiave pubblica ECDH
+                        val publicKeyBytes = localKeyPair?.public?.encoded ?: byteArrayOf()
+                        val message = HandshakeMessage(
+                            type = "KEY_EXCHANGE",
+                            publicKey = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP),
+                            deviceName = groupManager.getDeviceName(),
+                            groupName = group.name
+                        )
+
+                        val response = json.encodeToString(message).toByteArray(Charsets.UTF_8)
+
+                        try {
+                            gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, response)
+                            Log.d(TAG, "Sent public key to guest")
+                        } catch (e: SecurityException) {
+                            Log.e(TAG, "Security exception sending response", e)
+                        }
+                    }
+                }
+
+                override fun onCharacteristicWriteRequest(
+                    device: BluetoothDevice?,
+                    requestId: Int,
+                    characteristic: BluetoothGattCharacteristic?,
+                    preparedWrite: Boolean,
+                    responseNeeded: Boolean,
+                    offset: Int,
+                    value: ByteArray?
+                ) {
+                    if (characteristic?.uuid == CHARACTERISTIC_UUID && value != null) {
+                        try {
+                            val messageJson = String(value, Charsets.UTF_8)
+                            val message = json.decodeFromString<HandshakeMessage>(messageJson)
+
+                            when (message.type) {
+                                "KEY_EXCHANGE" -> {
+                                    // Ricevi chiave pubblica guest e calcola segreto condiviso
+                                    val guestPublicKey = Base64.decode(message.publicKey, Base64.NO_WRAP)
+                                    sharedSecret = computeSharedSecret(guestPublicKey)
+
+                                    // Cripta e invia dati gruppo
+                                    val groupJson = json.encodeToString(group)
+                                    val encryptedGroup = encryptWithSharedSecret(groupJson)
+
+                                    val responseMsg = HandshakeMessage(
+                                        type = "GROUP_DATA",
+                                        encryptedData = encryptedGroup.first,
+                                        iv = encryptedGroup.second
+                                    )
+
+                                    characteristic.value = json.encodeToString(responseMsg).toByteArray(Charsets.UTF_8)
+
+                                    try {
+                                        gattServer?.notifyCharacteristicChanged(device, characteristic, false)
+                                        _sharingState.value = SharingState.Success(group.name)
+                                        Log.d(TAG, "Group data sent successfully")
+
+                                        // Chiudi connessione dopo 2 secondi
+                                        scope.launch {
+                                            delay(2000)
+                                            gattServer?.cancelConnection(device)
+                                            stopAdvertising()
+                                        }
+                                    } catch (e: SecurityException) {
+                                        Log.e(TAG, "Security exception notifying", e)
+                                    }
+                                }
+                            }
+
+                            if (responseNeeded) {
+                                try {
+                                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                                } catch (e: SecurityException) {
+                                    Log.e(TAG, "Security exception sending response", e)
+                                }
+                            }
+
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to process write request", e)
+                            if (responseNeeded) {
+                                try {
+                                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                                } catch (se: SecurityException) {
+                                    Log.e(TAG, "Security exception sending error response", se)
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+
             gattServer?.addService(service)
+            Log.d(TAG, "GATT Server setup complete")
 
         } catch (e: SecurityException) {
             Log.e(TAG, "Security exception setting up GATT server", e)
-            _sharingState.value = SharingState.Error("Security error: ${e.message}")
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception setting up GATT server", e)
-            _sharingState.value = SharingState.Error("GATT setup failed: ${e.message}")
+            throw e
         }
     }
 
     // ==================== CALLBACKS ====================
-
-    // Add this callback definition alongside your other callbacks
-    private val gattServerCallback = object : BluetoothGattServerCallback() {
-        override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
-            super.onConnectionStateChange(device, status, newState)
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.d(TAG, "GATT Server: Client connected - ${device?.address}")
-                // You can update UI state here if needed
-                _sharingState.value = SharingState.Handshaking
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.d(TAG, "GATT Server: Client disconnected - ${device?.address}")
-                // If the process wasn't successful, show an error
-                if (_sharingState.value !is SharingState.Success) {
-                    _sharingState.value = SharingState.Error("Client disconnected")
-                }
-            }
-        }
-
-        override fun onCharacteristicReadRequest(
-            device: BluetoothDevice?,
-            requestId: Int,
-            offset: Int,
-            characteristic: BluetoothGattCharacteristic?
-        ) {
-            super.onCharacteristicReadRequest(device, requestId, offset, characteristic)
-            if (characteristic!!.uuid == CHARACTERISTIC_UUID) {
-                Log.d(TAG, "Read request for characteristic: ${characteristic.uuid}")
-                try {
-                    // Respond with some value, e.g., the public key for the initial handshake
-                    // This logic might need to be adjusted based on your exact protocol.
-                    val publicKeyBytes = localKeyPair?.public?.encoded ?: byteArrayOf()
-                    val message = HandshakeMessage(
-                        type = "KEY_EXCHANGE",
-                        publicKey = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP),
-                        deviceName = groupManager.getDeviceName(),
-                        groupName = "GROUP_NAME_PLACEHOLDER" // Replace with actual group name if available
-                    )
-                    val response = json.encodeToString(message).toByteArray(Charsets.UTF_8)
-                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, response)
-                } catch (e: SecurityException) {
-                    Log.e(TAG, "Security exception on read request", e)
-                }
-            } else {
-                // Invalid characteristic requested
-                try {
-                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
-                } catch (e: SecurityException) {
-                    Log.e(TAG, "Security exception sending failure response", e)
-                }
-            }
-        }
-
-        override fun onCharacteristicWriteRequest(
-            device: BluetoothDevice?,
-            requestId: Int,
-            characteristic: BluetoothGattCharacteristic?,
-            preparedWrite: Boolean,
-            responseNeeded: Boolean,
-            offset: Int,
-            value: ByteArray?
-        ) {
-            super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value)
-            if (characteristic!!.uuid == CHARACTERISTIC_UUID && value != null) {
-                Log.d(TAG, "Write request received with value: ${String(value)}")
-                // Process the written value here (e.g., received guest public key)
-
-                if (responseNeeded) {
-                    try {
-                        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
-                    } catch (e: SecurityException) {
-                        Log.e(TAG, "Security exception sending write response", e)
-                    }
-                }
-            } else if (responseNeeded) {
-                try {
-                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
-                } catch (e: SecurityException) {
-                    Log.e(TAG, "Security exception sending failure response", e)
-                }
-            }
-        }
-
-        override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
-            super.onNotificationSent(device, status)
-            Log.d(TAG, "Notification sent with status: $status")
-        }
-    }
 
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
@@ -454,10 +477,8 @@ class BluetoothGroupSharing(
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result?.let { scanResult ->
                 try {
-                    val serviceData =
-                        scanResult.scanRecord?.getServiceData(ParcelUuid(SERVICE_UUID))
-                    val groupName =
-                        serviceData?.let { String(it, Charsets.UTF_8) } ?: "Unknown Group"
+                    val serviceData = scanResult.scanRecord?.getServiceData(ParcelUuid(SERVICE_UUID))
+                    val groupName = serviceData?.let { String(it, Charsets.UTF_8) } ?: "Unknown Group"
                     val deviceName = scanResult.device.name ?: "Unknown Device"
 
                     val discovered = DiscoveredGroup(
@@ -473,8 +494,6 @@ class BluetoothGroupSharing(
                         currentList.add(discovered)
                         _discoveredGroups.value = currentList
                         Log.d(TAG, "Discovered group: $groupName from $deviceName")
-                    } else {
-                        Log.d(TAG, "Group already discovered: $groupName from $deviceName")
                     }
                 } catch (e: SecurityException) {
                     Log.e(TAG, "Security exception processing scan result", e)
@@ -537,7 +556,7 @@ class BluetoothGroupSharing(
             characteristic: BluetoothGattCharacteristic?,
             status: Int
         ) {
-            if (status == BluetoothGatt.GATT_SUCCESS && characteristic!!.uuid == CHARACTERISTIC_UUID) {
+            if (status == BluetoothGatt.GATT_SUCCESS && characteristic?.uuid == CHARACTERISTIC_UUID) {
                 try {
                     val value = characteristic.value
                     val messageJson = String(value, Charsets.UTF_8)
@@ -570,12 +589,11 @@ class BluetoothGroupSharing(
             }
         }
 
-
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?
         ) {
-            if (characteristic!!.uuid == CHARACTERISTIC_UUID) {
+            if (characteristic?.uuid == CHARACTERISTIC_UUID) {
                 try {
                     val value = characteristic.value
                     val messageJson = String(value, Charsets.UTF_8)
