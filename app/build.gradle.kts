@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "it.fourSTL.PositionMarker"
-        minSdk = 27 //  Min API level for Google Maps SDK
+        minSdk = 21 //  Min API level for Google Maps SDK
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
