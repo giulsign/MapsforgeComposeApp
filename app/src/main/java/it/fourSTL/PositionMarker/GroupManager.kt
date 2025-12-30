@@ -122,10 +122,11 @@ class GroupManager(private val context: Context) {
             name = groupName,
             encryptionKey = encryptionKey,
             createdAt = currentTime,
-            isHost = true
+            isHost = true,
+            members = mutableListOf()
         )
 
-        // Ad this device as first member
+        // Ad this device as first members
         val hostMember = GroupMember(
             deviceId = getDeviceId(),
             deviceName = getDeviceName(),

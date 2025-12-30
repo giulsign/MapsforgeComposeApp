@@ -1177,7 +1177,8 @@ fun GroupDetailsDialog(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(group.members) { member ->
+                    val uniqueMembers = group.members.distinctBy { it.deviceId }
+                    items(uniqueMembers) { member ->
                         MemberListItem(
                             member = member,
                             isCurrentUser = member.deviceId == groupManager.getDeviceId()

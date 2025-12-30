@@ -674,15 +674,22 @@ class BluetoothGroupSharing(
 
     private fun GroupManager.joinGroup(group: Group): Group? {
         return try {
-            val guestGroup = group.copy(isHost = false, members = mutableListOf())
-
-            val guestMember = GroupMember(
-                deviceId = getDeviceId(),
-                deviceName = getDeviceName(),
-                joinedAt = System.currentTimeMillis(),
-                isOnline = true
+            val guestGroup = group.copy(
+                isHost = false,
+                members = group.members.toMutableList()
             )
-            guestGroup.members.add(guestMember)
+
+            val deviceAlreadyExists = guestGroup.members.any { it.deviceId == getDeviceId() }
+
+            if (!deviceAlreadyExists) {
+                val guestMember = GroupMember(
+                    deviceId = getDeviceId(),
+                    deviceName = getDeviceName(),
+                    joinedAt = System.currentTimeMillis(),
+                    isOnline = true
+                )
+                guestGroup.members.add(guestMember)
+            }
 
             val prefs = context.getSharedPreferences("group_sharing_prefs", Context.MODE_PRIVATE)
             val jsonInstance = kotlinx.serialization.json.Json {
