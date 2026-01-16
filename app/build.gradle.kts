@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
     kotlin("android")
-    id("com.mikepenz.aboutlibraries.plugin")
     kotlin("plugin.serialization")// version "1.9.25"
+    id("com.mikepenz.aboutlibraries.plugin")
 }
 
 android {
@@ -11,10 +11,10 @@ android {
 
     defaultConfig {
         applicationId = "it.fourSTL.PositionMarker"
-        minSdk = 21 //  Min API level for Google Maps SDK
+        minSdk = 27 //  Min API level for Google Maps SDK
         targetSdk = 34
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
     }
 
     compileOptions {
@@ -22,8 +22,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    //kotlinOptions {
+    //    jvmTarget = "17"
+    //}
+
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs += "-opt-in=kotlinx.serialization.InternalSerializationApi"
     }
 
     buildFeatures {

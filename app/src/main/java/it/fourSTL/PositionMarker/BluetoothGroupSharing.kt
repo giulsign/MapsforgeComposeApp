@@ -9,10 +9,12 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Base64
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
@@ -59,6 +61,9 @@ class BluetoothGroupSharing(
     private var localKeyPair: KeyPair? = null
     private var sharedSecret: ByteArray? = null
 
+    private var isAdvertising = false
+    private var isScanning = false
+
     // Coroutine scope
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -82,6 +87,7 @@ class BluetoothGroupSharing(
     }
 
     @Serializable
+    //@OptIn(InternalSerializationApi::class)
     data class DiscoveredGroup(
         val groupName: String,
         val deviceName: String,
@@ -90,6 +96,7 @@ class BluetoothGroupSharing(
     )
 
     @Serializable
+    //@OptIn(InternalSerializationApi::class)
     data class HandshakeMessage(
         val type: String, // "HELLO", "KEY_EXCHANGE", "GROUP_DATA"
         val publicKey: String? = null,
@@ -101,7 +108,7 @@ class BluetoothGroupSharing(
 
     // ==================== PERMISSION CHECK ====================
 
-    fun hasBluetoothPermissions(): Boolean {
+    /*fun hasBluetoothPermissions(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
                     PackageManager.PERMISSION_GRANTED &&
@@ -117,11 +124,30 @@ class BluetoothGroupSharing(
                     ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
                     PackageManager.PERMISSION_GRANTED
         }
+    }*/
+    fun hasBluetoothPermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED
+        } else {
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADMIN) ==
+                    PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED
+        }
     }
 
     // ==================== HOST: START ADVERTISING ====================
 
-    fun startAdvertising(group: Group) {
+    /*fun startAdvertising(group: Group) {
         if (!hasBluetoothPermissions()) {
             _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
             return
@@ -166,10 +192,78 @@ class BluetoothGroupSharing(
             Log.e(TAG, "Failed to start advertising", e)
             _sharingState.value = SharingState.Error("Failed to advertise: ${e.message}")
         }
+    }*/
+
+    fun startAdvertising(group: Group) {
+        // Ferma advertising esistente prima di iniziarne uno nuovo
+        if (isAdvertising) {
+            Log.w(TAG, "Already advertising, stopping first")
+            stopAdvertising()
+            // Aspetta un attimo prima di riavviare
+            Thread.sleep(500)
+        }
+
+        if (!hasBluetoothPermissions()) {
+            _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
+            return
+        }
+
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            _sharingState.value = SharingState.Error("Bluetooth is disabled")
+            return
+        }
+
+        try {
+            generateKeyPair()
+            setupGattServer(group)
+            bleAdvertiser = bluetoothAdapter.bluetoothLeAdvertiser
+
+            if (bleAdvertiser == null) {
+                _sharingState.value = SharingState.Error("BLE Advertiser not available")
+                return
+            }
+
+            val settings = AdvertiseSettings.Builder()
+                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+                .setConnectable(true)
+                .setTimeout(0)
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+                .build()
+
+            // Advertising packet: SOLO il service UUID
+            val advertiseData = AdvertiseData.Builder()
+                .setIncludeDeviceName(false)
+                .setIncludeTxPowerLevel(false)
+                .addServiceUuid(ParcelUuid(SERVICE_UUID))
+                .build()
+
+            // Scan Response: nome del gruppo
+            val scanResponse = AdvertiseData.Builder()
+                .setIncludeDeviceName(false)
+                .addServiceData(
+                    ParcelUuid(SERVICE_UUID),
+                    group.name.toByteArray(Charsets.UTF_8).take(20).toByteArray()
+                )
+                .build()
+
+            bleAdvertiser?.startAdvertising(settings, advertiseData, scanResponse, advertiseCallback)
+            isAdvertising = true
+            _sharingState.value = SharingState.Advertising
+            Log.d(TAG, "Started advertising group: ${group.name}")
+
+        } catch (e: SecurityException) {
+            isAdvertising = false
+            Log.e(TAG, "Security exception during advertising", e)
+            _sharingState.value = SharingState.Error("Security error: ${e.message}")
+        } catch (e: Exception) {
+            isAdvertising = false
+            Log.e(TAG, "Failed to start advertising", e)
+            _sharingState.value = SharingState.Error("Failed to advertise: ${e.message}")
+        }
     }
 
 
-    fun stopAdvertising() {
+    /*fun stopAdvertising() {
         try {
             bleAdvertiser?.stopAdvertising(advertiseCallback)
             gattServer?.close()
@@ -179,12 +273,38 @@ class BluetoothGroupSharing(
         } catch (e: SecurityException) {
             Log.e(TAG, "Security exception stopping advertising", e)
         }
+    }*/
+
+    fun stopAdvertising() {
+        if (!isAdvertising) {
+            Log.d(TAG, "Not advertising, nothing to stop")
+            return
+        }
+
+        try {
+            bleAdvertiser?.stopAdvertising(advertiseCallback)
+            isAdvertising = false
+            gattServer?.clearServices()
+            gattServer?.close()
+            gattServer = null
+
+            if (_sharingState.value is SharingState.Advertising) {
+                _sharingState.value = SharingState.Idle
+            }
+            Log.d(TAG, "Stopped advertising")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception stopping advertising", e)
+            isAdvertising = false
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception stopping advertising", e)
+            isAdvertising = false
+        }
     }
 
     // ==================== GUEST: START SCANNING ====================
 
 
-    fun startScanning() {
+    /*fun startScanning() {
         if (!hasBluetoothPermissions()) {
             _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
             return
@@ -225,10 +345,67 @@ class BluetoothGroupSharing(
             Log.e(TAG, "Failed to start scanning", e)
             _sharingState.value = SharingState.Error("Failed to scan: ${e.message}")
         }
+    }*/
+
+    fun startScanning() {
+        // Ferma scan esistente
+        if (isScanning) {
+            Log.w(TAG, "Already scanning, stopping first")
+            stopScanning()
+            Thread.sleep(300)
+        }
+
+        if (!hasBluetoothPermissions()) {
+            _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
+            return
+        }
+
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            _sharingState.value = SharingState.Error("Bluetooth is disabled")
+            return
+        }
+
+        try {
+            generateKeyPair()
+            bleScanner = bluetoothAdapter.bluetoothLeScanner
+
+            if (bleScanner == null) {
+                _sharingState.value = SharingState.Error("BLE Scanner not available")
+                return
+            }
+
+            val scanFilter = ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(SERVICE_UUID))
+                .build()
+
+            val scanSettings = ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .build()
+
+            bleScanner?.startScan(listOf(scanFilter), scanSettings, scanCallback)
+            isScanning = true
+            _sharingState.value = SharingState.Scanning
+            Log.d(TAG, "Started scanning for groups")
+
+            // Timeout dopo 30 secondi
+            scope.launch {
+                delay(SCAN_TIMEOUT_MS)
+                stopScanning()
+            }
+
+        } catch (e: SecurityException) {
+            isScanning = false
+            Log.e(TAG, "Security exception during scanning", e)
+            _sharingState.value = SharingState.Error("Security error: ${e.message}")
+        } catch (e: Exception) {
+            isScanning = false
+            Log.e(TAG, "Failed to start scanning", e)
+            _sharingState.value = SharingState.Error("Failed to scan: ${e.message}")
+        }
     }
 
 
-    fun stopScanning() {
+    /*fun stopScanning() {
         try {
             bleScanner?.stopScan(scanCallback)
             if (_sharingState.value is SharingState.Scanning) {
@@ -238,9 +415,33 @@ class BluetoothGroupSharing(
         } catch (e: SecurityException) {
             Log.e(TAG, "Security exception stopping scan", e)
         }
+    }*/
+
+    fun stopScanning() {
+        if (!isScanning) {
+            Log.d(TAG, "Not scanning, nothing to stop")
+            return
+        }
+
+        try {
+            bleScanner?.stopScan(scanCallback)
+            isScanning = false
+
+            if (_sharingState.value is SharingState.Scanning) {
+                _sharingState.value = SharingState.Idle
+            }
+            Log.d(TAG, "Stopped scanning")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception stopping scan", e)
+            isScanning = false
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception stopping scan", e)
+            isScanning = false
+        }
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun connectToGroup(discoveredGroup: DiscoveredGroup) {
         if (!hasBluetoothPermissions()) {
             _sharingState.value = SharingState.Error("Missing Bluetooth permissions")
@@ -369,7 +570,7 @@ class BluetoothGroupSharing(
             }
         }
 
-        override fun onCharacteristicReadRequest(
+        /*override fun onCharacteristicReadRequest(
             device: BluetoothDevice?,
             requestId: Int,
             offset: Int,
@@ -401,7 +602,8 @@ class BluetoothGroupSharing(
                     Log.e(TAG, "Security exception sending failure response", e)
                 }
             }
-        }
+        }*/
+
 
         override fun onCharacteristicWriteRequest(
             device: BluetoothDevice?,
@@ -413,18 +615,106 @@ class BluetoothGroupSharing(
             value: ByteArray?
         ) {
             super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value)
-            if (characteristic!!.uuid == CHARACTERISTIC_UUID && value != null) {
-                Log.d(TAG, "Write request received with value: ${String(value)}")
-                // Process the written value here (e.g., received guest public key)
 
-                if (responseNeeded) {
-                    try {
-                        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
-                    } catch (e: SecurityException) {
-                        Log.e(TAG, "Security exception sending write response", e)
+            Log.d(TAG, "========== SERVER WRITE REQUEST ==========")
+            Log.d(TAG, "Device: ${device?.address}, RequestId: $requestId")
+            Log.d(TAG, "Characteristic: ${characteristic?.uuid}")
+            Log.d(TAG, "Value size: ${value?.size ?: 0} bytes")
+
+            if (characteristic != null && characteristic.uuid == CHARACTERISTIC_UUID && value != null) {
+                try {
+                    val messageJson = String(value, Charsets.UTF_8)
+                    Log.d(TAG, "Received message: ${messageJson.take(100)}...")
+
+                    val message = json.decodeFromString<HandshakeMessage>(messageJson)
+                    Log.d(TAG, "Message type: ${message.type}")
+
+                    if (message.type == "KEY_EXCHANGE" && message.publicKey != null) {
+                        Log.d(TAG, "Processing guest public key...")
+                        val guestPublicKey = Base64.decode(message.publicKey, Base64.NO_WRAP)
+                        sharedSecret = computeSharedSecret(guestPublicKey)
+                        Log.d(TAG, "✓ Shared secret computed, size: ${sharedSecret?.size} bytes")
+
+                        // Invia risposta prima di procedere
+                        if (responseNeeded) {
+                            try {
+                                gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                                Log.d(TAG, "✓ Write response sent")
+                            } catch (e: SecurityException) {
+                                Log.e(TAG, "Security exception sending write response", e)
+                            }
+                        }
+
+                        // Ora invia i dati del gruppo criptati
+                        scope.launch {
+                            delay(500) // Piccola pausa per stabilità
+
+                            try {
+                                // Ottieni il gruppo attivo
+                                val currentGroup = groupManager.getActiveGroup()
+
+                                if (currentGroup != null) {
+                                    Log.d(TAG, "Preparing encrypted group data for: ${currentGroup.name}")
+
+                                    val groupJson = json.encodeToString(currentGroup)
+                                    val (encryptedData, iv) = encryptWithSharedSecret(groupJson)
+
+                                    val groupDataMsg = HandshakeMessage(
+                                        type = "GROUP_DATA",
+                                        encryptedData = encryptedData,
+                                        iv = iv
+                                    )
+
+                                    val notificationData = json.encodeToString(groupDataMsg).toByteArray(Charsets.UTF_8)
+                                    Log.d(TAG, "Group data size: ${notificationData.size} bytes")
+
+                                    characteristic.value = notificationData
+
+                                    val notificationSent = gattServer?.notifyCharacteristicChanged(device, characteristic, false)
+                                    Log.d(TAG, "✓ Group data notification sent: $notificationSent")
+
+                                    // Dopo aver inviato i dati, segna come successo
+                                    _sharingState.value = SharingState.Success(currentGroup.name)
+
+                                } else {
+                                    Log.e(TAG, "✗ No active group found to share")
+                                    _sharingState.value = SharingState.Error("No group to share")
+                                }
+                            } catch (e: SecurityException) {
+                                Log.e(TAG, "✗ Security exception sending group data", e)
+                                _sharingState.value = SharingState.Error("Security error: ${e.message}")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "✗ Failed to send group data", e)
+                                _sharingState.value = SharingState.Error("Failed to send group: ${e.message}")
+                            }
+                        }
+
+                        return // Esci dalla funzione perché abbiamo già inviato la risposta
+                    }
+
+                    // Se arriviamo qui, invia risposta normale
+                    if (responseNeeded) {
+                        try {
+                            gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                            Log.d(TAG, "✓ Write response sent")
+                        } catch (e: SecurityException) {
+                            Log.e(TAG, "Security exception sending write response", e)
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    Log.e(TAG, "✗ Failed to process write request", e)
+
+                    if (responseNeeded) {
+                        try {
+                            gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                        } catch (se: SecurityException) {
+                            Log.e(TAG, "Security exception sending failure", se)
+                        }
                     }
                 }
             } else if (responseNeeded) {
+                Log.w(TAG, "✗ Invalid write request")
                 try {
                     gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
                 } catch (e: SecurityException) {
@@ -439,12 +729,25 @@ class BluetoothGroupSharing(
         }
     }
 
-    private val advertiseCallback = object : AdvertiseCallback() {
+    /*private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
             Log.d(TAG, "Advertising started successfully")
         }
 
         override fun onStartFailure(errorCode: Int) {
+            Log.e(TAG, "Advertising failed: $errorCode")
+            _sharingState.value = SharingState.Error("Advertising failed: $errorCode")
+        }
+    }*/
+
+    private val advertiseCallback = object : AdvertiseCallback() {
+        override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
+            isAdvertising = true
+            Log.d(TAG, "Advertising started successfully")
+        }
+
+        override fun onStartFailure(errorCode: Int) {
+            isAdvertising = false
             Log.e(TAG, "Advertising failed: $errorCode")
             _sharingState.value = SharingState.Error("Advertising failed: $errorCode")
         }
@@ -650,7 +953,7 @@ class BluetoothGroupSharing(
 
     // ==================== CLEANUP ====================
 
-    fun cleanup() {
+    /*fun cleanup() {
         stopAdvertising()
         stopScanning()
 
@@ -662,6 +965,27 @@ class BluetoothGroupSharing(
         }
 
         gattClient = null
+        localKeyPair = null
+        sharedSecret = null
+        scope.cancel()
+
+        Log.d(TAG, "Bluetooth sharing cleaned up")
+    }*/
+
+    fun cleanup() {
+        stopAdvertising()
+        stopScanning()
+
+        try {
+            gattClient?.disconnect()
+            gattClient?.close()
+            gattClient = null
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception during cleanup", e)
+        }
+
+        isAdvertising = false
+        isScanning = false
         localKeyPair = null
         sharedSecret = null
         scope.cancel()

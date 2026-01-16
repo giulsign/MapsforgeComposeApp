@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import android.util.Log
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
@@ -16,13 +17,12 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-/**
- * manage group system with bluetooth
- */
+
 
 // ==================== DATA CLASSES ====================
 
 @Serializable
+//@OptIn(InternalSerializationApi::class)
 data class Group(
     val id: String,                    // UUID group
     val name: String,                  // Personalized group name
@@ -34,6 +34,7 @@ data class Group(
 )
 
 @Serializable
+//@OptIn(InternalSerializationApi::class)
 data class GroupMember(
     val deviceId: String,              // ID device
     val deviceName: String,            // name device (es. "Samsung Galaxy S21")
@@ -45,6 +46,7 @@ data class GroupMember(
 )
 
 @Serializable
+//@OptIn(InternalSerializationApi::class)
 data class EncryptedGroupData(
     val groupId: String,
     val encryptedPayload: String,      // Encrypted data group (Base64)
@@ -442,6 +444,7 @@ class GroupManager(private val context: Context) {
 // ==================== ENCRYPTED MESSAGE ====================
 
 @Serializable
+//@OptIn(InternalSerializationApi::class)
 data class EncryptedMessage(
     val payload: String,               // Cripted datas (Base64)
     val iv: String,                    // Initialization Vector (Base64)

@@ -426,6 +426,21 @@ fun CreateGroupDialog(
     val bleSharing = remember { BluetoothGroupSharing(context, groupManager) }
     val sharingState by bleSharing.sharingState.collectAsState()
 
+    // permission launcher TO CREATE
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (allGranted) {
+            // permission on, create group
+            val group = groupManager.createGroup(groupName.trim())
+            isCreating = true
+            bleSharing.startAdvertising(group)
+        } else {
+            Toast.makeText(context, "Bluetooth permissions required", Toast.LENGTH_LONG).show()
+        }
+    }
+
     LaunchedEffect(sharingState) {
         when (sharingState) {
             is BluetoothGroupSharing.SharingState.Success -> {
@@ -504,9 +519,29 @@ fun CreateGroupDialog(
                         Button(
                             onClick = {
                                 if (groupName.isNotBlank()) {
-                                    val group = groupManager.createGroup(groupName.trim())
-                                    isCreating = true
-                                    bleSharing.startAdvertising(group)
+
+                                    if (bleSharing.hasBluetoothPermissions()) {
+                                        val group = groupManager.createGroup(groupName.trim())
+                                        isCreating = true
+                                        bleSharing.startAdvertising(group)
+                                    } else {
+
+                                        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            arrayOf(
+                                                Manifest.permission.BLUETOOTH_SCAN,
+                                                Manifest.permission.BLUETOOTH_CONNECT,
+                                                Manifest.permission.BLUETOOTH_ADVERTISE,
+                                                Manifest.permission.ACCESS_FINE_LOCATION
+                                            )
+                                        } else {
+                                            arrayOf(
+                                                Manifest.permission.BLUETOOTH,
+                                                Manifest.permission.BLUETOOTH_ADMIN,
+                                                Manifest.permission.ACCESS_FINE_LOCATION
+                                            )
+                                        }
+                                        permissionLauncher.launch(permissions)
+                                    }
                                 }
                             },
                             modifier = Modifier.weight(1f),
@@ -661,13 +696,14 @@ fun JoinGroupDialog(
                                         arrayOf(
                                             Manifest.permission.BLUETOOTH_SCAN,
                                             Manifest.permission.BLUETOOTH_CONNECT,
-                                            Manifest.permission.ACCESS_FINE_LOCATION
+                                            //Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.BLUETOOTH_ADVERTISE
                                         )
                                     } else {
                                         arrayOf(
                                             Manifest.permission.BLUETOOTH,
                                             Manifest.permission.BLUETOOTH_ADMIN,
-                                            Manifest.permission.ACCESS_FINE_LOCATION
+                                            //Manifest.permission.ACCESS_FINE_LOCATION,
                                         )
                                     }
                                     permissionLauncher.launch(permissions)
