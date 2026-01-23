@@ -3,6 +3,7 @@ plugins {
     kotlin("android")
     kotlin("plugin.serialization")// version "1.9.25"
     id("com.mikepenz.aboutlibraries.plugin")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -33,11 +34,6 @@ android {
 
     buildFeatures {
         compose = true
-    }
-
-    composeOptions {
-        // Compiler compatible with the latest Jetpack version
-        kotlinCompilerExtensionVersion = "1.5.15"
     }
 
     packaging {
