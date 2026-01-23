@@ -3,7 +3,7 @@
   <component name="deploymentTargetSelector">
     <selectionStates>
       <SelectionState runConfigName="prova">
-        <option name="selectionMode" value="DIALOG" />
+        <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-01-11T23:05:20.926508200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
