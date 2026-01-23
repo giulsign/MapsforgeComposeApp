@@ -1694,7 +1694,8 @@ fun fourSTLPositionMarkerComposable(
             if (realTimeTrackPoints.size > 1) {
                 val paint = AndroidGraphicFactory.INSTANCE.createPaint().apply {
                     setStyle(Style.STROKE)
-                    color = android.graphics.Color.BLUE
+                    // 🆕 BLU con alpha 25% (255 * 0.25 = 64)
+                    color = android.graphics.Color.argb(64, 0, 0, 255)
                     strokeWidth = 12f
                     setStrokeJoin(Join.ROUND)
                     setStrokeCap(Cap.ROUND)
@@ -1717,7 +1718,8 @@ fun fourSTLPositionMarkerComposable(
             if (showLoadedGpxTrack && loadedGpxTrack.isNotEmpty()) {
                 val paint = AndroidGraphicFactory.INSTANCE.createPaint().apply {
                     setStyle(Style.STROKE)
-                    color = android.graphics.Color.MAGENTA
+                    // 🆕 MAGENTA con alpha 25% (255 * 0.25 = 64)
+                    color = android.graphics.Color.argb(64, 255, 0, 255)
                     strokeWidth = 10f
                     setStrokeJoin(Join.ROUND)
                     setStrokeCap(Cap.ROUND)
