@@ -25,10 +25,33 @@ import androidx.compose.ui.platform.LocalContext
 
 class GpsTrackingService : Service() {
 
+    companion object {
+        private const val TAG = "GpsTrackingService"
+        const val ACTION_START = "it.fourSTL.PositionMarker.action.START_TRACKING"
+        const val ACTION_STOP = "it.fourSTL.PositionMarker.action.STOP_TRACKING"
+        const val ACTION_SAVE = "it.fourSTL.PositionMarker.action.SAVE_TRACK"
+
+        const val EXTRA_FILENAME = "it.fourSTL.PositionMarker.extra.FILENAME"
+        const val EXTRA_TRACK_WIDTH = "it.fourSTL.PositionMarker.extra.TRACK_WIDTH" // 🆕
+
+        private const val NOTIFICATION_ID = 1
+        private const val NOTIFICATION_CHANNEL_ID = "gps_tracking_channel"
+
+        private val _trackPointsFlow = MutableStateFlow<List<Location>>(emptyList())
+        val trackPointsFlow = _trackPointsFlow.asStateFlow()
+
+        // 🆕 StateFlow per larghezza traccia
+        private val _trackWidthFlow = MutableStateFlow<Float?>(null)
+        val trackWidthFlow = _trackWidthFlow.asStateFlow()
+    }
+
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private val trackPoints = mutableListOf<Location>()
     private var wakeLock: PowerManager.WakeLock? = null
+
+    // 🆕 Variabile per larghezza traccia corrente
+    private var currentTrackWidth: Float? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -37,7 +60,6 @@ class GpsTrackingService : Service() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let {
-                    // Log removed for security reasons (privacy)
                     trackPoints.add(it)
                     _trackPointsFlow.value = ArrayList(trackPoints)
                 }
@@ -50,10 +72,25 @@ class GpsTrackingService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 Log.d(TAG, "Starting tracking and acquiring WakeLock")
-                Toast.makeText(this, "Start Gps tracking service", Toast.LENGTH_SHORT).show()
+
+                // 🆕 Leggi larghezza traccia dall'intent
+                currentTrackWidth = intent.getFloatExtra(EXTRA_TRACK_WIDTH, -1f).let {
+                    if (it > 0) it else null
+                }
+                _trackWidthFlow.value = currentTrackWidth
+
+                val widthInfo = currentTrackWidth?.let { " (width: ${it}m)" } ?: ""
+                Toast.makeText(
+                    this,
+                    "Start GPS tracking service$widthInfo",
+                    Toast.LENGTH_SHORT
+                ).show()
 
                 val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GpsTrackingService::lock").apply {
+                wakeLock = powerManager.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK,
+                    "GpsTrackingService::lock"
+                ).apply {
                     acquire()
                 }
 
@@ -62,16 +99,30 @@ class GpsTrackingService : Service() {
                 startLocationUpdates()
                 startForegroundService()
             }
+
             ACTION_STOP -> {
                 Log.d(TAG, "Stopping tracking")
-                Toast.makeText(this, "Stop Gps tracking service", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Stop GPS tracking service", Toast.LENGTH_SHORT).show()
                 stopTrackingAndReleaseResources()
             }
+
             ACTION_SAVE -> {
                 val fileName = intent.getStringExtra(EXTRA_FILENAME)
+                // 🆕 Leggi larghezza (può sovrascrivere quella di START)
+                val saveWidth = intent.getFloatExtra(EXTRA_TRACK_WIDTH, -1f).let {
+                    if (it > 0) it else currentTrackWidth
+                }
+
                 if (fileName != null && trackPoints.isNotEmpty()) {
-                    Log.d(TAG, "Saving track to $fileName.gpx")
-                    GpxUtils.saveTrackAsGpx(applicationContext, ArrayList(trackPoints), fileName)
+                    Log.d(TAG, "Saving track to $fileName.gpx with width: $saveWidth")
+
+                    // 🆕 Passa larghezza a GpxUtils
+                    GpxUtils.saveTrackAsGpx(
+                        applicationContext,
+                        ArrayList(trackPoints),
+                        fileName,
+                        trackWidthMeters = saveWidth // 🆕
+                    )
                 } else {
                     Log.w(TAG, "File name is null or no track points to save.")
                 }
@@ -84,6 +135,10 @@ class GpsTrackingService : Service() {
         stopLocationUpdates()
         trackPoints.clear()
         _trackPointsFlow.value = emptyList()
+
+        // 🆕 Reset larghezza
+        currentTrackWidth = null
+        _trackWidthFlow.value = null
 
         wakeLock?.let {
             if (it.isHeld) {
@@ -117,8 +172,10 @@ class GpsTrackingService : Service() {
     private fun startForegroundService() {
         createNotificationChannel()
 
+        // 🆕 Includi larghezza nella notifica
+        val widthInfo = currentTrackWidth?.let { " (${it}m)" } ?: ""
         val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Recording GPS tracking active")
+            .setContentTitle("Recording GPS tracking$widthInfo")
             .setContentText("The service is running in the foreground...")
             .setSmallIcon(R.drawable.ic_marker_blue)
             .setOngoing(true)
@@ -129,8 +186,8 @@ class GpsTrackingService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Gps recording canal"
-            val descriptionText = "Gps recording canal description"
+            val name = "GPS recording channel"
+            val descriptionText = "GPS recording channel description"
             val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance).apply {
                 description = descriptionText
@@ -151,7 +208,7 @@ class GpsTrackingService : Service() {
         super.onDestroy()
     }
 
-    companion object {
+    /*companion object {
         private const val TAG = "GpsTrackingService"
         const val ACTION_START = "it.fourSTL.PositionMarker.action.START_TRACKING"
         const val ACTION_STOP = "it.fourSTL.PositionMarker.action.STOP_TRACKING"
@@ -163,5 +220,5 @@ class GpsTrackingService : Service() {
 
         private val _trackPointsFlow = MutableStateFlow<List<Location>>(emptyList())
         val trackPointsFlow = _trackPointsFlow.asStateFlow()
-    }
+    }*/
 }

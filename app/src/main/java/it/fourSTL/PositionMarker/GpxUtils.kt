@@ -16,14 +16,19 @@ import java.util.TimeZone
 
 object GpxUtils {
 
-    fun saveTrackAsGpx(context: Context, trackPoints: List<Location>, fileName: String) {
+    fun saveTrackAsGpx(
+        context: Context,
+        trackPoints: List<Location>,
+        fileName: String,
+        trackWidthMeters: Float? = null // 🆕 Parametro opzionale
+    ) {
         if (trackPoints.isEmpty()) {
             Toast.makeText(context, "No point to save.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val gpxString = generateGpxString(trackPoints, fileName)
-        
+        val gpxString = generateGpxString(trackPoints, fileName, trackWidthMeters)
+
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val values = ContentValues().apply {
@@ -39,7 +44,13 @@ object GpxUtils {
                     resolver.openOutputStream(uri)?.use { output ->
                         output.write(gpxString.toByteArray())
                     }
-                    Toast.makeText(context, "Gps track saved in Downloads/$fileName.gpx", Toast.LENGTH_LONG).show()
+
+                    val widthInfo = trackWidthMeters?.let { " (width: ${it}m)" } ?: ""
+                    Toast.makeText(
+                        context,
+                        "GPS track saved$widthInfo in Downloads/$fileName.gpx",
+                        Toast.LENGTH_LONG
+                    ).show()
                 } else {
                     throw Exception("Could not create file in MediaStore")
                 }
@@ -54,7 +65,12 @@ object GpxUtils {
                     output.write(gpxString.toByteArray())
                 }
 
-                Toast.makeText(context, "Gps track saved in Download/$fileName.gpx", Toast.LENGTH_LONG).show()
+                val widthInfo = trackWidthMeters?.let { " (width: ${it}m)" } ?: ""
+                Toast.makeText(
+                    context,
+                    "GPS track saved$widthInfo in Download/$fileName.gpx",
+                    Toast.LENGTH_LONG
+                ).show()
             }
 
         } catch (e: Exception) {
@@ -63,7 +79,11 @@ object GpxUtils {
         }
     }
 
-    private fun generateGpxString(trackPoints: List<Location>, trackName: String): String {
+    private fun generateGpxString(
+        trackPoints: List<Location>,
+        trackName: String,
+        trackWidthMeters: Float? = null
+    ): String {
         val iso8601Format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
             timeZone = TimeZone.getTimeZone("UTC")
         }
@@ -71,15 +91,37 @@ object GpxUtils {
 
         val sb = StringBuilder()
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-        sb.append("<gpx version=\"1.1\" creator=\"fourSTLPositionMarker\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">\n")
-        
+        sb.append("<gpx version=\"1.1\" creator=\"fourSTLPositionMarker\" ")
+        sb.append("xmlns=\"http://www.topografix.com/GPX/1/1\" ")
+        sb.append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ")
+        // 🆕 Aggiungi namespace custom per estensioni
+        sb.append("xmlns:fourSTL=\"http://fourSTL.it/gpx/extensions/1.0\" ")
+        sb.append("xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">\n")
+
         sb.append("  <metadata>\n")
         sb.append("    <name>${escapeXml(trackName)}</name>\n")
         sb.append("    <time>$creationTime</time>\n")
+
+        // 🆕 Aggiungi larghezza nei metadata come estensione
+        trackWidthMeters?.let { width ->
+            sb.append("    <extensions>\n")
+            sb.append("      <fourSTL:trackWidth>$width</fourSTL:trackWidth>\n")
+            sb.append("      <fourSTL:widthUnit>meters</fourSTL:widthUnit>\n")
+            sb.append("    </extensions>\n")
+        }
+
         sb.append("  </metadata>\n")
 
         sb.append("  <trk>\n")
         sb.append("    <name>${escapeXml(trackName)}</name>\n")
+
+        // 🆕 Ripeti larghezza anche nel track (per compatibilità)
+        trackWidthMeters?.let { width ->
+            sb.append("    <extensions>\n")
+            sb.append("      <fourSTL:trackWidth>$width</fourSTL:trackWidth>\n")
+            sb.append("    </extensions>\n")
+        }
+
         sb.append("    <trkseg>\n")
 
         trackPoints.forEach { point ->
@@ -98,12 +140,12 @@ object GpxUtils {
 
         return sb.toString()
     }
-    
+
     private fun escapeXml(text: String): String {
         return text.replace("&", "&amp;")
-                   .replace("<", "&lt;")
-                   .replace(">", "&gt;")
-                   .replace("\"", "&quot;")
-                   .replace("'", "&apos;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&apos;")
     }
 }

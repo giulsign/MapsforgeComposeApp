@@ -91,6 +91,28 @@ import android.os.IBinder
 import android.util.Log
 import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material3.Switch
+import kotlin.math.cos
+import kotlin.math.pow
+import org.mapsforge.core.util.MercatorProjection
+import androidx.compose.material3.Divider
+import androidx.compose.material3.TextField
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Straighten
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material3.Switch
+import kotlin.math.abs
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.material3.OutlinedButton
 
 
 //  memorize selected metadata
@@ -435,6 +457,60 @@ fun exportJsonToDownload(context: Context) {
 }
 
 
+fun metersToPixels(
+    meters: Float,
+    zoomLevel: Byte,
+    latitude: Double,
+    tileSize: Int = 256
+): Float {
+    // Raggio Terra in metri
+    val earthRadius = 6378137.0
+
+    // Circonferenza Terra all'equatore in metri
+    val earthCircumference = 2 * Math.PI * earthRadius
+
+    // Metri per pixel all'equatore per questo zoom
+    val metersPerPixelAtEquator = earthCircumference / (tileSize * (2.0.pow(zoomLevel.toInt())))
+
+    // Correzione per latitudine (proiezione Mercatore)
+    // Ai poli la scala è diversa dall'equatore
+    val latitudeRadians = Math.toRadians(latitude)
+    val metersPerPixel = metersPerPixelAtEquator * cos(latitudeRadians)
+
+    // Converti metri in pixel
+    return (meters / metersPerPixel).toFloat()
+}
+
+/**
+ * Versione con MapView (usa i parametri della mappa)
+ */
+fun metersToPixelsFromMap(
+    meters: Float,
+    mapView: MapView,
+    latitude: Double
+): Float {
+    val zoomLevel = mapView.model.mapViewPosition.zoomLevel
+    val tileSize = mapView.model.displayModel.tileSize
+    return metersToPixels(meters, zoomLevel, latitude, tileSize)
+}
+
+
+object TrackWidthConstants {
+    // Larghezze preset comuni (in metri)
+    const val FOREST_CENSUS_MIN = 10.0f
+    const val FOREST_CENSUS_MAX = 20.0f
+    const val TRAIL_MAPPING = 5.0f
+    const val NARROW_PATH = 2.0f
+
+    // Limiti validazione
+    const val MIN_WIDTH = 0.1f   // 10 cm
+    const val MAX_WIDTH = 1000.0f // 1 km
+
+    // Larghezza default se non specificata
+    const val DEFAULT_WIDTH_PIXELS = 12.0f
+}
+
+
 // Composable for vertical buttons
 @Composable
 fun VerticalCategoryButton(
@@ -476,7 +552,7 @@ fun CategoryMenu(
     onDismiss: () -> Unit,
     titleAlignment: TextAlign = TextAlign.Center,
     customFont: FontFamily = MyCustomFont
-    ) {
+) {
     Dialog(
         onDismissRequest = onDismiss) {
         Surface(shape = RectangleShape,
@@ -508,7 +584,7 @@ fun CategoryMenu(
                         onClick = {
                             itemAction()
                             onDismiss()
-                                  },
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .border((1.dp), Color(0xFF99CCFF))
@@ -577,7 +653,7 @@ fun fourSTLPositionMarkerComposable(
     context: Context,
     modifier: Modifier = Modifier,
     mapFileName: String = "italy.map"
-    ) {
+) {
     var userLocation by remember { mutableStateOf<Location?>(null) }
     var hasLocationPermission by remember { mutableStateOf(false) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
@@ -633,6 +709,10 @@ fun fourSTLPositionMarkerComposable(
     var showStopTrackingDialog by remember { mutableStateOf(false) }
     var gpxStatsRealTime by remember { mutableStateOf<GpxStats?>(null) }
     var showGpxReportRealTime by remember { mutableStateOf(false) }
+    var trackWidthMeters by remember { mutableStateOf<Float?>(null) } // Larghezza traccia corrente
+    var showTrackWidthDialog by remember { mutableStateOf(false) }
+    var loadedGpxWidth by remember { mutableStateOf<Float?>(null) } // Larghezza GPX caricato
+
 
     // 🔹 Show loaded start point from file
     var showImportStartPointDialog by remember { mutableStateOf(false) }
@@ -665,6 +745,19 @@ fun fourSTLPositionMarkerComposable(
             }
         }
     }
+
+
+    var zoomLevel by remember { mutableStateOf<Byte>(15) }
+
+    // 🆕 Observer zoom
+    ObserveMapZoom(
+        mapViewRef = mapViewRef,
+        onZoomChanged = { newZoom ->
+            zoomLevel = newZoom
+            Log.d("MapZoom", "Zoom changed to: $newZoom")
+        }
+    )
+
 
     // Connect service when composable is active
     DisposableEffect(Unit) {
@@ -738,37 +831,40 @@ fun fourSTLPositionMarkerComposable(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             if (uri != null) {
-                val points = GpxParser.parse(context, uri)
+                // 🆕 Usa nuovo parser che restituisce GpxData
+                val gpxData = GpxParser.parse(context, uri)
 
+                // Estrai nome file
                 var name = "Track.gpx"
                 if (uri.scheme == "content") {
                     context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                         if (cursor.moveToFirst()) {
-                            val index =
-                                cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                            val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
                             if (index >= 0) {
                                 name = cursor.getString(index)
                             }
                         }
                     }
                 } else {
-                    // Fallback per i rari casi di file://
                     name = uri.lastPathSegment ?: "Track.gpx"
                 }
                 loadedGpxFileName = name
 
-                if (points.isNotEmpty()) {
-                    loadedGpxTrack = points
+                if (gpxData.trackPoints.isNotEmpty()) {
+                    loadedGpxTrack = gpxData.trackPoints
+                    loadedGpxWidth = gpxData.trackWidthMeters // 🆕 Salva larghezza
                     showLoadedGpxTrack = true
+
+                    val widthInfo = gpxData.trackWidthMeters?.let { " (width: ${it}m)" } ?: ""
                     Toast.makeText(
                         context,
-                        "GPX track loaded with ${points.size} points",
+                        "✅ GPX loaded: ${gpxData.trackPoints.size} points$widthInfo",
                         Toast.LENGTH_LONG
                     ).show()
                 } else {
                     Toast.makeText(
                         context,
-                        "Error: Cannot load GPX track from file",
+                        "❌ Error: Cannot load GPX track",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -1263,7 +1359,7 @@ fun fourSTLPositionMarkerComposable(
             val trackingItems = mutableListOf<Pair<String, () -> Unit>>()
 
             // Start/Stop recording
-            trackingItems.add(
+            /*trackingItems.add(
                 (if (isTracking) "Stop Gps Tracking" else "Start GPS Tracking") to {
                     if (isTracking) {
                         // if recording, ask for save options
@@ -1275,6 +1371,17 @@ fun fourSTLPositionMarkerComposable(
                             action = GpsTrackingService.ACTION_START
                         }
                         context.startService(intent)
+                    }
+                }
+            )*/
+
+            trackingItems.add(
+                (if (isTracking) "Stop GPS Tracking" else "Start GPS Tracking") to {
+                    if (isTracking) {
+                        showStopTrackingDialog = true
+                    } else {
+                        // 🆕 Mostra dialog per impostare larghezza
+                        showTrackWidthDialog = true
                     }
                 }
             )
@@ -1352,6 +1459,35 @@ fun fourSTLPositionMarkerComposable(
                 title = "Gps track Menu",
                 items = trackingItems,
                 onDismiss = { showTracciaMenu = false }
+            )
+        }
+
+
+        if (showTrackWidthDialog) {
+            TrackWidthDialog(
+                onStart = { widthMeters ->
+                    trackWidthMeters = widthMeters
+                    isTracking = true
+
+                    // Avvia servizio con larghezza
+                    val intent = Intent(context, GpsTrackingService::class.java).apply {
+                        action = GpsTrackingService.ACTION_START
+                        widthMeters?.let {
+                            putExtra("track_width_meters", it)
+                        }
+                    }
+                    context.startService(intent)
+
+                    showTrackWidthDialog = false
+
+                    val widthInfo = widthMeters?.let { "${it}m width" } ?: "standard"
+                    Toast.makeText(
+                        context,
+                        "🎬 Recording started ($widthInfo)",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onDismiss = { showTrackWidthDialog = false }
             )
         }
 
@@ -1688,18 +1824,26 @@ fun fourSTLPositionMarkerComposable(
 
 
         // 🔹 Draw real time track in blue color
-        LaunchedEffect(realTimeTrackPoints, mapViewRef) {
+        LaunchedEffect(realTimeTrackPoints, mapViewRef, trackWidthMeters, zoomLevel) {
             val mapView = mapViewRef ?: return@LaunchedEffect
             realTimePolyline?.let { mapView.layerManager.layers.remove(it) }
+
             if (realTimeTrackPoints.size > 1) {
+                val firstPoint = realTimeTrackPoints.first()
+                val strokeWidth = trackWidthMeters?.let { meters ->
+                    metersToPixelsFromMap(meters, mapView, firstPoint.latitude)
+                } ?: TrackWidthConstants.DEFAULT_WIDTH_PIXELS
+
+                Log.d("TrackWidth", "Real-time: ${trackWidthMeters}m = ${strokeWidth}px at zoom $zoomLevel")
+
                 val paint = AndroidGraphicFactory.INSTANCE.createPaint().apply {
                     setStyle(Style.STROKE)
-                    // 🆕 BLU con alpha 25% (255 * 0.25 = 64)
                     color = android.graphics.Color.argb(64, 0, 0, 255)
-                    strokeWidth = 12f
+                    this.strokeWidth = strokeWidth
                     setStrokeJoin(Join.ROUND)
                     setStrokeCap(Cap.ROUND)
                 }
+
                 val newPolyline = Polyline(paint, AndroidGraphicFactory.INSTANCE).apply {
                     realTimeTrackPoints.forEach { location ->
                         addPoint(LatLong(location.latitude, location.longitude))
@@ -1712,21 +1856,30 @@ fun fourSTLPositionMarkerComposable(
 
 
         // 🔹 Draw loaded GPS track in purple color
-        LaunchedEffect(loadedGpxTrack, showLoadedGpxTrack, mapViewRef) {
+        LaunchedEffect(loadedGpxTrack, showLoadedGpxTrack, mapViewRef, loadedGpxWidth, zoomLevel) {
             val mapView = mapViewRef ?: return@LaunchedEffect
             loadedGpxPolyline?.let { mapView.layerManager.layers.remove(it) }
+
             if (showLoadedGpxTrack && loadedGpxTrack.isNotEmpty()) {
+                val firstPoint = loadedGpxTrack.first()
+                val strokeWidth = loadedGpxWidth?.let { meters ->
+                    metersToPixelsFromMap(meters, mapView, firstPoint.latitude)
+                } ?: 10f
+
+                Log.d("TrackWidth", "Loaded GPX: ${loadedGpxWidth}m = ${strokeWidth}px at zoom $zoomLevel")
+
                 val paint = AndroidGraphicFactory.INSTANCE.createPaint().apply {
                     setStyle(Style.STROKE)
-                    // 🆕 MAGENTA con alpha 25% (255 * 0.25 = 64)
                     color = android.graphics.Color.argb(64, 255, 0, 255)
-                    strokeWidth = 10f
+                    this.strokeWidth = strokeWidth
                     setStrokeJoin(Join.ROUND)
                     setStrokeCap(Cap.ROUND)
                 }
+
                 val newPolyline = Polyline(paint, AndroidGraphicFactory.INSTANCE).apply {
                     loadedGpxTrack.forEach { point -> addPoint(point) }
                 }
+
                 val layerIndex = if (mapView.layerManager.layers.size() > 0) {
                     mapView.layerManager.layers.size() - 1
                 } else {
@@ -2507,7 +2660,7 @@ fun fourSTLPositionMarkerComposable(
 
         // licensees page
         if (showLicenses) {
-            var tabIndex by remember { mutableIntStateOf(0) }
+            var tabIndex by remember { mutableStateOf(0) }
             val tabs = listOf("Dependencies", "App License", "Third Party License", "Readme")
 
             Scaffold(
@@ -2571,33 +2724,68 @@ fun fourSTLPositionMarkerComposable(
         if (showSaveDialog) {
             AlertDialog(
                 onDismissRequest = { showSaveDialog = false },
-                title = { Text("Save Track GPX") },
+                title = { Text("Save GPS Track", fontFamily = MyCustomFont) },
                 text = {
+                    Column {
+                        TextField(
+                            value = fileName,
+                            onValueChange = { fileName = it },
+                            label = { Text("File name") },
+                            singleLine = true
+                        )
 
-                    androidx.compose.material3.TextField(
-                        value = fileName,
-                        onValueChange = { fileName = it },
-                        label = { Text("File name") },
-                        singleLine = true
-                    )
+                        // 🆕 Mostra larghezza se impostata
+                        trackWidthMeters?.let { width ->
+                            Spacer(Modifier.height(8.dp))
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFE8F5E9)
+                                ),
+                                shape = RectangleShape
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.Straighten,
+                                        contentDescription = null,
+                                        tint = Color(0xFF4CAF50),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        "Track width: ${width}m",
+                                        fontSize = 14.sp,
+                                        fontFamily = MyCustomFont,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
                 },
                 confirmButton = {
                     TextButton(
                         onClick = {
+                            // 🆕 Passa larghezza al servizio
                             val intent = Intent(context, GpsTrackingService::class.java).apply {
                                 action = GpsTrackingService.ACTION_SAVE
                                 putExtra(GpsTrackingService.EXTRA_FILENAME, fileName)
+                                trackWidthMeters?.let {
+                                    putExtra(GpsTrackingService.EXTRA_TRACK_WIDTH, it)
+                                }
                             }
                             context.startService(intent)
                             showSaveDialog = false
                         }
                     ) {
-                        Text("Save")
+                        Text("Save", fontFamily = MyCustomFont)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showSaveDialog = false }) {
-                        Text("Cancel")
+                        Text("Cancel", fontFamily = MyCustomFont)
                     }
                 }
             )
@@ -3192,6 +3380,7 @@ fun fourSTLPositionMarkerComposable(
                                 // Stop without save
                                 showStopTrackingDialog = false
                                 isTracking = false
+                                trackWidthMeters = null
                                 val intent = Intent(context, GpsTrackingService::class.java).apply {
                                     action = GpsTrackingService.ACTION_STOP
                                 }
@@ -3237,9 +3426,187 @@ fun fourSTLPositionMarkerComposable(
 }
 
 
+@Composable
+fun TrackWidthDialog(
+    onStart: (widthMeters: Float?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var widthInput by remember { mutableStateOf("10.0") } // Default 10m
+    var useCustomWidth by remember { mutableStateOf(true) }
+    var showError by remember { mutableStateOf(false) }
 
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RectangleShape,
+        title = {
+            Text(
+                "Start GPS Tracking",
+                fontFamily = MyCustomFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    "Set track width for census/survey",
+                    fontFamily = MyCustomFont,
+                    fontSize = 14.sp
+                )
 
+                Divider()
 
+                // Toggle: Usa larghezza custom
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Custom track width",
+                        fontFamily = MyCustomFont,
+                        fontSize = 16.sp
+                    )
+
+                    Switch(
+                        checked = useCustomWidth,
+                        onCheckedChange = { useCustomWidth = it }
+                    )
+                }
+
+                // Input larghezza (visibile solo se custom è attivo)
+                AnimatedVisibility(visible = useCustomWidth) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = widthInput,
+                            onValueChange = {
+                                widthInput = it
+                                showError = false
+                            },
+                            label = { Text("Width (meters)", fontFamily = MyCustomFont) },
+                            placeholder = { Text("e.g., 10.0") },
+                            suffix = { Text("m", color = Color.Gray) },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal
+                            ),
+                            singleLine = true,
+                            isError = showError,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        if (showError) {
+                            Text(
+                                "⚠️ Invalid value (use 0.1 - 1000)",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp,
+                                fontFamily = MyCustomFont
+                            )
+                        }
+
+                        // Preset buttons
+                        Text(
+                            "Quick presets:",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            fontFamily = MyCustomFont
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("5", "10", "20", "50").forEach { preset ->
+                                OutlinedButton(
+                                    onClick = { widthInput = "$preset.0" },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RectangleShape
+                                ) {
+                                    Text("${preset}m", fontSize = 12.sp)
+                                }
+                            }
+                        }
+
+                        // Info box
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFFFF9C4)
+                            ),
+                            shape = RectangleShape
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    "💡 Track Width Info",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    fontFamily = MyCustomFont
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "• Forest census: 10-20m\n" +
+                                            "• Trail mapping: 2-5m\n" +
+                                            "• Survey strips: custom",
+                                    fontSize = 11.sp,
+                                    fontFamily = MyCustomFont,
+                                    lineHeight = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (!useCustomWidth) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFE3F2FD)
+                        ),
+                        shape = RectangleShape
+                    ) {
+                        Text(
+                            "ℹ️ Standard track (no custom width)",
+                            modifier = Modifier.padding(12.dp),
+                            fontSize = 12.sp,
+                            fontFamily = MyCustomFont
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (useCustomWidth) {
+                        val width = widthInput.toFloatOrNull()
+                        if (width != null && width > 0 && width <= 1000) {
+                            onStart(width)
+                        } else {
+                            showError = true
+                        }
+                    } else {
+                        onStart(null) // Nessuna larghezza custom
+                    }
+                },
+                shape = RectangleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50)
+                )
+            ) {
+                Icon(Icons.Default.PlayArrow, null, tint = Color.White)
+                Spacer(Modifier.width(4.dp))
+                Text("Start Recording", fontFamily = MyCustomFont)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", fontFamily = MyCustomFont)
+            }
+        }
+    )
+}
 
 
 // Helper function to load text from assets
@@ -3258,6 +3625,52 @@ private fun AssetTextView(assetFileName: String, modifier: Modifier = Modifier) 
     LazyColumn(modifier = modifier.padding(16.dp)) {
         item {
             Text(text = text, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+
+@Composable
+fun ObserveMapZoom(
+    mapViewRef: MapView?,
+    onZoomChanged: (Byte) -> Unit
+) {
+    var lastZoom by remember { mutableStateOf<Byte>(15) }
+
+    LaunchedEffect(mapViewRef) {
+        mapViewRef?.let { mapView ->
+            // Polling ogni 500ms per cambiamenti zoom
+            while (true) {
+                delay(500)
+                val currentZoom = mapView.model.mapViewPosition.zoomLevel
+                if (currentZoom != lastZoom) {
+                    lastZoom = currentZoom
+                    onZoomChanged(currentZoom)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ObserveMapZoomThrottled(
+    mapViewRef: MapView?,
+    onZoomChanged: (Byte) -> Unit
+) {
+    var lastZoom by remember { mutableStateOf<Byte>(15) }
+
+    LaunchedEffect(mapViewRef) {
+        mapViewRef?.let { mapView ->
+            while (true) {
+                delay(300) // Check ogni 300ms
+                val currentZoom = mapView.model.mapViewPosition.zoomLevel
+
+                // Aggiorna solo se differenza >= 1 livello
+                if (kotlin.math.abs(currentZoom - lastZoom) >= 1) {
+                    lastZoom = currentZoom
+                    onZoomChanged(currentZoom)
+                }
+            }
         }
     }
 }
