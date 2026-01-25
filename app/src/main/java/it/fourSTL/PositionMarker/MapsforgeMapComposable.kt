@@ -85,9 +85,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.window.Dialog
 import it.fourSTL.PositionMarker.ui.theme.Purple40
-import android.content.ComponentName
-import android.content.ServiceConnection
-import android.os.IBinder
 import android.util.Log
 import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.delay
@@ -726,27 +723,6 @@ fun fourSTLPositionMarkerComposable(
     var showDatiMenu by remember { mutableStateOf(false) }
     var showTracciaMenu by remember { mutableStateOf(false) }
 
-    // Group Sharing
-    var showGroupSharing by remember { mutableStateOf(false) }
-    val groupManager = remember { GroupManager(context) }
-    var locationService by remember { mutableStateOf<LocationSharingService?>(null) }
-    var memberMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
-
-    // ServiceConnection for LocationSharingService
-    val serviceConnection = remember {
-        object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val binder = service as? LocationSharingService.LocalBinder
-                locationService = binder?.getService()
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                locationService = null
-            }
-        }
-    }
-
-
     var zoomLevel by remember { mutableStateOf<Byte>(15) }
 
     // 🆕 Observer zoom
@@ -757,25 +733,6 @@ fun fourSTLPositionMarkerComposable(
             Log.d("MapZoom", "Zoom changed to: $newZoom")
         }
     )
-
-
-    // Connect service when composable is active
-    DisposableEffect(Unit) {
-        val intent = Intent(context, LocationSharingService::class.java)
-        try {
-            context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        } catch (e: Exception) {
-            Log.e("GroupSharing", "Failed to bind service", e)
-        }
-
-        onDispose {
-            try {
-                context.unbindService(serviceConnection)
-            } catch (e: Exception) {
-                Log.e("GroupSharing", "Failed to unbind service", e)
-            }
-        }
-    }
 
 
     val configuration = LocalConfiguration.current
@@ -1679,118 +1636,6 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
-        // ========== SHARING POSITION GROUP MENU ==========
-        var showGroupMenu by remember { mutableStateOf(false) }
-        if (buttonsVisible) {
-            VerticalCategoryButton(
-                text = "GROUP SHARING MENU",
-                alignment = Alignment.TopStart,
-                onClick = { showGroupMenu = true },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(vertical = (144.dp + 70.dp + 2.dp + 70.dp + 2.dp))
-                    .zIndex(2f)
-            )
-        }
-
-        // add menu button
-        //var showGroupMenu by remember { mutableStateOf(false) }
-
-        if (showGroupMenu) {
-            val group = groupManager.getActiveGroup()
-            val serviceState =
-                null // aggiunta dopo implementazione totale del progetto per group sharing
-            val isSharing = serviceState is LocationSharingService.ServiceState.HostRunning ||
-                    serviceState is LocationSharingService.ServiceState.GuestRunning
-
-            val menuItems = mutableListOf<Pair<String, () -> Unit>>()
-
-            // Opne Group Sharing screen
-            menuItems.add("Manage Groups" to {
-                showGroupSharing = true
-                showGroupMenu = false
-            })
-
-            // If there's an active group
-            if (group != null) {
-                if (isSharing) {
-                    menuItems.add("Stop Sharing" to {
-                        val intent = Intent(context, LocationSharingService::class.java).apply {
-                            action = LocationSharingService.ACTION_STOP
-                        }
-                        context.startService(intent)
-                        showGroupMenu = false
-                    })
-                } else {
-                    menuItems.add("Start Sharing" to {
-                        val intent = Intent(context, LocationSharingService::class.java).apply {
-                            action = if (group.isHost) {
-                                LocationSharingService.ACTION_START_HOST
-                            } else {
-                                LocationSharingService.ACTION_START_GUEST
-                                putExtra(
-                                    LocationSharingService.EXTRA_HOST_ADDRESS,
-                                    group.hostAddress
-                                ).toString()
-                            }
-                        }
-                        context.startService(intent)
-                        showGroupMenu = false
-                    })
-                }
-
-                // Center on group members
-                menuItems.add("Show All Members" to {
-                    val onlineMembers = group.members.filter {
-                        it.isOnline && it.latitude != 0.0 && it.longitude != 0.0
-                    }
-
-                    if (onlineMembers.isNotEmpty()) {
-                        var minLat = onlineMembers.first().latitude
-                        var maxLat = minLat
-                        var minLon = onlineMembers.first().longitude
-                        var maxLon = minLon
-
-                        onlineMembers.forEach { member ->
-                            if (member.latitude < minLat) minLat = member.latitude
-                            if (member.latitude > maxLat) maxLat = member.latitude
-                            if (member.longitude < minLon) minLon = member.longitude
-                            if (member.longitude > maxLon) maxLon = member.longitude
-                        }
-
-                        // Center on medium position
-                        val centerLat = (minLat + maxLat) / 2
-                        val centerLon = (minLon + maxLon) / 2
-                        val centerPoint = LatLong(centerLat, centerLon)
-
-                        mapViewRef?.model?.mapViewPosition?.apply {
-                            setCenter(centerPoint)
-                            setZoomLevel(15.toByte())
-                        }
-
-                        Toast.makeText(
-                            context,
-                            "Showing ${onlineMembers.size} member(s)",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "No members online with location",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    showGroupMenu = false
-                })
-            }
-
-            CategoryMenu(
-                title = "Group Menu",
-                items = menuItems,
-                onDismiss = { showGroupMenu = false }
-            )
-        }
-
         // Marker GPS uploaded
         LaunchedEffect(userLocation) {
             userLocation?.let { loc ->
@@ -1870,63 +1715,6 @@ fun fourSTLPositionMarkerComposable(
                 }
                 mapView.layerManager.layers.add(layerIndex, newPolyline)
                 loadedGpxPolyline = newPolyline
-            }
-        }
-
-        // Upodate member markers every 3 seconds
-        LaunchedEffect(locationService) {
-            while (true) {
-                val group = groupManager.getActiveGroup()
-                if (group != null && locationService != null) {
-                    // Remove old markers
-                    memberMarkers.forEach { marker ->
-                        mapViewRef?.layerManager?.layers?.remove(marker)
-                    }
-
-                    // Create new markers
-                    val newMarkers = group.members
-                        .filter {
-                            it.isOnline &&
-                                    it.deviceId != groupManager.getDeviceId() &&
-                                    it.latitude != 0.0 &&
-                                    it.longitude != 0.0
-                        }
-                        .mapNotNull { member ->
-                            try {
-                                val latLong = LatLong(member.latitude, member.longitude)
-
-                                // UYse yellow markers for member online
-                                val drawable = ResourcesCompat.getDrawable(
-                                    context.resources,
-                                    R.drawable.ic_marker_yellow, // Yellow marker
-                                    null
-                                )
-                                val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-                                Marker(latLong, bitmap, 0, -bitmap.height / 2)
-                            } catch (e: Exception) {
-                                Log.e("GroupSharing", "Failed to create member marker", e)
-                                null
-                            }
-                        }
-
-                    // Add new markers to map
-                    newMarkers.forEach { marker ->
-                        mapViewRef?.layerManager?.layers?.add(marker)
-                    }
-
-                    memberMarkers = newMarkers
-                    mapViewRef?.invalidate()
-                } else {
-                    // If no group active, remove all members
-                    if (memberMarkers.isNotEmpty()) {
-                        memberMarkers.forEach { marker ->
-                            mapViewRef?.layerManager?.layers?.remove(marker)
-                        }
-                        memberMarkers = emptyList()
-                    }
-                }
-
-                delay(3000) // Update every 3 seconds
             }
         }
 
@@ -2886,73 +2674,6 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
-        // Advisor active group
-        val activeGroup = groupManager.getActiveGroup()
-        val serviceState = locationService?.serviceState?.collectAsState()?.value
-
-        if (activeGroup != null) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 350.dp)
-                    .background(
-                        color = Color.White.copy(alpha = 0.85f),
-                        shape = RectangleShape
-                    )
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    //State dot
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(
-                                color = when (serviceState) {
-                                    is LocationSharingService.ServiceState.HostRunning,
-                                    is LocationSharingService.ServiceState.GuestRunning ->
-                                        Color(0xFF4CAF50) // Green if active
-                                    else -> Color.Gray
-                                },
-                                shape = androidx.compose.foundation.shape.CircleShape
-                            )
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-
-                    Text(
-                        text = buildString {
-                            append("Group: ${activeGroup.name}")
-                            if (serviceState is LocationSharingService.ServiceState.HostRunning ||
-                                serviceState is LocationSharingService.ServiceState.GuestRunning
-                            ) {
-                                append(" • SHARING")
-                            }
-                        },
-                        color = Color(0xFF2196F3),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = MyCustomFont
-                    )
-                }
-
-                // Show online members if service is active
-                if (serviceState is LocationSharingService.ServiceState.HostRunning ||
-                    serviceState is LocationSharingService.ServiceState.GuestRunning
-                ) {
-
-                    val connectedCount = activeGroup.members.count { it.isOnline }
-                    Text(
-                        text = "$connectedCount member${if (connectedCount != 1) "s" else ""} online",
-                        color = Color.Gray,
-                        fontSize = 12.sp,
-                        fontFamily = MyCustomFont
-                    )
-                }
-            }
-        }
-
-
         // Dialog close app
         if (showExitDialog) {
             AlertDialog(
@@ -3395,25 +3116,6 @@ fun fourSTLPositionMarkerComposable(
                 }
             )
         }
-
-
-        // Overlay GroupSharingScreen
-        if (showGroupSharing) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .zIndex(1002f)
-            ) {
-                GroupSharingScreen(
-                    context = context,
-                    groupManager = groupManager,
-                    onBack = { showGroupSharing = false }
-                )
-
-            }
-        }
-
     }
 }
 
