@@ -1358,6 +1358,23 @@ fun fourSTLPositionMarkerComposable(
         if (showTracciaMenu) {
             val trackingItems = mutableListOf<Pair<String, () -> Unit>>()
 
+            // Start/Stop recording
+            /*trackingItems.add(
+                (if (isTracking) "Stop Gps Tracking" else "Start GPS Tracking") to {
+                    if (isTracking) {
+                        // if recording, ask for save options
+                        showStopTrackingDialog = true
+                    } else {
+                        // start recording
+                        isTracking = true
+                        val intent = Intent(context, GpsTrackingService::class.java).apply {
+                            action = GpsTrackingService.ACTION_START
+                        }
+                        context.startService(intent)
+                    }
+                }
+            )*/
+
             trackingItems.add(
                 (if (isTracking) "Stop GPS Tracking" else "Start GPS Tracking") to {
                     if (isTracking) {
@@ -3337,27 +3354,20 @@ fun fourSTLPositionMarkerComposable(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            // Prepara il nome file
+                            // Save before stop
                             val timestamp = SimpleDateFormat(
                                 "yyyyMMdd_HHmmss",
                                 Locale.getDefault()
                             ).format(Date())
-                            val generatedFileName = "track_$timestamp"
-
-                            // 🆕 Usa la nuova action ACTION_SAVE_AND_STOP
+                            fileName = "track_$timestamp"
+                            showStopTrackingDialog = false
+                            showSaveDialog = true
+                            // After save, stop recording
+                            isTracking = false
                             val intent = Intent(context, GpsTrackingService::class.java).apply {
-                                action = GpsTrackingService.ACTION_SAVE_AND_STOP
-                                putExtra(GpsTrackingService.EXTRA_FILENAME, generatedFileName)
-                                trackWidthMeters?.let {
-                                    putExtra(GpsTrackingService.EXTRA_TRACK_WIDTH, it)
-                                }
+                                action = GpsTrackingService.ACTION_STOP
                             }
                             context.startService(intent)
-
-                            // Aggiorna lo stato locale
-                            isTracking = false
-                            trackWidthMeters = null
-                            showStopTrackingDialog = false
                         }
                     ) {
                         Text("Save and Stop", fontFamily = MyCustomFont)
@@ -3367,16 +3377,14 @@ fun fourSTLPositionMarkerComposable(
                     Column {
                         TextButton(
                             onClick = {
-                                // Stop senza salvare
+                                // Stop without save
+                                showStopTrackingDialog = false
+                                isTracking = false
+                                trackWidthMeters = null
                                 val intent = Intent(context, GpsTrackingService::class.java).apply {
                                     action = GpsTrackingService.ACTION_STOP
                                 }
                                 context.startService(intent)
-
-                                isTracking = false
-                                trackWidthMeters = null
-                                showStopTrackingDialog = false
-
                                 Toast.makeText(
                                     context,
                                     "Tracking stopped without saving",

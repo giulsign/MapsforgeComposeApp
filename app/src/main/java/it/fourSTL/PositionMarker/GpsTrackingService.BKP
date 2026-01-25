@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.LocalContext
 class GpsTrackingService : Service() {
 
     companion object {
-        const val ACTION_SAVE_AND_STOP = "it.fourSTL.PositionMarker.action.SAVE_AND_STOP"
         private const val TAG = "GpsTrackingService"
         const val ACTION_START = "it.fourSTL.PositionMarker.action.START_TRACKING"
         const val ACTION_STOP = "it.fourSTL.PositionMarker.action.STOP_TRACKING"
@@ -128,43 +127,6 @@ class GpsTrackingService : Service() {
                     Log.w(TAG, "File name is null or no track points to save.")
                 }
             }
-            ACTION_SAVE_AND_STOP -> {
-                val fileName = intent.getStringExtra(EXTRA_FILENAME)
-                val saveWidth = intent.getFloatExtra(EXTRA_TRACK_WIDTH, -1f).let {
-                    if (it > 0) it else currentTrackWidth
-                }
-
-                if (fileName != null && trackPoints.isNotEmpty()) {
-                    Log.d(TAG, "Saving track to $fileName.gpx with width: $saveWidth then stopping")
-
-                    // 1. Salva il file
-                    GpxUtils.saveTrackAsGpx(
-                        applicationContext,
-                        ArrayList(trackPoints),
-                        fileName,
-                        trackWidthMeters = saveWidth
-                    )
-
-                    // 2. Mostra conferma
-                    Toast.makeText(
-                        this,
-                        "✅ Track saved: $fileName.gpx",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                    // 3. Ferma il servizio DOPO il salvataggio
-                    stopTrackingAndReleaseResources()
-                } else {
-                    Log.w(TAG, "Cannot save: file name is null or no track points")
-                    Toast.makeText(
-                        this,
-                        "❌ Cannot save track",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    stopTrackingAndReleaseResources()
-                }
-            }
-
         }
         return START_STICKY
     }
