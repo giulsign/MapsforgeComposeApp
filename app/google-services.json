@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1054222586642",
+    "firebase_url": "https://pointmarker-1e0d5-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "pointmarker-1e0d5",
+    "storage_bucket": "pointmarker-1e0d5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054222586642:android:6bb7ce46d247d3f13e19cb",
+        "android_client_info": {
+          "package_name": "it.fourSTL.PositionMarker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDY8U7Pbm-25ayfAkHWh2an2oJzUfxWlIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

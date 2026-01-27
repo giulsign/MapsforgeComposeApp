@@ -8,12 +8,6 @@ import androidx.compose.material3.Surface
 import androidx.core.view.WindowCompat
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.activity.compose.setContent
-import androidx.compose.material3.Surface
-import androidx.activity.enableEdgeToEdge
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import it.fourSTL.PositionMarker.fourSTLPositionMarkerComposable
-import it.fourSTL.PositionMarker.FirebaseConfig
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,8 +15,6 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
 
         super.onCreate(savedInstanceState)
-
-        FirebaseConfig.initialize(this)
 
 
         // edge-to-edge visualization

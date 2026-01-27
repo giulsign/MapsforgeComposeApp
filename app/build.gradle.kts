@@ -3,6 +3,7 @@ plugins {
     kotlin("android")
     kotlin("plugin.serialization")// version "1.9.25"
     id("com.mikepenz.aboutlibraries.plugin")
+    id("com.google.gms.google-services")
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -109,4 +110,12 @@ dependencies {
 
     // Coroutines (potrebbero essere già presenti)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+    implementation ("com.google.firebase:firebase-database")
+    implementation ("com.google.firebase:firebase-auth")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("com.google.firebase:firebase-analytics")
+
 }

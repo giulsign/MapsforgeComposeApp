@@ -7,6 +7,8 @@ plugins {
     //kotlin("plugin.serialization") version "1.9.25" apply false
     id("com.mikepenz.aboutlibraries.plugin") version "11.1.0" apply false
     // no global plugin available
+    // Add the dependency for the Google services Gradle plugin
+    id("com.google.gms.google-services") version "4.4.4" apply false
 }
 
 tasks.register("clean", Delete::class) {

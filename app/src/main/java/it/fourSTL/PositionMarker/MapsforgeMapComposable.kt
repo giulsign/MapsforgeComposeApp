@@ -110,6 +110,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.material3.OutlinedButton
+import it.fourSTL.PositionMarker.firebase.SharedLocation
 
 
 //  memorize selected metadata
@@ -724,6 +725,20 @@ fun fourSTLPositionMarkerComposable(
     var showTracciaMenu by remember { mutableStateOf(false) }
 
     var zoomLevel by remember { mutableStateOf<Byte>(15) }
+
+    // Firebase
+    val firebaseLocationService = remember { FirebaseLocationService(context) }
+    var showGroupSharing by remember { mutableStateOf(false) }
+    val sessionLocations by produceState<Map<String, SharedLocation>>(
+        initialValue = emptyMap(),
+        key1 = firebaseLocationService.getCurrentSessionId()
+    ) {
+        firebaseLocationService.getCurrentSessionId()?.let { sessionId ->
+            firebaseLocationService.observeSession(sessionId).collect { locations ->
+                value = locations
+            }
+        }
+    }
 
     // 🆕 Observer zoom
     ObserveMapZoom(
@@ -1634,6 +1649,70 @@ fun fourSTLPositionMarkerComposable(
                 onDismiss = { showDatiMenu = false }
             )
         }
+
+
+        // ========== POSITION SHARING GROUP ==========
+
+        if (buttonsVisible) {
+            VerticalCategoryButton(
+                text = "GPS SHARING",
+                alignment = Alignment.TopStart,
+                onClick = { showGroupSharing = true },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(vertical = (144.dp + 70.dp + 2.dp + 70.dp + 2.dp))
+                    .zIndex(2f)
+            )
+        }
+
+        // Overlay per GroupSharingScreen
+        if (showGroupSharing) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .zIndex(1002f)
+            ) {
+                GroupSharingScreen(
+                    context = context,
+                    onBack = { showGroupSharing = false }
+                )
+            }
+        }
+
+        // Aggiorna posizione Firebase quando sei in una sessione
+        LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
+            userLocation?.let { location ->
+                if (firebaseLocationService.isInSession()) {
+                    firebaseLocationService.updateLocation(location)
+                }
+            }
+        }
+
+        // Disegna marker per le posizioni condivise
+        LaunchedEffect(sessionLocations, mapViewRef) {
+            val mapView = mapViewRef ?: return@LaunchedEffect
+
+            // Rimuovi marker vecchi (implementa la tua logica di pulizia)
+
+            sessionLocations.forEach { (id, sharedLocation) ->
+                if (sharedLocation.deviceId != firebaseLocationService.getDeviceId()) {
+                    val latLong = LatLong(sharedLocation.latitude, sharedLocation.longitude)
+
+                    // Crea marker con colore personalizzato
+                    val drawable = ContextCompat.getDrawable(
+                        context,
+                        R.drawable.ic_marker_yellow // Usa l'icona appropriata
+                    )
+                    val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+                    val marker = Marker(latLong, bitmap, 0, -bitmap.height / 2)
+
+                    mapView.layerManager.layers.add(marker)
+                }
+            }
+        }
+
+        // TERMINE GROUP SHARING
 
 
         // Marker GPS uploaded
