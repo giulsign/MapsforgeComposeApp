@@ -3,8 +3,8 @@
   <component name="deploymentTargetSelector">
     <selectionStates>
       <SelectionState runConfigName="prova">
-        <option name="selectionMode" value="DIALOG" />
-        <DropdownSelection timestamp="2026-01-27T16:59:41.060859700Z">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2026-01-27T17:12:52.095514800Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=BLADE20PRO000002424" />

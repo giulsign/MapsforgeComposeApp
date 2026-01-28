@@ -22,6 +22,10 @@ import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class GpsTrackingService : Service() {
 
@@ -51,6 +55,10 @@ class GpsTrackingService : Service() {
     private val trackPoints = mutableListOf<Location>()
     private var wakeLock: PowerManager.WakeLock? = null
 
+    // Define a scope for the service
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+
     // 🆕 Variabile per larghezza traccia corrente
     private var currentTrackWidth: Float? = null
 
@@ -60,9 +68,20 @@ class GpsTrackingService : Service() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
-                locationResult.lastLocation?.let {
-                    trackPoints.add(it)
+                // Use a named variable 'location' instead of 'it' to avoid confusion
+                locationResult.lastLocation?.let { location ->
+                    trackPoints.add(location)
                     _trackPointsFlow.value = ArrayList(trackPoints)
+
+                    // ✅ Update Firebase if in session
+                    val firebaseService = FirebaseLocationService.getInstance(applicationContext)
+                    if (firebaseService.isInSession()) {
+                        // Use the serviceScope defined above
+                        serviceScope.launch {
+                            firebaseService.updateLocation(location)
+                            Log.d(TAG, "📤 Location sent to Firebase from service")
+                        }
+                    }
                 }
             }
         }

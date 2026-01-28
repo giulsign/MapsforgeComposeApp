@@ -43,13 +43,12 @@
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 
         <service
-            android:name=".GpsTrackingService"
-            android:foregroundServiceType="location" />
+            android:name=".MyApplication"
+            android:allowBackup="true"
+            tools:ignore="Instantiatable" />
 
         <service
-            android:name=".LocationSharingService"
-            android:enabled="true"
-            android:exported="false"
+            android:name=".GpsTrackingService"
             android:foregroundServiceType="location" />
 
         <activity

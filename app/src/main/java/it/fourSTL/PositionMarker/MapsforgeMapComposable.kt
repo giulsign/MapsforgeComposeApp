@@ -671,6 +671,7 @@ fun fourSTLPositionMarkerComposable(
     var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var showLicenses by remember { mutableStateOf(false) }
     var showStartPointReport by remember { mutableStateOf(false) }
+    var showGroupSharing by remember { mutableStateOf(false) }
 
     // 🔹 Load persistent metadatas selections
     val persistentSelectionsState = remember {
@@ -726,16 +727,70 @@ fun fourSTLPositionMarkerComposable(
 
     var zoomLevel by remember { mutableStateOf<Byte>(15) }
 
-    // Firebase
-    val firebaseLocationService = remember { FirebaseLocationService(context) }
-    var showGroupSharing by remember { mutableStateOf(false) }
-    val sessionLocations by produceState<Map<String, SharedLocation>>(
-        initialValue = emptyMap(),
-        key1 = firebaseLocationService.getCurrentSessionId()
-    ) {
-        firebaseLocationService.getCurrentSessionId()?.let { sessionId ->
-            firebaseLocationService.observeSession(sessionId).collect { locations ->
-                value = locations
+    // ✅ AGGIUNGI: Ottieni il singleton del servizio
+    val firebaseLocationService = remember {
+        FirebaseLocationService.getInstance(context)
+    }
+
+    // ✅ AGGIUNGI: Stato per le posizioni condivise
+    var sharedLocations by remember { mutableStateOf<Map<String, SharedLocation>>(emptyMap()) }
+    var sharedMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
+
+    // ✅ AGGIUNGI: Osserva la sessione corrente
+    LaunchedEffect(Unit) {
+        // Controlla continuamente se c'è una sessione attiva
+        while (true) {
+            val sessionId = firebaseLocationService.getCurrentSessionId()
+
+            if (sessionId != null && firebaseLocationService.isInSession()) {
+                Log.d("MapComposable", "🔄 Active session detected: $sessionId")
+
+                // Osserva le posizioni della sessione
+                firebaseLocationService.observeSession(sessionId).collect { locations ->
+                    Log.d("MapComposable", "📍 Received ${locations.size} locations")
+                    sharedLocations = locations
+                }
+            }
+
+            // Ricontrolla ogni 2 secondi
+            delay(2000)
+        }
+    }
+
+    // ✅ AGGIUNGI: Aggiorna i marker quando cambiano le posizioni
+    LaunchedEffect(sharedLocations, mapViewRef) {
+        mapViewRef?.let { mapView ->
+            // Rimuovi i vecchi marker condivisi
+            sharedMarkers.forEach { marker ->
+                mapView.layerManager.layers.remove(marker)
+            }
+
+            // Crea nuovi marker per ogni posizione condivisa
+            val newMarkers = sharedLocations.map { (key, location) ->
+                createSharedLocationMarker(
+                    context = context,
+                    location = location,
+                    isHost = key.startsWith("host_")
+                )
+            }
+
+            // Aggiungi i nuovi marker alla mappa
+            newMarkers.forEach { marker ->
+                mapView.layerManager.layers.add(marker)
+            }
+
+            sharedMarkers = newMarkers
+
+            Log.d("MapComposable", "🗺️ Updated ${newMarkers.size} shared markers on map")
+        }
+    }
+
+    // ✅ AGGIUNGI: Aggiorna la tua posizione in Firebase quando sei in una sessione
+    LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
+        userLocation?.let { location ->
+            if (firebaseLocationService.isInSession()) {
+                firebaseLocationService.updateLocation(location)
+                Log.d("MapComposable", "📤 Sent location to Firebase")
             }
         }
     }
@@ -1685,29 +1740,6 @@ fun fourSTLPositionMarkerComposable(
             userLocation?.let { location ->
                 if (firebaseLocationService.isInSession()) {
                     firebaseLocationService.updateLocation(location)
-                }
-            }
-        }
-
-        // Disegna marker per le posizioni condivise
-        LaunchedEffect(sessionLocations, mapViewRef) {
-            val mapView = mapViewRef ?: return@LaunchedEffect
-
-            // Rimuovi marker vecchi (implementa la tua logica di pulizia)
-
-            sessionLocations.forEach { (id, sharedLocation) ->
-                if (sharedLocation.deviceId != firebaseLocationService.getDeviceId()) {
-                    val latLong = LatLong(sharedLocation.latitude, sharedLocation.longitude)
-
-                    // Crea marker con colore personalizzato
-                    val drawable = ContextCompat.getDrawable(
-                        context,
-                        R.drawable.ic_marker_yellow // Usa l'icona appropriata
-                    )
-                    val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
-                    val marker = Marker(latLong, bitmap, 0, -bitmap.height / 2)
-
-                    mapView.layerManager.layers.add(marker)
                 }
             }
         }
@@ -3445,5 +3477,28 @@ fun ObserveMapZoomThrottled(
                 }
             }
         }
+    }
+}
+
+private fun createSharedLocationMarker(
+    context: Context,
+    location: SharedLocation,
+    isHost: Boolean
+): Marker {
+    val latLong = LatLong(location.latitude, location.longitude)
+
+    // Scegli l'icona in base al ruolo
+    val iconRes = if (isHost) {
+        R.drawable.ic_marker_green  // Host (verde)
+    } else {
+        R.drawable.ic_marker_blue   // Guest (blu o altri colori)
+    }
+
+    val drawable = ContextCompat.getDrawable(context, iconRes)
+    val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+
+    return Marker(latLong, bitmap, 0, 0).apply {
+        // Puoi aggiungere un label con il nome del device
+        // this.title = location.deviceName
     }
 }
