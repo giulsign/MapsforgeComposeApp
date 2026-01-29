@@ -109,7 +109,10 @@ import kotlin.math.abs
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.platform.LocalDensity
 import it.fourSTL.PositionMarker.firebase.SharedLocation
 
 
@@ -643,6 +646,18 @@ fun calculateGpxStats(points: List<LatLong>): GpxStats? {
     )
 }
 
+// Converte coordinate geografiche in posizione pixel sullo schermo
+private fun latLongToScreenPosition(
+    mapView: MapView,
+    latLong: LatLong
+): androidx.compose.ui.geometry.Offset? {
+    return try {
+        val point = mapView.mapViewProjection.toPixels(latLong)
+        androidx.compose.ui.geometry.Offset(point.x.toFloat(), point.y.toFloat())
+    } catch (e: Exception) {
+        null
+    }
+}
 
 // Main composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1078,6 +1093,7 @@ fun fourSTLPositionMarkerComposable(
             },
             modifier = Modifier.fillMaxSize()
         )
+
 
         // Button MyLocation
         FloatingActionButton(
@@ -1745,6 +1761,57 @@ fun fourSTLPositionMarkerComposable(
         }
 
         // TERMINE GROUP SHARING
+
+
+        // Card legenda membri (opzionale)
+        if (sharedLocations.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .width(200.dp)
+                    .zIndex(10f),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White.copy(alpha = 0.9f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        "👥 Active members (${sharedLocations.size})",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        fontFamily = MyCustomFont
+                    )
+                    Spacer(Modifier.height(8.dp))
+
+                    sharedLocations.forEach { (key, location) ->
+                        val isCurrentDevice = location.deviceId == firebaseLocationService.getDeviceId()
+                        val label = if (isCurrentDevice) "${location.deviceName} (Tu)" else location.deviceName
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        ) {
+                            // Pallino colorato
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .background(
+                                        Color(android.graphics.Color.parseColor(location.color)),
+                                        shape = CircleShape
+                                    )
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                label,
+                                fontSize = 12.sp,
+                                fontFamily = MyCustomFont
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
 
         // Marker GPS uploaded
@@ -3487,18 +3554,20 @@ private fun createSharedLocationMarker(
 ): Marker {
     val latLong = LatLong(location.latitude, location.longitude)
 
-    // Scegli l'icona in base al ruolo
-    val iconRes = if (isHost) {
-        R.drawable.ic_marker_green  // Host (verde)
-    } else {
-        R.drawable.ic_marker_blue   // Guest (blu o altri colori)
-    }
+    // 🎨 Mappa colori → icone
+    val guestColors = mapOf(
+        "#3b82f6" to R.drawable.ic_marker_blue,      // Blu
+        "#f59e0b" to R.drawable.ic_marker_yellow,    // Giallo
+        "#10b981" to R.drawable.ic_marker_green,     // Verde
+        "#8b5cf6" to R.drawable.ic_marker_purple,    // Viola
+        "#ef4444" to R.drawable.ic_marker_orange     // Arancio
+    )
+
+    // Seleziona l'icona in base al colore
+    val iconRes = guestColors[location.color] ?: R.drawable.ic_marker_blue
 
     val drawable = ContextCompat.getDrawable(context, iconRes)
     val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
 
-    return Marker(latLong, bitmap, 0, 0).apply {
-        // Puoi aggiungere un label con il nome del device
-        // this.title = location.deviceName
-    }
+    return Marker(latLong, bitmap, 0, -bitmap.height / 2)
 }
