@@ -4,7 +4,7 @@
     <selectionStates>
       <SelectionState runConfigName="prova">
         <option name="selectionMode" value="DIALOG" />
-        <DropdownSelection timestamp="2026-01-27T17:12:52.095514800Z">
+        <DropdownSelection timestamp="2026-02-01T13:38:46.238835800Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=BLADE20PRO000002424" />
@@ -15,12 +15,12 @@
           <targets>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=HGAJQDZL" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=BLADE20PRO000002424" />
               </handle>
             </Target>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=BLADE20PRO000002424" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=HGAJQDZL" />
               </handle>
             </Target>
           </targets>

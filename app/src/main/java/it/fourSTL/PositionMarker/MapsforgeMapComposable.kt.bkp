@@ -109,7 +109,11 @@ import kotlin.math.abs
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.platform.LocalDensity
+import it.fourSTL.PositionMarker.firebase.SharedLocation
 
 
 //  memorize selected metadata
@@ -642,6 +646,18 @@ fun calculateGpxStats(points: List<LatLong>): GpxStats? {
     )
 }
 
+// Converte coordinate geografiche in posizione pixel sullo schermo
+private fun latLongToScreenPosition(
+    mapView: MapView,
+    latLong: LatLong
+): androidx.compose.ui.geometry.Offset? {
+    return try {
+        val point = mapView.mapViewProjection.toPixels(latLong)
+        androidx.compose.ui.geometry.Offset(point.x.toFloat(), point.y.toFloat())
+    } catch (e: Exception) {
+        null
+    }
+}
 
 // Main composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -670,6 +686,7 @@ fun fourSTLPositionMarkerComposable(
     var selectedMetadata by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var showLicenses by remember { mutableStateOf(false) }
     var showStartPointReport by remember { mutableStateOf(false) }
+    var showGroupSharing by remember { mutableStateOf(false) }
 
     // 🔹 Load persistent metadatas selections
     val persistentSelectionsState = remember {
@@ -724,6 +741,84 @@ fun fourSTLPositionMarkerComposable(
     var showTracciaMenu by remember { mutableStateOf(false) }
 
     var zoomLevel by remember { mutableStateOf<Byte>(15) }
+
+    // ✅ AGGIUNGI: Ottieni il singleton del servizio
+    val firebaseLocationService = remember {
+        FirebaseLocationService.getInstance(context)
+    }
+
+    // ✅ AGGIUNGI: Stato per le posizioni condivise
+    var sharedLocations by remember { mutableStateOf<Map<String, SharedLocation>>(emptyMap()) }
+    var sharedMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
+
+    // ✅ AGGIUNGI: Osserva la sessione corrente
+    LaunchedEffect(Unit) {
+        // Controlla continuamente se c'è una sessione attiva
+        while (true) {
+            val sessionId = firebaseLocationService.getCurrentSessionId()
+
+            if (sessionId != null && firebaseLocationService.isInSession()) {
+                Log.d("MapComposable", "🔄 Active session detected: $sessionId")
+
+                // Osserva le posizioni della sessione
+                firebaseLocationService.observeSession(sessionId).collect { locations ->
+                    Log.d("MapComposable", "📍 Received ${locations.size} locations")
+                    sharedLocations = locations
+                }
+            }
+
+            // Ricontrolla ogni 2 secondi
+            delay(2000)
+        }
+    }
+
+    // ✅ Aggiorna i marker quando cambiano le posizioni
+    LaunchedEffect(sharedLocations, mapViewRef) {
+        mapViewRef?.let { mapView ->
+            // Rimuovi i vecchi marker condivisi
+            sharedMarkers.forEach { marker ->
+                mapView.layerManager.layers.remove(marker)
+            }
+
+            val currentDeviceId = firebaseLocationService.getDeviceId()
+
+            // ✅ FILTRO: Crea marker SOLO per gli altri membri (non per te stesso)
+            val newMarkers = sharedLocations
+                .filterNot { (_, location) ->
+                    // Escludi il tuo device dai marker condivisi
+                    location.deviceId == currentDeviceId
+                }
+                .map { (key, location) ->
+                    createSharedLocationMarker(
+                        context = context,
+                        location = location,
+                        isHost = key.startsWith("host_")
+                    )
+                }
+
+            // Aggiungi i nuovi marker alla mappa
+            newMarkers.forEach { marker ->
+                mapView.layerManager.layers.add(marker)
+            }
+
+            sharedMarkers = newMarkers
+
+            Log.d(
+                "MapComposable",
+                "🗺️ Updated ${newMarkers.size} shared markers (total: ${sharedLocations.size}, excluding self)"
+            )
+        }
+    }
+
+    // ✅ AGGIUNGI: Aggiorna la tua posizione in Firebase quando sei in una sessione
+    LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
+        userLocation?.let { location ->
+            if (firebaseLocationService.isInSession()) {
+                firebaseLocationService.updateLocation(location)
+                Log.d("MapComposable", "📤 Sent location to Firebase")
+            }
+        }
+    }
 
     // 🆕 Observer zoom
     ObserveMapZoom(
@@ -1008,6 +1103,7 @@ fun fourSTLPositionMarkerComposable(
             },
             modifier = Modifier.fillMaxSize()
         )
+
 
         // Button MyLocation
         FloatingActionButton(
@@ -1633,6 +1729,98 @@ fun fourSTLPositionMarkerComposable(
                 items = metadataItems,
                 onDismiss = { showDatiMenu = false }
             )
+        }
+
+
+        // ========== POSITION SHARING GROUP ==========
+
+        if (buttonsVisible) {
+            VerticalCategoryButton(
+                text = "GPS SHARING",
+                alignment = Alignment.TopStart,
+                onClick = { showGroupSharing = true },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(vertical = (144.dp + 70.dp + 2.dp + 70.dp + 2.dp))
+                    .zIndex(2f)
+            )
+        }
+
+        // Overlay per GroupSharingScreen
+        if (showGroupSharing) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .zIndex(1002f)
+            ) {
+                GroupSharingScreen(
+                    context = context,
+                    onBack = { showGroupSharing = false }
+                )
+            }
+        }
+
+        // Aggiorna posizione Firebase quando sei in una sessione
+        LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
+            userLocation?.let { location ->
+                if (firebaseLocationService.isInSession()) {
+                    firebaseLocationService.updateLocation(location)
+                }
+            }
+        }
+
+        // TERMINE GROUP SHARING
+
+
+        // Card legenda membri (opzionale)
+        if (sharedLocations.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .width(200.dp)
+                    .zIndex(10f),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White.copy(alpha = 0.9f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        "👥 Active members (${sharedLocations.size})",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        fontFamily = MyCustomFont
+                    )
+                    Spacer(Modifier.height(8.dp))
+
+                    sharedLocations.forEach { (key, location) ->
+                        val isCurrentDevice = location.deviceId == firebaseLocationService.getDeviceId()
+                        val label = if (isCurrentDevice) "${location.deviceName} (Tu)" else location.deviceName
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        ) {
+                            // Pallino colorato
+                            Box(
+                                Modifier
+                                    .size(12.dp)
+                                    .background(
+                                        Color(android.graphics.Color.parseColor(location.color)),
+                                        shape = CircleShape
+                                    )
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                label,
+                                fontSize = 12.sp,
+                                fontFamily = MyCustomFont
+                            )
+                        }
+                    }
+                }
+            }
         }
 
 
@@ -2591,6 +2779,7 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
+
         // Advisor GPX loaded
         if (loadedGpxTrack.isNotEmpty()) {
             Text(
@@ -3367,4 +3556,26 @@ fun ObserveMapZoomThrottled(
             }
         }
     }
+}
+
+private fun createSharedLocationMarker(
+    context: Context,
+    location: SharedLocation,
+    isHost: Boolean
+): Marker {
+    val latLong = LatLong(location.latitude, location.longitude)
+
+    // 🎨 Logica colori marker:
+    // - Host visto da guest = VERDE
+    // - Tutti i guest visti da chiunque = BLU
+    val iconRes = if (isHost) {
+        R.drawable.ic_marker_green  // Host è sempre verde quando visualizzato
+    } else {
+        R.drawable.ic_marker_blue   // Guest sono sempre blu quando visualizzati
+    }
+
+    val drawable = ContextCompat.getDrawable(context, iconRes)
+    val bitmap = AndroidGraphicFactory.convertToBitmap(drawable)
+
+    return Marker(latLong, bitmap, 0, -bitmap.height / 2)
 }
