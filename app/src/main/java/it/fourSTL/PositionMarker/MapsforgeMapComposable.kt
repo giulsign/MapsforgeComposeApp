@@ -2771,6 +2771,24 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
+        // ✅ ATTRIBUZIONE OPENSTREETMAP (Licenza ODbL)
+        Text(
+            text = "© OpenStreetMap contributors",
+            color = Color.Black,
+            fontSize = 9.sp,
+            fontFamily = MyCustomFont,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 8.dp, end = 8.dp)
+                .background(
+                    color = Color.White.copy(alpha = 0.85f),
+                    shape = RoundedCornerShape(4.dp)
+                )
+                .padding(horizontal = 6.dp, vertical = 3.dp)
+                .zIndex(1000f)
+        )
+
+
         // Button close app
         var showExitDialog by remember { mutableStateOf(false) }
 
