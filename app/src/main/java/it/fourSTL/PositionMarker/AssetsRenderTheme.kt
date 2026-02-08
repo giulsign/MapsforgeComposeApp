@@ -30,7 +30,7 @@ class AssetsRenderTheme(private val context: Context) : XmlRenderTheme {
         return try {
             context.assets.open("renderTheme.xml")
         } catch (e: IOException) {
-            throw RuntimeException("Errore durante il caricamento di renderTheme.xml", e)
+            throw RuntimeException("RenderTheme upload error.xml", e)
         }
     }
 }

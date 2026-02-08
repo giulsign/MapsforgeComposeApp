@@ -17,15 +17,12 @@ import it.fourSTL.PositionMarker.FirebaseConfig
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Handle the splash screen transition.
         installSplashScreen()
 
         super.onCreate(savedInstanceState)
 
         FirebaseConfig.initialize(this)
 
-
-        // edge-to-edge visualization
         enableEdgeToEdge()
 
         setContent {

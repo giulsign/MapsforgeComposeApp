@@ -14,7 +14,7 @@ data class SharedLocation(
     @PropertyName("active") val active: Boolean = true,
     @PropertyName("color") val color: String = "#ef4444" // Colore marker
 ) {
-    // Costruttore vuoto richiesto da Firebase
+    // EMPTY CONSTRUCTOR
     constructor() : this("", "", 0.0, 0.0, 0.0, 0L, true, "#ef4444")
 
     fun toMap(): Map<String, Any> = mapOf(

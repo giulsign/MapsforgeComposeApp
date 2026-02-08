@@ -162,7 +162,7 @@ fun clearSavedLocations(context: Context) {
     if (file.exists()) {
         file.writeText("[]")
     }
-    Toast.makeText(context, "Dati tabella JSON cancellati", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, "Datas JSON deleted", Toast.LENGTH_LONG).show()
 }
 
 
@@ -257,7 +257,6 @@ fun importMetadataFromFile(
                     put("date", importedPoint.optString("date", ""))
                     put("hour", importedPoint.optString("hour", ""))
 
-                    // Copia tutti gli altri metadati
                     val keys = importedPoint.keys()
                     while (keys.hasNext()) {
                         val key = keys.next()
@@ -464,27 +463,18 @@ fun metersToPixels(
     latitude: Double,
     tileSize: Int = 256
 ): Float {
-    // Raggio Terra in metri
     val earthRadius = 6378137.0
 
-    // Circonferenza Terra all'equatore in metri
     val earthCircumference = 2 * Math.PI * earthRadius
 
-    // Metri per pixel all'equatore per questo zoom
     val metersPerPixelAtEquator = earthCircumference / (tileSize * (2.0.pow(zoomLevel.toInt())))
 
-    // Correzione per latitudine (proiezione Mercatore)
-    // Ai poli la scala è diversa dall'equatore
     val latitudeRadians = Math.toRadians(latitude)
     val metersPerPixel = metersPerPixelAtEquator * cos(latitudeRadians)
 
-    // Converti metri in pixel
     return (meters / metersPerPixel).toFloat()
 }
 
-/**
- * Versione con MapView (usa i parametri della mappa)
- */
 fun metersToPixelsFromMap(
     meters: Float,
     mapView: MapView,
@@ -497,17 +487,12 @@ fun metersToPixelsFromMap(
 
 
 object TrackWidthConstants {
-    // Larghezze preset comuni (in metri)
     const val FOREST_CENSUS_MIN = 10.0f
     const val FOREST_CENSUS_MAX = 20.0f
     const val TRAIL_MAPPING = 5.0f
     const val NARROW_PATH = 2.0f
-
-    // Limiti validazione
     const val MIN_WIDTH = 0.1f   // 10 cm
     const val MAX_WIDTH = 1000.0f // 1 km
-
-    // Larghezza default se non specificata
     const val DEFAULT_WIDTH_PIXELS = 12.0f
 }
 
@@ -646,7 +631,7 @@ fun calculateGpxStats(points: List<LatLong>): GpxStats? {
     )
 }
 
-// Converte coordinate geografiche in posizione pixel sullo schermo
+// Convert lat long to screen position
 private fun latLongToScreenPosition(
     mapView: MapView,
     latLong: LatLong
@@ -723,16 +708,14 @@ fun fourSTLPositionMarkerComposable(
     var showStopTrackingDialog by remember { mutableStateOf(false) }
     var gpxStatsRealTime by remember { mutableStateOf<GpxStats?>(null) }
     var showGpxReportRealTime by remember { mutableStateOf(false) }
-    var trackWidthMeters by remember { mutableStateOf<Float?>(null) } // Larghezza traccia corrente
+    var trackWidthMeters by remember { mutableStateOf<Float?>(null) }
     var showTrackWidthDialog by remember { mutableStateOf(false) }
-    var loadedGpxWidth by remember { mutableStateOf<Float?>(null) } // Larghezza GPX caricato
-
+    var loadedGpxWidth by remember { mutableStateOf<Float?>(null) }
 
     // 🔹 Show loaded start point from file
     var showImportStartPointDialog by remember { mutableStateOf(false) }
     var showOverwriteConfirmDialog by remember { mutableStateOf(false) }
     var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
-
 
     // Show buttons menu
     var showPosizioneMenu by remember { mutableStateOf(false) }
@@ -742,23 +725,23 @@ fun fourSTLPositionMarkerComposable(
 
     var zoomLevel by remember { mutableStateOf<Byte>(15) }
 
-    // ✅ AGGIUNGI: Ottieni il singleton del servizio
+    // add singleton service
     val firebaseLocationService = remember {
         FirebaseLocationService.getInstance(context)
     }
 
-    // ✅ AGGIUNGI: Stato per le posizioni condivise
+    // add shareing position service
     var sharedLocations by remember { mutableStateOf<Map<String, SharedLocation>>(emptyMap()) }
     var sharedMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
 
-    // ✅ Osserva la sessione corrente - VERSIONE CORRETTA
+    // observe session
     LaunchedEffect(firebaseLocationService.getCurrentSessionId()) {
         val sessionId = firebaseLocationService.getCurrentSessionId()
 
         if (sessionId != null && firebaseLocationService.isInSession()) {
             Log.d("MapComposable", "🔄 Observing session: $sessionId")
 
-            // Osserva le posizioni della sessione
+            // observe session position
             firebaseLocationService.observeSession(sessionId).collect { locations ->
                 Log.d("MapComposable", "📍 Received ${locations.size} locations:")
                 locations.forEach { (key, loc) ->
@@ -772,10 +755,10 @@ fun fourSTLPositionMarkerComposable(
         }
     }
 
-    // ✅ Aggiorna i marker quando cambiano le posizioni
+    // add marker on change
     LaunchedEffect(sharedLocations, mapViewRef) {
         mapViewRef?.let { mapView ->
-            // Rimuovi i vecchi marker condivisi
+            // remove old shared markers
             sharedMarkers.forEach { marker ->
                 mapView.layerManager.layers.remove(marker)
             }
@@ -786,7 +769,6 @@ fun fourSTLPositionMarkerComposable(
             Log.d("MapComposable", "  - Current device: ${currentDeviceId.take(8)}...")
             Log.d("MapComposable", "  - Total locations: ${sharedLocations.size}")
 
-            // ✅ FILTRO: Crea marker SOLO per gli altri membri (non per te stesso)
             val newMarkers = sharedLocations
                 .filterNot { (_, location) ->
                     val isMe = location.deviceId == currentDeviceId
@@ -810,7 +792,6 @@ fun fourSTLPositionMarkerComposable(
                     )
                 }
 
-            // Aggiungi i nuovi marker alla mappa
             newMarkers.forEach { marker ->
                 mapView.layerManager.layers.add(marker)
             }
@@ -821,7 +802,7 @@ fun fourSTLPositionMarkerComposable(
         }
     }
 
-    // ✅ Aggiorna la tua posizione in Firebase quando sei in una sessione
+    // add devcie position
     LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
         userLocation?.let { location ->
             if (firebaseLocationService.isInSession()) {
@@ -840,7 +821,7 @@ fun fourSTLPositionMarkerComposable(
         }
     }
 
-    // 🆕 Observer zoom
+    // observer zoom
     ObserveMapZoom(
         mapViewRef = mapViewRef,
         onZoomChanged = { newZoom ->
@@ -903,10 +884,8 @@ fun fourSTLPositionMarkerComposable(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             if (uri != null) {
-                // 🆕 Usa nuovo parser che restituisce GpxData
                 val gpxData = GpxParser.parse(context, uri)
 
-                // Estrai nome file
                 var name = "Track.gpx"
                 if (uri.scheme == "content") {
                     context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
@@ -924,7 +903,7 @@ fun fourSTLPositionMarkerComposable(
 
                 if (gpxData.trackPoints.isNotEmpty()) {
                     loadedGpxTrack = gpxData.trackPoints
-                    loadedGpxWidth = gpxData.trackWidthMeters // 🆕 Salva larghezza
+                    loadedGpxWidth = gpxData.trackWidthMeters
                     showLoadedGpxTrack = true
 
                     val widthInfo = gpxData.trackWidthMeters?.let { " (width: ${it}m)" } ?: ""
@@ -1436,7 +1415,6 @@ fun fourSTLPositionMarkerComposable(
                     if (isTracking) {
                         showStopTrackingDialog = true
                     } else {
-                        // 🆕 Mostra dialog per impostare larghezza
                         showTrackWidthDialog = true
                     }
                 }
@@ -1732,18 +1710,6 @@ fun fourSTLPositionMarkerComposable(
                 }
             )
 
-            /*metadataItems.add(
-                "Export metadatas to file" to {
-                    exportJsonToDownload(context)
-                }
-            )
-
-            metadataItems.add(
-                 "View saved metadatas" to {
-                    showTable = true
-                }
-            )*/
-
             CategoryMenu(
                 title = "Personalized Metadatas Menu",
                 items = metadataItems,
@@ -1781,7 +1747,7 @@ fun fourSTLPositionMarkerComposable(
             }
         }
 
-        // Aggiorna posizione Firebase quando sei in una sessione
+        // Update position
         LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
             userLocation?.let { location ->
                 if (firebaseLocationService.isInSession()) {
@@ -1793,7 +1759,7 @@ fun fourSTLPositionMarkerComposable(
         // TERMINE GROUP SHARING
 
 
-        // Card legenda membri (opzionale)
+        // Legenda card
         if (sharedLocations.isNotEmpty()) {
             Card(
                 modifier = Modifier
@@ -1822,7 +1788,6 @@ fun fourSTLPositionMarkerComposable(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(vertical = 2.dp)
                         ) {
-                            // Pallino colorato
                             Box(
                                 Modifier
                                     .size(12.dp)
@@ -2419,7 +2384,7 @@ fun fourSTLPositionMarkerComposable(
                             } catch (e: Exception) {
                                 Toast.makeText(
                                     context,
-                                    "❌ Errore lettura punto auto",
+                                    "❌ errore reading start point",
                                     Toast.LENGTH_LONG
                                 )
                                     .show()
@@ -2427,7 +2392,7 @@ fun fourSTLPositionMarkerComposable(
                         } else {
                             Toast.makeText(
                                 context,
-                                "⚠️ Nessun punto auto salvato.",
+                                "⚠️ No start point saved.",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -2462,7 +2427,7 @@ fun fourSTLPositionMarkerComposable(
         {
             Icon(
                 painter = painterResource(id = R.drawable.show_start),
-                contentDescription = "Mostra punto partenza",
+                contentDescription = "Show start point",
                 tint = Color.Unspecified
             )
         }
@@ -2488,7 +2453,7 @@ fun fourSTLPositionMarkerComposable(
         {
             Icon(
                 painter = painterResource(id = R.drawable.list),
-                contentDescription = "Apri tabella selezione",
+                contentDescription = "Open selection table",
                 tint = Color.Unspecified
             )
         }
@@ -2616,7 +2581,6 @@ fun fourSTLPositionMarkerComposable(
             onClick = { showLicenses = true },
             modifier = Modifier
                 .align(Alignment.TopStart)
-                //.padding(horizontal = 30.dp, vertical = 60.dp)
                 .width(screenWidth * 0.5f)
                 .height(70.dp)
                 .zIndex(2f),
@@ -2713,7 +2677,7 @@ fun fourSTLPositionMarkerComposable(
                             singleLine = true
                         )
 
-                        // 🆕 Mostra larghezza se impostata
+                        // show lenght
                         trackWidthMeters?.let { width ->
                             Spacer(Modifier.height(8.dp))
                             Card(
@@ -2747,7 +2711,7 @@ fun fourSTLPositionMarkerComposable(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            // 🆕 Passa larghezza al servizio
+                            // send length to service
                             val intent = Intent(context, GpsTrackingService::class.java).apply {
                                 action = GpsTrackingService.ACTION_SAVE
                                 putExtra(GpsTrackingService.EXTRA_FILENAME, fileName)
@@ -2771,7 +2735,7 @@ fun fourSTLPositionMarkerComposable(
         }
 
 
-        // ✅ ATTRIBUZIONE OPENSTREETMAP (Licenza ODbL)
+        // Openstreetmap attribution
         Text(
             text = "© OpenStreetMap contributors",
             color = Color.Black,
@@ -2781,7 +2745,7 @@ fun fourSTLPositionMarkerComposable(
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 8.dp, end = 8.dp)
                 .background(
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = Color.White.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(4.dp)
                 )
                 .padding(horizontal = 6.dp, vertical = 3.dp)
@@ -2796,7 +2760,6 @@ fun fourSTLPositionMarkerComposable(
             onClick = { showExitDialog = true },
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                //.padding(horizontal = 30.dp, vertical = 60.dp)
                 .width(screenWidth * 0.5f)
                 .height(70.dp)
                 .zIndex(2f),
@@ -3285,14 +3248,12 @@ fun fourSTLPositionMarkerComposable(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            // Prepara il nome file
                             val timestamp = SimpleDateFormat(
                                 "yyyyMMdd_HHmmss",
                                 Locale.getDefault()
                             ).format(Date())
                             val generatedFileName = "track_$timestamp"
 
-                            // 🆕 Usa la nuova action ACTION_SAVE_AND_STOP
                             val intent = Intent(context, GpsTrackingService::class.java).apply {
                                 action = GpsTrackingService.ACTION_SAVE_AND_STOP
                                 putExtra(GpsTrackingService.EXTRA_FILENAME, generatedFileName)
@@ -3302,7 +3263,6 @@ fun fourSTLPositionMarkerComposable(
                             }
                             context.startService(intent)
 
-                            // Aggiorna lo stato locale
                             isTracking = false
                             trackWidthMeters = null
                             showStopTrackingDialog = false
@@ -3315,7 +3275,6 @@ fun fourSTLPositionMarkerComposable(
                     Column {
                         TextButton(
                             onClick = {
-                                // Stop senza salvare
                                 val intent = Intent(context, GpsTrackingService::class.java).apply {
                                     action = GpsTrackingService.ACTION_STOP
                                 }
@@ -3380,7 +3339,6 @@ fun TrackWidthDialog(
 
                 Divider()
 
-                // Toggle: Usa larghezza custom
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -3398,7 +3356,6 @@ fun TrackWidthDialog(
                     )
                 }
 
-                // Input larghezza (visibile solo se custom è attivo)
                 AnimatedVisibility(visible = useCustomWidth) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
@@ -3508,7 +3465,7 @@ fun TrackWidthDialog(
                             showError = true
                         }
                     } else {
-                        onStart(null) // Nessuna larghezza custom
+                        onStart(null)
                     }
                 },
                 shape = RectangleShape,
@@ -3560,7 +3517,6 @@ fun ObserveMapZoom(
 
     LaunchedEffect(mapViewRef) {
         mapViewRef?.let { mapView ->
-            // Polling ogni 500ms per cambiamenti zoom
             while (true) {
                 delay(500)
                 val currentZoom = mapView.model.mapViewPosition.zoomLevel
@@ -3583,10 +3539,9 @@ fun ObserveMapZoomThrottled(
     LaunchedEffect(mapViewRef) {
         mapViewRef?.let { mapView ->
             while (true) {
-                delay(300) // Check ogni 300ms
+                delay(300)
                 val currentZoom = mapView.model.mapViewPosition.zoomLevel
 
-                // Aggiorna solo se differenza >= 1 livello
                 if (kotlin.math.abs(currentZoom - lastZoom) >= 1) {
                     lastZoom = currentZoom
                     onZoomChanged(currentZoom)
@@ -3603,13 +3558,10 @@ private fun createSharedLocationMarker(
 ): Marker {
     val latLong = LatLong(location.latitude, location.longitude)
 
-    // 🎨 Logica colori marker:
-    // - Host visto da guest = VERDE
-    // - Tutti i guest visti da chiunque = BLU
     val iconRes = if (isHost) {
-        R.drawable.ic_marker_green  // Host è sempre verde quando visualizzato
+        R.drawable.ic_marker_green
     } else {
-        R.drawable.ic_marker_blue   // Guest sono sempre blu quando visualizzati
+        R.drawable.ic_marker_blue
     }
 
     Log.d("MarkerCreation", "Creating marker for ${location.deviceName}:")

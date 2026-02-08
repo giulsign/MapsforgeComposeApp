@@ -7,7 +7,7 @@
     base-text-size="11.0">
 
     <!-- ========================================================================== -->
-    <!--                         AREE NATURALI - BASE LAYER                        -->
+    <!--                         NATURAL AREA - BASE LAYER                        -->
     <!-- ========================================================================== -->
 
     <rule e="way" k="natural" v="bare_rock|scree|shingle|sand">
@@ -36,7 +36,7 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--                              AREE ACQUATICHE                               -->
+    <!--                              WATER AREA                               -->
     <!-- ========================================================================== -->
 
     <rule e="way" k="natural" v="coastline" zoom-min="6">
@@ -75,7 +75,7 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--                              AREE URBANE                                  -->
+    <!--                              URBAN AREA                                  -->
     <!-- ========================================================================== -->
 
     <rule e="way" k="landuse" v="residential">
@@ -92,7 +92,7 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--                              AREE RICREATIVE                              -->
+    <!--                              RECREATIVE AREA                              -->
     <!-- ========================================================================== -->
 
     <rule e="way" k="leisure" v="park|garden">
@@ -112,10 +112,10 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--            STRADE CON PATHTEXT (TESTO CHE SEGUE IL PERCORSO)              -->
+    <!--            STREET             -->
     <!-- ========================================================================== -->
 
-    <!-- Autostrade (motorway) -->
+    <!-- HIGHWAY -->
     <rule e="way" k="highway" v="motorway|motorway_link" zoom-min="8" zoom-max="10">
         <line stroke="#E19DB0" stroke-width="1.8"/>
     </rule>
@@ -138,7 +138,7 @@
         <line stroke="#E89DAC" stroke-width="3.0"/>
     </rule>
 
-    <!-- Strade principali (trunk) -->
+    <!-- PRINCIPAL -->
     <rule e="way" k="highway" v="trunk|trunk_link" zoom-min="9" zoom-max="10">
         <line stroke="#F5C4A8" stroke-width="1.5"/>
     </rule>
@@ -153,7 +153,7 @@
         <pathText k="name" font-size="1" fill="#664C00" stroke="#FFFFFF" stroke-width="1.5" repeat-gap="200" priority="2"/>
     </rule>
 
-    <!-- Strade primarie (primary) -->
+    <!-- PRIMARY -->
     <rule e="way" k="highway" v="primary|primary_link" zoom-min="10" zoom-max="11">
         <line stroke="#F5D9A8" stroke-width="1.2"/>
     </rule>
@@ -168,7 +168,7 @@
         <pathText k="name" font-size="1" fill="#664C00" stroke="#FFFFFF" stroke-width="1.5" repeat-gap="220" priority="3"/>
     </rule>
 
-    <!-- Strade secondarie (secondary) -->
+    <!-- SECONDARY -->
     <rule e="way" k="highway" v="secondary|secondary_link" zoom-min="13" zoom-max="13">
         <line stroke="#D9CE9F" stroke-width="2.5"/>
         <line stroke="#F5EABC" stroke-width="1.5"/>
@@ -179,7 +179,7 @@
         <pathText k="name" font-size="1" fill="#595236" stroke="#FFFFFF" stroke-width="1.5" repeat-gap="250" priority="4"/>
     </rule>
 
-    <!-- Strade terziarie (tertiary) -->
+    <!-- TERTIARY -->
     <rule e="way" k="highway" v="tertiary|tertiary_link" zoom-min="14" zoom-max="15">
         <line stroke="#CCCCCC" stroke-width="2.2"/>
         <line stroke="#FAFAFA" stroke-width="1.5"/>
@@ -191,14 +191,14 @@
         <pathText k="name" font-size="1" fill="#404040" stroke="#FFFFFF" stroke-width="1.5" repeat-gap="260" priority="5"/>
     </rule>
 
-    <!-- Strade residenziali e non classificate -->
+    <!-- RESIDENTIAL AND NOT CLASSIFIED -->
     <rule e="way" k="highway" v="unclassified|residential" zoom-min="16">
         <line stroke="#BBBBBB" stroke-width="3.5"/>
         <line stroke="#F5F5F5" stroke-width="2.8"/>
         <pathText k="name" font-size="1" fill="#555555" stroke="#FFFFFF" stroke-width="1.5" repeat-gap="280" priority="6"/>
     </rule>
 
-    <!-- Altre strade -->
+    <!-- OTHERS -->
     <rule e="way" k="highway" v="living_street" zoom-min="15">
         <line stroke="#BBBBBB" stroke-width="1.8"/>
         <line stroke="#F0F0F0" stroke-width="1.2"/>
@@ -223,7 +223,7 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--                              EDIFICI                                      -->
+    <!--                              ESTATE                                      -->
     <!-- ========================================================================== -->
 
     <rule e="way" k="building" v="*" zoom-min="15" zoom-max="16">
@@ -234,7 +234,7 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--                              FERROVIE                                     -->
+    <!--                              RAILWAY                                     -->
     <!-- ========================================================================== -->
 
     <rule e="way" k="railway" v="rail" zoom-min="11" zoom-max="13">
@@ -249,7 +249,7 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--            ETICHETTE - NOMI DI LUOGHI (CAPTION PER NODI)                   -->
+    <!--            NAMES                   -->
     <!-- ========================================================================== -->
 
     <rule e="node" k="place" v="city" zoom-min="8" zoom-max="10">
@@ -278,7 +278,7 @@
     </rule>
 
     <!-- ========================================================================== -->
-    <!--                         PUNTI DI INTERESSE (POI)                          -->
+    <!--                         POINT OF INTEREST                          -->
     <!-- ========================================================================== -->
 
     <rule e="node" k="amenity" v="hospital" zoom-min="15">

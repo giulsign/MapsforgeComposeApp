@@ -23,7 +23,7 @@ object FirebaseConfig {
 
     fun getDatabase(): FirebaseDatabase {
         return database ?: throw IllegalStateException(
-            "Firebase non inizializzato. Chiama FirebaseConfig.initialize(context) nel tuo Application o Activity."
+            "Firebase not initialized. Call FirebaseConfig.initialize(context) in your application or activity.."
         )
     }
 

@@ -20,7 +20,7 @@ object GpxUtils {
         context: Context,
         trackPoints: List<Location>,
         fileName: String,
-        trackWidthMeters: Float? = null // 🆕 Parametro opzionale
+        trackWidthMeters: Float? = null
     ) {
         if (trackPoints.isEmpty()) {
             Toast.makeText(context, "No point to save.", Toast.LENGTH_SHORT).show()
@@ -102,7 +102,7 @@ object GpxUtils {
         sb.append("    <name>${escapeXml(trackName)}</name>\n")
         sb.append("    <time>$creationTime</time>\n")
 
-        // 🆕 Aggiungi larghezza nei metadata come estensione
+        // ADD WIDTH AS METADATA'S EXTENSION
         trackWidthMeters?.let { width ->
             sb.append("    <extensions>\n")
             sb.append("      <fourSTL:trackWidth>$width</fourSTL:trackWidth>\n")
@@ -115,7 +115,7 @@ object GpxUtils {
         sb.append("  <trk>\n")
         sb.append("    <name>${escapeXml(trackName)}</name>\n")
 
-        // 🆕 Ripeti larghezza anche nel track (per compatibilità)
+        // REPEAT WIDTH IN TRACK
         trackWidthMeters?.let { width ->
             sb.append("    <extensions>\n")
             sb.append("      <fourSTL:trackWidth>$width</fourSTL:trackWidth>\n")

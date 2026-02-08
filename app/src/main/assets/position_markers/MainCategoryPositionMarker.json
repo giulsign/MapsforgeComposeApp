@@ -1,9 +1,9 @@
 [
   {"id": 1, "idM": "M1", "title": "Flora", "ref": "FloraSubCategoryPositionMarker.json"},
   {"id": 2, "idM": "M2", "title": "Fauna", "ref": "FaunaSubCategoryPositionMarker.json"},
-  {"id": 3, "idM": "M3", "title": "Funghi", "ref": "FunghiSubCategoryPositionMarker.json"},
-  {"id": 4, "idM": "M4", "title": "Tartufi", "ref": "TartufiSubCategoryPositionMarker.json"},
-  {"id": 5, "idM": "M5", "title": "Fossili", "ref": "FossiliSubCategoryPositionMarker.json"},
-  {"id": 6, "idM": "M6", "title": "Rifiuti", "ref": "RifiutiSubCategoryPositionMarker.json"},
-  {"id": 7, "idM": "M7", "title": "Personale", "ref": "personale.json"}
+  {"id": 3, "idM": "M3", "title": "Mushrooms", "ref": "FunghiSubCategoryPositionMarker.json"},
+  {"id": 4, "idM": "M4", "title": "Truffles", "ref": "TartufiSubCategoryPositionMarker.json"},
+  {"id": 5, "idM": "M5", "title": "Fossils", "ref": "FossiliSubCategoryPositionMarker.json"},
+  {"id": 6, "idM": "M6", "title": "Waste/Garbages", "ref": "RifiutiSubCategoryPositionMarker.json"},
+  {"id": 7, "idM": "M7", "title": "Personal", "ref": "personale.json"}
 ]

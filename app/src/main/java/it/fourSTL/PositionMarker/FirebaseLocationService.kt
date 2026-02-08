@@ -15,7 +15,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 /**
- * 🔧 VERSIONE CORRETTA - Singleton con fix per HOST visibility
+Singleton with HOST visibility fix
  */
 class FirebaseLocationService private constructor(private val context: Context) {
 
@@ -25,7 +25,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
     private var currentSessionId: String? = null
     private var currentDeviceId: String = getOrCreateDeviceId()
     private var currentRole: SessionRole = SessionRole.NONE
-    private var currentDeviceName: String = ""  // ✅ AGGIUNTO: Memorizza il nome del device
+    private var currentDeviceName: String = ""
 
     companion object {
         private const val TAG = "FirebaseLocationService"
@@ -37,7 +37,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
             "#3b82f6", "#8b5cf6", "#ec4899"
         )
 
-        // ✅ SINGLETON
+        //SINGLETON
         @Volatile
         private var INSTANCE: FirebaseLocationService? = null
 
@@ -51,7 +51,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
         }
     }
 
-    // ========== DEVICE ID ==========
+    //DEVICE ID
 
     private fun getOrCreateDeviceId(): String {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -67,7 +67,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
 
     fun getDeviceId(): String = currentDeviceId
 
-    // ========== CREATE SESSION (HOST) ==========
+    //CREATE SESSION (HOST)
 
     suspend fun createSession(hostName: String): FirebaseResult<String> {
         return try {
@@ -83,16 +83,15 @@ class FirebaseLocationService private constructor(private val context: Context) 
 
             sessionsRef.child(sessionId).setValue(session.toMap()).await()
 
-            // ✅ FIX: Crea subito l'entry host con posizione iniziale
             val initialHostLocation = SharedLocation(
                 deviceId = currentDeviceId,
                 deviceName = hostName,
-                latitude = 0.0,  // Verrà aggiornata da updateLocation
+                latitude = 0.0,
                 longitude = 0.0,
                 altitude = 0.0,
                 timestamp = System.currentTimeMillis(),
                 active = true,
-                color = "#22c55e"  // Verde per host
+                color = "#22c55e"  //HOST color
             )
 
             sessionsRef.child(sessionId)
@@ -102,7 +101,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
 
             currentSessionId = sessionId
             currentRole = SessionRole.HOST
-            currentDeviceName = hostName  // ✅ Memorizza il nome
+            currentDeviceName = hostName
 
             Log.d(TAG, "✅ Session created: $sessionId (Host: $hostName)")
             FirebaseResult.Success(sessionId)
@@ -113,7 +112,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
         }
     }
 
-    // ========== JOIN SESSION (GUEST) ==========
+    //JOIN SESSION (GUEST)
 
     suspend fun joinSession(sessionId: String, guestName: String): FirebaseResult<Boolean> {
         return try {
@@ -139,7 +138,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
                 return FirebaseResult.Error("Session is full (max ${session.maxGuests} guests)")
             }
 
-            // Aggiungi guest con colore casuale
+
             val guestColor = MARKER_COLORS.random()
             val guestLocation = SharedLocation(
                 deviceId = currentDeviceId,
@@ -160,7 +159,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
 
             currentSessionId = sessionId
             currentRole = SessionRole.GUEST
-            currentDeviceName = guestName  // ✅ Memorizza il nome
+            currentDeviceName = guestName
 
             Log.d(TAG, "✅ Joined session: $sessionId as $guestName")
             FirebaseResult.Success(true)
@@ -171,7 +170,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
         }
     }
 
-    // ========== UPDATE LOCATION ==========
+    //UPDATE LOCATION
 
     suspend fun updateLocation(location: Location): FirebaseResult<Boolean> {
         val sessionId = currentSessionId ?: return FirebaseResult.Error("No active session")
@@ -183,16 +182,15 @@ class FirebaseLocationService private constructor(private val context: Context) 
                 SessionRole.NONE -> return FirebaseResult.Error("Invalid role")
             }
 
-            // ✅ FIX: Includi TUTTI i campi necessari, non solo le coordinate
             val updates = mapOf(
-                "deviceId" to currentDeviceId,           // ✅ AGGIUNTO
-                "deviceName" to currentDeviceName,       // ✅ AGGIUNTO
+                "deviceId" to currentDeviceId,
+                "deviceName" to currentDeviceName,
                 "latitude" to location.latitude,
                 "longitude" to location.longitude,
                 "altitude" to (if (location.hasAltitude()) location.altitude else 0.0),
                 "timestamp" to System.currentTimeMillis(),
                 "active" to true,
-                "color" to if (currentRole == SessionRole.HOST) "#22c55e" else null  // ✅ AGGIUNTO
+                "color" to if (currentRole == SessionRole.HOST) "#22c55e" else null
             ).filterValues { it != null } as Map<String, Any>
 
             sessionsRef.child(sessionId).child(path).updateChildren(updates).await()
@@ -206,7 +204,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
         }
     }
 
-    // ========== OBSERVE SESSION (REAL-TIME) ==========
+    //OBSERVE SESSION (REAL-TIME)
 
     fun observeSession(sessionId: String): Flow<Map<String, SharedLocation>> = callbackFlow {
         Log.d(TAG, "👀 Starting to observe session: $sessionId")
@@ -217,7 +215,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
 
                 // Host location
                 snapshot.child("host").getValue(SharedLocation::class.java)?.let { host ->
-                    if (host.active && host.deviceId.isNotEmpty()) {  // ✅ Verifica deviceId non vuoto
+                    if (host.active && host.deviceId.isNotEmpty()) {
                         locations["host_${host.deviceId}"] = host.copy(color = "#22c55e")
                         Log.d(TAG, "📍 Host found: ${host.deviceName} at ${host.latitude}, ${host.longitude}")
                     }
@@ -227,7 +225,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
                 var guestCount = 0
                 snapshot.child("guests").children.forEach { guestSnapshot ->
                     guestSnapshot.getValue(SharedLocation::class.java)?.let { guest ->
-                        if (guest.active && guest.deviceId.isNotEmpty()) {  // ✅ Verifica deviceId non vuoto
+                        if (guest.active && guest.deviceId.isNotEmpty()) {
                             locations["guest_${guest.deviceId}"] = guest
                             guestCount++
                             Log.d(TAG, "📍 Guest found: ${guest.deviceName} at ${guest.latitude}, ${guest.longitude}")
@@ -254,7 +252,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
         }
     }
 
-    // ========== LEAVE SESSION ==========
+    //LEAVE SESSION
 
     suspend fun leaveSession(): FirebaseResult<Boolean> {
         val sessionId = currentSessionId ?: return FirebaseResult.Error("No active session")
@@ -270,7 +268,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
                     Log.d(TAG, "🛑 Host closed session $sessionId")
                 }
                 SessionRole.GUEST -> {
-                    // Guest si rimuove dalla lista
+
                     sessionsRef.child(sessionId)
                         .child("guests")
                         .child(currentDeviceId)
@@ -297,7 +295,7 @@ class FirebaseLocationService private constructor(private val context: Context) 
         }
     }
 
-    // ========== UTILITY ==========
+    //UTILITY
 
     private fun generateSessionCode(): String {
         return (100000..999999).random().toString()

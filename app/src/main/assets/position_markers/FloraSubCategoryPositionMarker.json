@@ -1,6 +1,6 @@
 [
-  { "id": 1, "idFL": "FLAL", "title": "Alberi (trono unico)", "Ref": "FloraAlberiCategoryPositionMarker.json" },
-  { "id": 2, "idFL": "FLAR", "title": "Arbusti (ramificati alla base)", "Ref": "FloraArbustiCategoryPositionMarker.json" },
-  { "id": 3, "idFL": "FLER", "title": "Erbacee (fiori, erbe, ortaggi, acquatiche)", "Ref": "FloraErbaceeCategoryPositionMarker.json" },
-  { "id": 4, "idFL": "FLSU", "title": "Succulente", "Ref": "FloraSucculenteCategoryPositionMarker.json" }
+  { "id": 1, "idFL": "FLAL", "title": "Trees (single trunk)", "Ref": "FloraAlberiCategoryPositionMarker.json" },
+  { "id": 2, "idFL": "FLAR", "title": "Shrubs (“multi-stem shrubs”)", "Ref": "FloraArbustiCategoryPositionMarker.json" },
+  { "id": 3, "idFL": "FLER", "title": "Herbaceous vegetation (flowers, herbs, vegetables, aquatic species)", "Ref": "FloraErbaceeCategoryPositionMarker.json" },
+  { "id": 4, "idFL": "FLSU", "title": "Succulents", "Ref": "FloraSucculenteCategoryPositionMarker.json" }
 ]

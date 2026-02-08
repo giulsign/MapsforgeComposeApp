@@ -7,20 +7,13 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.InputStream
 
-/**
- * Risultato parsing GPX con larghezza traccia
- */
 data class GpxData(
     val trackPoints: List<LatLong>,
-    val trackWidthMeters: Float? = null, // 🆕 Larghezza in metri
+    val trackWidthMeters: Float? = null,
     val trackName: String? = null
 )
 
 object GpxParser {
-
-    /**
-     * Parse GPX file e estrai punti + larghezza
-     */
     fun parse(context: Context, uri: Uri): GpxData {
         val trackPoints = mutableListOf<LatLong>()
         var trackWidthMeters: Float? = null
@@ -52,25 +45,24 @@ object GpxParser {
                                 }
                             }
 
-                            // Leggi nome traccia
+                            // READ NAME
                             "name" -> {
-                                if (trackName == null) { // Prendi solo il primo
+                                if (trackName == null) {
                                     trackName = parser.nextText()
                                 }
                             }
 
-                            // Entra in sezione extensions
+                            // ENTER EXTENSION SESSION
                             "extensions" -> {
                                 insideExtensions = true
                             }
 
-                            // 🆕 Leggi larghezza (namespace-aware)
+                            // READ WIDTH
                             "trackWidth" -> {
                                 if (insideExtensions && trackWidthMeters == null) {
                                     try {
                                         trackWidthMeters = parser.nextText().toFloatOrNull()
                                     } catch (e: Exception) {
-                                        // Ignora errori di parsing
                                     }
                                 }
                             }
@@ -99,9 +91,6 @@ object GpxParser {
         )
     }
 
-    /**
-     * Versione legacy che ritorna solo i punti
-     */
     @Deprecated("Use parse() that returns GpxData", ReplaceWith("parse(context, uri).trackPoints"))
     fun parsePoints(context: Context, uri: Uri): List<LatLong> {
         return parse(context, uri).trackPoints

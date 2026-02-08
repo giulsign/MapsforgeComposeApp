@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 
-// Data class to represent a location
+// LOCATION'S DATA CLASS
 data class LocationDatas(
     val id: Int,
     val latitude: Double,
@@ -187,7 +187,7 @@ fun LocationsTableScreen(
         Spacer(Modifier.height(16.dp))
 
 
-        // Points list
+        // POINT LIST
         if (locations.isEmpty()) {
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -235,7 +235,7 @@ fun LocationsTableScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // Button close
+        // CLOSE BUTTON
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -244,7 +244,7 @@ fun LocationsTableScreen(
         }
     }
 
-    // Dialog confirm
+    // CONFIRM DIALOG
     if (showDeleteDialog && locationToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -273,142 +273,6 @@ fun LocationsTableScreen(
     }
 }
 
-/*@Composable
-fun LocationCard(
-    location: LocationDatas,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
-    onShowCategory: () -> Unit
-) {
-    val context = LocalContext.current
-    val backgroundColor = if (isSelected) Color(0xFF81D4FA) else if (location.idsp != null) Color(0xFFFFF9C4) else MaterialTheme.colorScheme.surface
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        )
-    ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onClick() }
-            ) {
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top //
-                ) {
-                    Text(
-                        text = "Punto #${location.id}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(location.date, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        Text(location.hour.take(8), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    }
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row {
-                        Text("📍 Lat: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        Text(String.format("%.6f", location.latitude), style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Row {
-                        Text("📍 Lon: ", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        Text(String.format("%.6f", location.longitude), style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-
-
-                location.nomeItaliano?.let { nome ->
-                    Spacer(Modifier.height(12.dp))
-                    Divider(color = Color.Gray.copy(alpha = 0.3f))
-                    Spacer(Modifier.height(12.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("🇮🇹 ", style = MaterialTheme.typography.bodyMedium)
-                            Text(nome, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        }
-                        location.nomeLatino?.let { nomeLat ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("🌿 ", style = MaterialTheme.typography.bodySmall)
-                                Text(nomeLat, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic, color = Color.Gray)
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            Spacer(Modifier.width(8.dp))
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-
-                IconButton(onClick = onClick) {
-                    Icon(
-                        Icons.Default.MyLocation,
-                        contentDescription = "Show Point Location",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-
-                if (!location.idsp.isNullOrBlank()) {
-                    IconButton(onClick = onShowCategory) {
-                        Icon(
-                            painterResource(R.drawable.my_multiple_location),
-                            contentDescription = "Show all with same IDSP",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-
-                location.nomeLatino?.let { query ->
-                    if (query.isNotBlank()) {
-                        IconButton(onClick = { searchImageOnWeb(context, query) }) {
-                            Icon(
-                                Icons.Default.ImageSearch,
-                                contentDescription = "Search Image on Web",
-                                tint = Color(blue = 0x80, green = 0x80, red = 0x80)
-                            )
-                        }
-                    }
-                }
-
-
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        }
-    }
-}*/
 
 @Composable
 fun LocationCard(
@@ -434,7 +298,7 @@ fun LocationCard(
                 .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Info Column (clickable)
+            // LEFT INFO COLUMN
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -492,12 +356,12 @@ fun LocationCard(
 
             Spacer(Modifier.width(8.dp))
 
-            // Right: Action Buttons Column
+            // RIGHT ACTION COLUMN
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // 1. Show Point on Map
+                // SHOW POINT ON MAP
                 IconButton(onClick = onClick) {
                     Icon(
                         Icons.Default.MyLocation,
@@ -506,7 +370,7 @@ fun LocationCard(
                     )
                 }
 
-                // 2. Show Category (if IDSP exists)
+                // SHOW CATEGORY
                 if (!location.idsp.isNullOrBlank()) {
                     IconButton(onClick = onShowCategory) {
                         Icon(
@@ -517,7 +381,7 @@ fun LocationCard(
                     }
                 }
 
-                // 🆕 3. Open in Google Maps
+                // OPEN IN GOOGLE MAPS
                 IconButton(
                     onClick = {
                         openInGoogleMaps(
@@ -529,13 +393,13 @@ fun LocationCard(
                     }
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_google_map), // Aggiungeremo questa risorsa
+                        painter = painterResource(R.drawable.ic_google_map),
                         contentDescription = "Open in Google Maps",
                         tint = Color(0xFF4285F4) // Google Blue
                     )
                 }
 
-                // 4. Search Image on Web (if Latin name exists)
+                // SEARCH IMAGE ON WEB
                 location.nomeLatino?.let { query ->
                     if (query.isNotBlank()) {
                         IconButton(onClick = { searchImageOnWeb(context, query) }) {
@@ -548,7 +412,7 @@ fun LocationCard(
                     }
                 }
 
-                // 5. Delete
+                // DELETE POINT
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete,
@@ -561,7 +425,7 @@ fun LocationCard(
     }
 }
 
-// 🆕 Funzione Helper per aprire Google Maps
+// OPEN GOOGLE MAPS FUNCTION
 fun openInGoogleMaps(
     context: Context,
     latitude: Double,
@@ -569,18 +433,15 @@ fun openInGoogleMaps(
     label: String = "Location"
 ) {
     try {
-        // Crea URI per Google Maps con label
         val uri = Uri.parse("geo:$latitude,$longitude?q=$latitude,$longitude($label)")
 
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-            setPackage("com.google.android.apps.maps") // Forza l'apertura in Google Maps
+            setPackage("com.google.android.apps.maps")
         }
 
-        // Verifica se Google Maps è installato
         if (intent.resolveActivity(context.packageManager) != null) {
             context.startActivity(intent)
         } else {
-            // Fallback: apri nel browser con Google Maps web
             val webUri = Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")
             val webIntent = Intent(Intent.ACTION_VIEW, webUri)
             context.startActivity(webIntent)

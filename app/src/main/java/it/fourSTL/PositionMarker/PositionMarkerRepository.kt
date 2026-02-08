@@ -14,7 +14,7 @@ class PositionMarkerRepository(
 ) {
 
     init {
-        // Create filesDir if it doesn't exist
+        // CREATE FILESDIR IF NOT EXIST
         val personalJson = File(context.filesDir, "personale.json")
         if (!personalJson.exists()) {
             personalJson.writeText("[]")
@@ -30,7 +30,7 @@ class PositionMarkerRepository(
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
 
-                // 🔑 ID: "idso" priority over id
+                // 🔑 ID: IDSO PRIORITY OVER ID
                 val id = when {
                     obj.has("idsp") -> obj.getString("idsp")
                     obj.has("id") -> obj.optString("id", obj.optInt("id").toString())
@@ -53,19 +53,16 @@ class PositionMarkerRepository(
 
 
     private fun extractTitle(obj: JSONObject): String {
-        // Search for exact keys (highest priority)
         val exactKeys = listOf("nome italiano", "Nome italiano", "Nome Italiano", "NOME ITALIANO", "nota")
         for (k in exactKeys) {
             if (obj.has(k)) return obj.optString(k, "").trim()
         }
 
-        // Search for standard keys
         val standardKeys = listOf("title", "name", "label", "Main1", "Main2", "Sub1", "Sub2")
         for (k in standardKeys) {
             if (obj.has(k)) return obj.optString(k, "").trim()
         }
 
-        // Research case-insensitive for "nome italiano"
         val it = obj.keys()
         while (it.hasNext()) {
             val key = it.next()
@@ -74,7 +71,6 @@ class PositionMarkerRepository(
             }
         }
 
-        // 4️⃣ Fallback: first non-empty value
         val excludeKeys = setOf("id", "idsp", "ref", "nome latino", "nome_latino", "nota_b")
         val keys = obj.keys()
         while (keys.hasNext()) {
@@ -90,19 +86,17 @@ class PositionMarkerRepository(
 
 
     private fun extractNote(obj: JSONObject): String {
-        // Search for exact keys (highest priority)
+
         val exactKeys = listOf("nome latino", "Nome latino", "Nome Latino", "NOME LATINO", "nota_b")
         for (k in exactKeys) {
             if (obj.has(k)) return obj.optString(k, "").trim()
         }
 
-        // Search for standard keys
         val standardKeys = listOf("note", "descrizione", "description", "Note", "Descrizione")
         for (k in standardKeys) {
             if (obj.has(k)) return obj.optString(k, "").trim()
         }
 
-        // Search for case-insensitive for "nome latino"
         val it = obj.keys()
         while (it.hasNext()) {
             val key = it.next()
