@@ -1,5 +1,6 @@
 package it.fourSTL.PositionMarker
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -32,6 +33,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 
 // LOCATION'S DATA CLASS
 data class LocationDatas(
@@ -162,12 +164,12 @@ fun LocationsTableScreen(
         ) {
             Column {
                 Text(
-                    "Saved points",
+                    stringResource(R.string.saved_points),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "Total ${locations.size} point${if (locations.size == 1) "" else "s"}",
+                    "string ${locations.size} point${if (locations.size == 1) "" else "s"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -179,9 +181,9 @@ fun LocationsTableScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Search by italian or latin name") },
+            label = { Text(stringResource(R.string.search_by_italian_or_latin_name))},
             modifier = Modifier.fillMaxWidth(),
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") }
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) }
         )
 
         Spacer(Modifier.height(16.dp))
@@ -197,8 +199,8 @@ fun LocationsTableScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("📍 No point saved", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
-                    Text("Save a point before to show here", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(stringResource(R.string.no_point_saved), style = MaterialTheme.typography.titleMedium, color = Color.Gray)
+                    Text(stringResource(R.string.save_a_point_before_to_show_here), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
             }
         } else {
@@ -240,7 +242,7 @@ fun LocationsTableScreen(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("Close", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.close), style = MaterialTheme.typography.titleMedium)
         }
     }
 
@@ -249,8 +251,8 @@ fun LocationsTableScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             shape = RectangleShape,
-            title = { Text("Delete point") },
-            text = { Text("Do you want to delete this point? #${locationToDelete?.id}?\nThis action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_point)) },
+            text = { Text(stringResource(R.string.do_you_want_to_delete_the_saved_points_This_action_cannot_be_undone))},
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -263,11 +265,11 @@ fun LocationsTableScreen(
                         locationToDelete = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Undo") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.back)) }
             }
         )
     }
@@ -310,7 +312,7 @@ fun LocationCard(
                     verticalAlignment = Alignment.Top
                 ) {
                     Text(
-                        text = "Punto #${location.id}",
+                        text = "Point #${location.id}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -365,7 +367,7 @@ fun LocationCard(
                 IconButton(onClick = onClick) {
                     Icon(
                         Icons.Default.MyLocation,
-                        contentDescription = "Show Point Location",
+                        contentDescription = stringResource(R.string.show_on_map),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -375,7 +377,7 @@ fun LocationCard(
                     IconButton(onClick = onShowCategory) {
                         Icon(
                             painterResource(R.drawable.my_multiple_location),
-                            contentDescription = "Show all with same IDSP",
+                            contentDescription = stringResource(R.string.show_all_with_same_idsp),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -388,13 +390,13 @@ fun LocationCard(
                             context = context,
                             latitude = location.latitude,
                             longitude = location.longitude,
-                            label = location.nomeItaliano ?: "Punto #${location.id}"
+                            label = location.nomeItaliano ?: "Point #${location.id}"
                         )
                     }
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_google_map),
-                        contentDescription = "Open in Google Maps",
+                        contentDescription = stringResource(R.string.open_in_google_maps),
                         tint = Color(0xFF4285F4) // Google Blue
                     )
                 }
@@ -405,7 +407,7 @@ fun LocationCard(
                         IconButton(onClick = { searchImageOnWeb(context, query) }) {
                             Icon(
                                 Icons.Default.ImageSearch,
-                                contentDescription = "Search Image on Web",
+                                contentDescription = stringResource(R.string.search_image_on_web),
                                 tint = Color(blue = 0x80, green = 0x80, red = 0x80)
                             )
                         }
@@ -416,7 +418,7 @@ fun LocationCard(
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.delete),
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
@@ -426,6 +428,7 @@ fun LocationCard(
 }
 
 // OPEN GOOGLE MAPS FUNCTION
+@SuppressLint("StringFormatInvalid")
 fun openInGoogleMaps(
     context: Context,
     latitude: Double,
@@ -448,14 +451,17 @@ fun openInGoogleMaps(
 
             Toast.makeText(
                 context,
-                "Google Maps app not installed, opening in browser",
+                context.getString(R.string.google_maps_app_not_installed_opening_in_browser),
                 Toast.LENGTH_SHORT
             ).show()
         }
     } catch (e: Exception) {
         Toast.makeText(
             context,
-            "Error opening Google Maps: ${e.message}",
+            context.getString(
+                R.string.error_opening_google_maps,
+                e.localizedMessage ?: context.getString(R.string.unknown_error)
+            ),
             Toast.LENGTH_LONG
         ).show()
     }

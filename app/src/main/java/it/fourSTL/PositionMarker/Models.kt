@@ -12,7 +12,7 @@ data class SharedLocation(
     @PropertyName("altitude") val altitude: Double = 0.0,
     @PropertyName("timestamp") val timestamp: Long = 0L,
     @PropertyName("active") val active: Boolean = true,
-    @PropertyName("color") val color: String = "#ef4444" // Colore marker
+    @PropertyName("color") val color: String = "#ef4444" // Color marker
 ) {
     // EMPTY CONSTRUCTOR
     constructor() : this("", "", 0.0, 0.0, 0.0, 0L, true, "#ef4444")

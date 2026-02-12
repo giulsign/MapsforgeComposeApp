@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import androidx.compose.ui.res.stringResource
 
 // Selezioni: NONE = NOT SELECTED, SINGLE = YELLOW (SELECTED FOR ONE SAVE), PERSISTENT = GREEN (PERSISTENT SELECTION)
 enum class SelectionState { NONE, SINGLE, PERSISTENT }
@@ -295,10 +296,10 @@ fun SelectionScreen(
         if (showQuantityDialog) {
             AlertDialog(
                 onDismissRequest = { showQuantityDialog = false },
-                title = { Text(text = "Number:") },
+                title = { Text(text = stringResource(R.string.number)) },
                 text = {
                     Column {
-                        Text("Insert number:")
+                        Text(stringResource(R.string.enter_number))
                         Spacer(modifier = Modifier.height(8.dp))
                         TextField(
                             value = quantityInput,
@@ -321,12 +322,12 @@ fun SelectionScreen(
                             performFinalSave(finalQty)
                         }
                     ) {
-                        Text("Save")
+                        Text(stringResource(R.string.save))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showQuantityDialog = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -342,7 +343,7 @@ fun SelectionScreen(
                 scope.launch {
                     val success = savePersonalNote(context, nota, notaB)
                     if (success) {
-                        // Ricarica la lista
+
                         currentRows = repo.loadItems(currentFile)
                     }
                 }
@@ -381,7 +382,7 @@ fun SelectionScreen(
                                     searchResults = emptyList()
                                 }
                             },
-                            placeholder = { Text("Search metadatas...") },
+                            placeholder = { Text(stringResource(R.string.search_metadatas)) },
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
@@ -393,12 +394,12 @@ fun SelectionScreen(
 
                         )
                     } else {
-                        Text("Select Metadatas")
+                        Text(stringResource(R.string.select_metadatas))
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
@@ -407,7 +408,7 @@ fun SelectionScreen(
                             searchQuery = ""
                             searchResults = emptyList()
                         }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Erase search")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.erase_search))
                         }
                     }
                     IconButton(onClick = {
@@ -417,7 +418,7 @@ fun SelectionScreen(
                             searchResults = emptyList()
                         }
                     }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
                     }
                 }
             )
@@ -425,7 +426,7 @@ fun SelectionScreen(
         floatingActionButton = {
             if (currentFile == "personale.json") {
                 FloatingActionButton(onClick = { showAddPersonalNoteDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add personal category")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_personal_category))
                 }
             }
         },
@@ -455,12 +456,12 @@ fun SelectionScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    TextButton(onClick = onBackPressed) { Text("Back") }
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onBackPressed) { Text(stringResource(R.string.back)) }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.delete)) }
                     Button(onClick = onSaveClicked, enabled = anySelected) {
                         Icon(Icons.Default.Check, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Save")
+                        Text(stringResource(R.string.save))
                     }
                 }
             }
@@ -485,9 +486,9 @@ fun SelectionScreen(
                 ) {
                     Text(
                         text = if (searchQuery.length < 2) {
-                            "Search with a t least 2 characters"
+                            stringResource(R.string.search_with_at_least_two_characters)
                         } else {
-                            "${searchResults.size} category found"
+                            "${searchResults.size}" + stringResource(R.string.category_found)
                         },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.bodySmall,
@@ -530,20 +531,20 @@ fun AddPersonalNoteDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Personal Category") },
+        title = { Text(stringResource(R.string.add_personal_category)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = nota,
                     onValueChange = { nota = it },
-                    label = { Text("Notation A") },
+                    label = { Text(stringResource(R.string.notation_a)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = notaB,
                     onValueChange = { notaB = it },
-                    label = { Text("Notation B") },
+                    label = { Text(stringResource(R.string.notation_b)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -553,12 +554,12 @@ fun AddPersonalNoteDialog(
                 onClick = { onSave(nota, notaB) },
                 enabled = nota.isNotBlank()
             ) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

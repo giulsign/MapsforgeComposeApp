@@ -113,6 +113,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import it.fourSTL.PositionMarker.firebase.SharedLocation
 
 
@@ -162,7 +163,7 @@ fun clearSavedLocations(context: Context) {
     if (file.exists()) {
         file.writeText("[]")
     }
-    Toast.makeText(context, "Datas JSON deleted", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, context.getString(R.string.datas_json_deleted), Toast.LENGTH_LONG).show()
 }
 
 
@@ -172,7 +173,7 @@ fun clearSavedLocationsAuto(context: Context) {
     if (file.exists()) {
         file.writeText("[]")
     }
-    Toast.makeText(context, "Start point deleted", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, context.getString(R.string.start_point_deleted), Toast.LENGTH_LONG).show()
 }
 
 
@@ -203,7 +204,7 @@ fun saveLocationToJson(context: Context, location: Location, metadataMap: Map<St
     jsonArray.put(locationJson)
     file.writeText(jsonArray.toString(2))
 
-    Toast.makeText(context, "New point added to JSON table", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, context.getString(R.string.new_point_added_to_json), Toast.LENGTH_LONG).show()
 }
 
 
@@ -217,7 +218,7 @@ fun importMetadataFromFile(
     try {
         val inputStream = context.contentResolver.openInputStream(uri)
         if (inputStream == null) {
-            onError("Cannot open file")
+            onError(context.getString(R.string.cannot_open_file))
             return
         }
 
@@ -226,7 +227,7 @@ fun importMetadataFromFile(
         try {
             val importedArray = JSONArray(content)
             if (importedArray.length() == 0) {
-                onError("File is empty")
+                onError(context.getString(R.string.file_is_empty))
                 return
             }
 
@@ -279,11 +280,11 @@ fun importMetadataFromFile(
             onSuccess(importedCount)
 
         } catch (e: Exception) {
-            onError("Invalid JSON format: ${e.message}")
+            onError(context.getString(R.string.invalid_json_format) + ": ${e.message}")
         }
 
     } catch (e: Exception) {
-        onError("Error reading file: ${e.message}")
+        onError(context.getString(R.string.error_reading_file) + ": ${e.message}")
     }
 }
 
@@ -298,7 +299,7 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
             if (jsonArray.length() > 0) {
                 Toast.makeText(
                     context,
-                    "⚠️ Start point already saved.",
+                    context.getString(R.string.start_point_already_saved),
                     Toast.LENGTH_LONG
                 ).show()
                 return
@@ -324,7 +325,7 @@ fun saveLocationToJsonAuto(context: Context, location: Location) {
     val jsonArray = JSONArray().apply { put(locationJson) }
     file.writeText(jsonArray.toString(2))
 
-    Toast.makeText(context, "✅ New start point saved.", Toast.LENGTH_LONG).show()
+    Toast.makeText(context, context.getString(R.string.new_start_point_saved), Toast.LENGTH_LONG).show()
 }
 
 
@@ -334,7 +335,7 @@ fun exportStartPointToDownload(context: Context) {
         val sourceFile = File(context.filesDir, "auto_locations.json")
 
         if (!sourceFile.exists()) {
-            Toast.makeText(context, "No Start Point file found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.no_start_point_file_found), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -352,11 +353,11 @@ fun exportStartPointToDownload(context: Context) {
             }
         }
 
-        Toast.makeText(context, "File saved in Download folder as $fileName", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.file_saved_in_download_folder_as) + " $fileName", Toast.LENGTH_LONG).show()
 
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "Error exporting Start Point position file: ${e.message}", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.error_exporting_start_point_position_file) + "$e.message", Toast.LENGTH_LONG).show()
     }
 }
 
@@ -371,7 +372,7 @@ fun importStartPointFromFile(
     try {
         val inputStream = context.contentResolver.openInputStream(uri)
         if (inputStream == null) {
-            onError("Cannot open file")
+            onError(context.getString(R.string.cannot_open_file))
             return
         }
 
@@ -381,14 +382,14 @@ fun importStartPointFromFile(
         try {
             val jsonArray = JSONArray(content)
             if (jsonArray.length() == 0) {
-                onError("File is empty")
+                onError(context.getString(R.string.file_is_empty))
                 return
             }
 
             // Check Objects
             val firstObj = jsonArray.getJSONObject(0)
             if (!firstObj.has("latitude") || !firstObj.has("longitude")) {
-                onError("Invalid file format: missing coordinates")
+                onError(context.getString(R.string.invalid_json_format_missing_coordinates))
                 return
             }
 
@@ -399,11 +400,11 @@ fun importStartPointFromFile(
             onSuccess()
 
         } catch (e: Exception) {
-            onError("Invalid JSON format: ${e.message}")
+            onError(context.getString(R.string.invalid_json_format) + ": ${e.message}")
         }
 
     } catch (e: Exception) {
-        onError("Error reading file: ${e.message}")
+        onError(context.getString(R.string.error_reading_file) + "${e.message}")
     }
 }
 
@@ -430,7 +431,7 @@ fun exportJsonToDownload(context: Context) {
         val sourceFile = File(context.filesDir, "locations.json")
 
         if (!sourceFile.exists()) {
-            Toast.makeText(context, "No JSON file found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.no_json_file_found), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -448,11 +449,11 @@ fun exportJsonToDownload(context: Context) {
             }
         }
 
-        Toast.makeText(context, "File saved in Download folder as $fileName", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.file_saved_in_download_folder_as) + "$fileName", Toast.LENGTH_LONG).show()
 
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "Error exporting JSON file: ${e.message}", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.error_exporting_json_file) + "${e.message}", Toast.LENGTH_LONG).show()
     }
 }
 
@@ -862,14 +863,14 @@ fun fourSTLPositionMarkerComposable(
                     onSuccess = { count ->
                         Toast.makeText(
                             context,
-                            "✅ Successfully imported $count points with updated IDs",
+                            "$count" + context.getString(R.string.points_imported_with_updated_IDs),
                             Toast.LENGTH_LONG
                         ).show()
                     },
                     onError = { error ->
                         Toast.makeText(
                             context,
-                            "❌ Error: $error",
+                            context.getString(R.string.error_importing_metadatas) + ": $error",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -909,13 +910,13 @@ fun fourSTLPositionMarkerComposable(
                     val widthInfo = gpxData.trackWidthMeters?.let { " (width: ${it}m)" } ?: ""
                     Toast.makeText(
                         context,
-                        "✅ GPX loaded: ${gpxData.trackPoints.size} points$widthInfo",
+                        context.getString(R.string.loaded_gpx) + ": ${gpxData.trackPoints.size}" + context.getString(R.string.points) + "$widthInfo",
                         Toast.LENGTH_LONG
                     ).show()
                 } else {
                     Toast.makeText(
                         context,
-                        "❌ Error: Cannot load GPX track",
+                        context.getString(R.string.error_loading_gpx),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -941,14 +942,14 @@ fun fourSTLPositionMarkerComposable(
                         onSuccess = {
                             Toast.makeText(
                                 context,
-                                "✅ Start point imported successfully",
+                                context.getString(R.string.start_point_imported_succesfully),
                                 Toast.LENGTH_LONG
                             ).show()
                         },
                         onError = { error ->
                             Toast.makeText(
                                 context,
-                                "❌ Error: $error",
+                                context.getString(R.string.error) + "$error",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -969,7 +970,7 @@ fun fourSTLPositionMarkerComposable(
                 .border(25.dp, Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            Text("Map file not found: ${mapFile.absolutePath}")
+            context.getString(R.string.error_map_file_not_found) + "${mapFile.absolutePath}"
         }
         return
     }
@@ -1151,11 +1152,11 @@ fun fourSTLPositionMarkerComposable(
                     if (persistentMetadata.isNotEmpty()) {
                         selectedMetadata = mapOf("Number" to "1")
 
-                        Toast.makeText(context, "Point saved.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.saved_points), Toast.LENGTH_SHORT).show()
                     } else {
                         selectedMetadata = emptyMap()
 
-                        Toast.makeText(context, "Point saved.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.saved_points), Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -1176,7 +1177,7 @@ fun fourSTLPositionMarkerComposable(
         {
             Icon(
                 painter = painterResource(id = R.drawable.save),
-                contentDescription = "Save",
+                contentDescription = stringResource(R.string.save),
                 tint = Color.Unspecified
             )
         }
@@ -1204,7 +1205,7 @@ fun fourSTLPositionMarkerComposable(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.save_car),
-                contentDescription = "Save start point",
+                contentDescription = stringResource(R.string.save_start_point),
                 tint = Color.Unspecified
             )
         }
@@ -1222,17 +1223,17 @@ fun fourSTLPositionMarkerComposable(
                             showConfirmMessage = true
                         }
                     ) {
-                        Text("Confirm")
+                        Text(stringResource(R.string.confirm))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showConfirmDialog = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 },
-                title = { Text("Confirm deletion of points") },
+                title = { Text(stringResource(R.string.confirm_deletion_title)) },
                 text = {
-                    Text("Do you really want to delete the saved points? This action cannot be undone.")
+                    Text(stringResource(R.string.do_you_want_to_delete_the_saved_points_This_action_cannot_be_undone))
                 }
             )
         }
@@ -1242,11 +1243,11 @@ fun fourSTLPositionMarkerComposable(
         if (showConfirmMessage) {
             AlertDialog(
                 onDismissRequest = { showConfirmMessage = false },
-                title = { Text("Data deletion completed") },
-                text = { Text("The saved points table has been cleared.") },
+                title = { Text(stringResource(R.string.datas_json_deleted)) },
+                text = { Text(stringResource(R.string.the_saved_points_table_has_been_deleted)) },
                 confirmButton = {
                     TextButton(onClick = { showConfirmMessage = false }) {
-                        Text("OK")
+                        Text(stringResource(R.string.ok))
                     }
                 }
             )
@@ -1265,12 +1266,12 @@ fun fourSTLPositionMarkerComposable(
                             showConfirmMessageAuto = true
                         }
                     ) {
-                        Text("Confirm")
+                        Text(stringResource(R.string.confirm))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showConfirmDialogAuto = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 },
                 title = { Text("Confirm start point deletion") },
@@ -1284,11 +1285,11 @@ fun fourSTLPositionMarkerComposable(
         if (showConfirmMessageAuto) {
             AlertDialog(
                 onDismissRequest = { showConfirmMessageAuto = false },
-                title = { Text("Start point deletion completed") },
-                text = { Text("The start point has been cleared.") },
+                title = { Text(stringResource(R.string.start_point_deleted)) },
+                text = { Text(stringResource(R.string.start_point_cleared)) },
                 confirmButton = {
                     TextButton(onClick = { showConfirmMessageAuto = false }) {
-                        Text("OK")
+                        Text(stringResource(R.string.ok))
                     }
                 }
             )
@@ -1344,7 +1345,7 @@ fun fourSTLPositionMarkerComposable(
         // ========== METADAGTAS MENUS (LEFT SIDE) ==========
         if (buttonsVisible) {
             VerticalCategoryButton(
-                text = "METADATAS MENU",
+                text = stringResource(R.string.metadatas_menu),
                 alignment = Alignment.TopStart,
                 onClick = { showPosizioneMenu = true },
                 modifier = Modifier
@@ -1356,12 +1357,12 @@ fun fourSTLPositionMarkerComposable(
 
         if (showPosizioneMenu) {
             CategoryMenu(
-                title = "Metadatas Menu",
+                title = stringResource(R.string.metadatas_menu),
                 items = listOf(
-                    "Select metadatas to save" to {
+                    stringResource(R.string.select_metadatas_to_save) to {
                         showSelectionScreen = true
                     },
-                    "Save GPS point with metadatas" to {
+                    stringResource(R.string.save_gps_points_with_metadatas) to {
                         userLocation?.let { loc ->
                             persistentMetadata = loadPersistentMetadata(context)
                             val finalMetadata = persistentMetadata + selectedMetadata
@@ -1369,23 +1370,23 @@ fun fourSTLPositionMarkerComposable(
                             selectedMetadata = emptyMap()
                         }
                     },
-                    "Show metadatas point saved" to {
+                    stringResource(R.string.show_saved_gps_points_with_metadatas) to {
                         showTable = true//onShowCategory = true
                     },
-                    "Reset metadatas selecions" to {
+                    stringResource(R.string.reset_metadatas_selections) to {
                         clearAllPersistentData(context)
                         persistentSelectionsState.value = mutableSetOf()
                         persistentMetadata = emptyMap()
                         Toast.makeText(
                             context,
-                            "None persistent metadatas selctions",
+                            context.getString(R.string.none_metadatas_selections),
                             Toast.LENGTH_SHORT
                         ).show()
                     },
-                    "Export Gps points to JSON" to {
+                    stringResource(R.string.export_gps_points_to_Json) to {
                         exportJsonToDownload(context)
                     },
-                    "Delete saved points" to {
+                    stringResource(R.string.delete_saved_point) to {
                         showConfirmDialog = true
                     },
                 ),
@@ -1397,7 +1398,7 @@ fun fourSTLPositionMarkerComposable(
         // ========== GPS TRACKS (LEFT SIDE) ==========
         if (buttonsVisible) {
             VerticalCategoryButton(
-                text = "GPS TRACK MENU",
+                text = stringResource(R.string.gps_track_menu),
                 alignment = Alignment.TopEnd,
                 onClick = { showTracciaMenu = true },
                 modifier = Modifier
@@ -1411,7 +1412,7 @@ fun fourSTLPositionMarkerComposable(
             val trackingItems = mutableListOf<Pair<String, () -> Unit>>()
 
             trackingItems.add(
-                (if (isTracking) "Stop GPS Tracking" else "Start GPS Tracking") to {
+                (if (isTracking) stringResource(R.string.stop_gps_tracking_service) else stringResource(R.string.start_gps_tracking_service)) to {
                     if (isTracking) {
                         showStopTrackingDialog = true
                     } else {
@@ -1423,7 +1424,7 @@ fun fourSTLPositionMarkerComposable(
             // Save track (only when recording)
             if (isTracking) {
                 trackingItems.add(
-                    "Save GPX Track" to {
+                    stringResource(R.string.save_gps_track) to {
                         val timestamp = SimpleDateFormat(
                             "yyyyMMdd_HHmmss",
                             Locale.getDefault()
@@ -1435,7 +1436,7 @@ fun fourSTLPositionMarkerComposable(
 
                 // Report track on recording
                 trackingItems.add(
-                    "Recording Track Report" to {
+                    stringResource(R.string.recording_gps_track) to {
                         if (realTimeTrackPoints.isNotEmpty()) {
                             gpxStatsRealTime = calculateGpxStats(
                                 realTimeTrackPoints.map { loc ->
@@ -1446,7 +1447,7 @@ fun fourSTLPositionMarkerComposable(
                         } else {
                             Toast.makeText(
                                 context,
-                                "No tracking data available yet",
+                                context.getString(R.string.no_tracking_data_availabe_yet),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -1456,13 +1457,13 @@ fun fourSTLPositionMarkerComposable(
 
             // Load track
             trackingItems.add(
-                "Load GPX Track" to { gpxFilePickerLauncher.launch("*/*") }
+                stringResource(R.string.load_gpx_track) to { gpxFilePickerLauncher.launch("*/*") }
             )
 
             // Show GPX Report (for loaded track)
             if (loadedGpxTrack.isNotEmpty()) {
                 trackingItems.add(
-                    "GPX Track Report" to {
+                    stringResource(R.string.gpx_track_report) to {
                         gpxStats = calculateGpxStats(loadedGpxTrack)
                         showGpxReport = true
                     }
@@ -1472,25 +1473,25 @@ fun fourSTLPositionMarkerComposable(
             // Show/Hide track (if loaded)
             if (loadedGpxTrack.isNotEmpty()) {
                 trackingItems.add(
-                    (if (showLoadedGpxTrack) "Hide GPX track uploaded" else "Show GPX Track Uploaded") to {
+                    (if (showLoadedGpxTrack) stringResource(R.string.hide_gpx_track_uploaded) else stringResource(R.string.show_gpx_track_uploaded)) to {
                         showLoadedGpxTrack = !showLoadedGpxTrack
                     }
                 )
 
                 // Clear Loaded GPX
                 trackingItems.add(
-                    "Clear Loaded GPX" to {
+                    stringResource(R.string.clear_loaded_gpx) to {
                         loadedGpxTrack = emptyList()
                         showLoadedGpxTrack = false
                         loadedGpxFileName = ""
-                        Toast.makeText(context, "Track cleared from map", Toast.LENGTH_SHORT)
+                        Toast.makeText(context, context.getString(R.string.track_cleared_from_map), Toast.LENGTH_SHORT)
                             .show()
                     }
                 )
             }
 
             CategoryMenu(
-                title = "Gps track Menu",
+                title = stringResource(R.string.gps_track_menu),
                 items = trackingItems,
                 onDismiss = { showTracciaMenu = false }
             )
@@ -1507,17 +1508,17 @@ fun fourSTLPositionMarkerComposable(
                     val intent = Intent(context, GpsTrackingService::class.java).apply {
                         action = GpsTrackingService.ACTION_START
                         widthMeters?.let {
-                            putExtra("track_width_meters", it)
+                            putExtra(context.getString(R.string.track_width_meters), it)
                         }
                     }
                     context.startService(intent)
 
                     showTrackWidthDialog = false
 
-                    val widthInfo = widthMeters?.let { "${it}m width" } ?: "standard"
+                    val widthInfo = widthMeters?.let { "${it}m" + context.getString(R.string.width) } ?: "standard"
                     Toast.makeText(
                         context,
-                        "🎬 Recording started ($widthInfo)",
+                        context.getString(R.string.recording_started) + "$widthInfo",
                         Toast.LENGTH_SHORT
                     ).show()
                 },
@@ -1529,7 +1530,7 @@ fun fourSTLPositionMarkerComposable(
         // ========== START POINT (RIGHT SIDE) ==========
         if (buttonsVisible) {
             VerticalCategoryButton(
-                text = "START MENU",
+                text = stringResource(R.string.start_menu),
                 alignment = Alignment.TopEnd,
                 onClick = { showPartenzaMenu = true },
                 modifier = Modifier
@@ -1548,7 +1549,7 @@ fun fourSTLPositionMarkerComposable(
 
             // Commands always visibles
             startPointItems.add(
-                "Save start point" to {
+                stringResource(R.string.save_start_point) to {
                     userLocation?.let { loc ->
                         saveLocationToJsonAuto(context, loc)
                     }
@@ -1556,13 +1557,13 @@ fun fourSTLPositionMarkerComposable(
             )
 
             startPointItems.add(
-                "Import start point from file" to {
+                stringResource(R.string.import_start_point) to {
                     startPointFilePickerLauncher.launch("application/json")
                 }
             )
 
             startPointItems.add(
-                (if (showCarMarker) "Hide start point" else "Show start point") to {
+                (if (showCarMarker) stringResource(R.string.hide_start_point) else stringResource(R.string.show_start_point)) to {
                     mapViewRef?.let { map ->
                         if (!showCarMarker) {
                             val file = File(context.filesDir, "auto_locations.json")
@@ -1594,7 +1595,7 @@ fun fourSTLPositionMarkerComposable(
                                         } ?: run {
                                             Toast.makeText(
                                                 context,
-                                                "📍 Start point.",
+                                                context.getString(R.string.start_point),
                                                 Toast.LENGTH_LONG
                                             ).show()
                                         }
@@ -1619,14 +1620,14 @@ fun fourSTLPositionMarkerComposable(
                                 } catch (e: Exception) {
                                     Toast.makeText(
                                         context,
-                                        "❌ Start point reading error",
+                                        context.getString(R.string.start_point_reading_error),
                                         Toast.LENGTH_LONG
                                     ).show()
                                 }
                             } else {
                                 Toast.makeText(
                                     context,
-                                    "⚠️ No start point saved.",
+                                    context.getString(R.string.no_start_point_saved),
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
@@ -1636,7 +1637,7 @@ fun fourSTLPositionMarkerComposable(
                             }
                             carMarker = null
                             showCarMarker = false
-                            Toast.makeText(context, "Start point removed.", Toast.LENGTH_SHORT)
+                            Toast.makeText(context, context.getString(R.string.start_point_removed), Toast.LENGTH_SHORT)
                                 .show()
                         }
                     }
@@ -1646,7 +1647,7 @@ fun fourSTLPositionMarkerComposable(
             // Commands visible only if start point exist
             if (hasStartPoint) {
                 startPointItems.add(
-                    "Start point report" to {
+                    stringResource(R.string.start_point_report) to {
                         val file = File(context.filesDir, "auto_locations.json")
                         if (file.exists() && file.length() > 0) {
                             try {
@@ -1657,7 +1658,7 @@ fun fourSTLPositionMarkerComposable(
                             } catch (e: Exception) {
                                 Toast.makeText(
                                     context,
-                                    "❌ Error reading start point.",
+                                    context.getString(R.string.start_point_reading_error),
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
@@ -1666,20 +1667,20 @@ fun fourSTLPositionMarkerComposable(
                 )
 
                 startPointItems.add(
-                    "Export start point" to {
+                    stringResource(R.string.export_start_point) to {
                         exportStartPointToDownload(context)
                     }
                 )
 
                 startPointItems.add(
-                    "Remove start point" to {
+                    stringResource(R.string.remove_start_point) to {
                         showConfirmDialogAuto = true
                     }
                 )
             }
 
             CategoryMenu(
-                title = "Start point menu",
+                title = stringResource(R.string.start_point_menu),
                 items = startPointItems,
                 onDismiss = { showPartenzaMenu = false }
             )
@@ -1689,7 +1690,7 @@ fun fourSTLPositionMarkerComposable(
         // ========== METADATAS IMPORT AND OPERATIONS ON PERSONAL METADATAS TABLES (RIGHT SIDE) ==========
         if (buttonsVisible) {
             VerticalCategoryButton(
-                text = "PERSONALIZED METADATAS",
+                text = stringResource(R.string.personalized_metadatas),
                 alignment = Alignment.TopStart,
                 onClick = { showDatiMenu = true },
                 modifier = Modifier
@@ -1705,13 +1706,13 @@ fun fourSTLPositionMarkerComposable(
 
             // Import metadatas
             metadataItems.add(
-                "Import metadatas from file" to {
+                stringResource(R.string.import_metadatas_from_file) to {
                     metadataFilePickerLauncher.launch("application/json")
                 }
             )
 
             CategoryMenu(
-                title = "Personalized Metadatas Menu",
+                title = stringResource(R.string.personalized_metadatas_menu),
                 items = metadataItems,
                 onDismiss = { showDatiMenu = false }
             )
@@ -1722,7 +1723,7 @@ fun fourSTLPositionMarkerComposable(
 
         if (buttonsVisible) {
             VerticalCategoryButton(
-                text = "GPS SHARING",
+                text = stringResource(R.string.gps_sharing),
                 alignment = Alignment.TopStart,
                 onClick = { showGroupSharing = true },
                 modifier = Modifier
@@ -1773,7 +1774,7 @@ fun fourSTLPositionMarkerComposable(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        "👥 Active members (${sharedLocations.size})",
+                        stringResource(R.string.active_members) + " (${sharedLocations.size})",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         fontFamily = MyCustomFont
@@ -1782,7 +1783,7 @@ fun fourSTLPositionMarkerComposable(
 
                     sharedLocations.forEach { (key, location) ->
                         val isCurrentDevice = location.deviceId == firebaseLocationService.getDeviceId()
-                        val label = if (isCurrentDevice) "${location.deviceName} (Tu)" else location.deviceName
+                        val label = if (isCurrentDevice) "${location.deviceName}" + stringResource(R.string.you) else location.deviceName
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -2350,7 +2351,7 @@ fun fourSTLPositionMarkerComposable(
                                             context,
                                             String.format(
                                                 Locale.getDefault(),
-                                                "📍 Start point visible. Distance: %.2f km",
+                                                context.getString(R.string.start_point_distance) +": %.2f km",
                                                 distance
                                             ),
                                             Toast.LENGTH_LONG
@@ -2358,7 +2359,7 @@ fun fourSTLPositionMarkerComposable(
                                     } ?: run {
                                         Toast.makeText(
                                             context,
-                                            "📍 Start point visible.",
+                                            context.getString(R.string.start_point_visible),
                                             Toast.LENGTH_LONG
                                         ).show()
                                     }
@@ -2384,7 +2385,7 @@ fun fourSTLPositionMarkerComposable(
                             } catch (e: Exception) {
                                 Toast.makeText(
                                     context,
-                                    "❌ errore reading start point",
+                                    context.getString(R.string.error_reading_start_point),
                                     Toast.LENGTH_LONG
                                 )
                                     .show()
@@ -2392,7 +2393,7 @@ fun fourSTLPositionMarkerComposable(
                         } else {
                             Toast.makeText(
                                 context,
-                                "⚠️ No start point saved.",
+                                context.getString(R.string.no_start_point_saved),
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -2404,7 +2405,7 @@ fun fourSTLPositionMarkerComposable(
                         showCarMarker = false
                         Toast.makeText(
                             context,
-                            "Start point hided.",
+                            context.getString(R.string.start_point_hided),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -2427,7 +2428,7 @@ fun fourSTLPositionMarkerComposable(
         {
             Icon(
                 painter = painterResource(id = R.drawable.show_start),
-                contentDescription = "Show start point",
+                contentDescription = context.getString(R.string.show_start_point),
                 tint = Color.Unspecified
             )
         }
@@ -2453,7 +2454,7 @@ fun fourSTLPositionMarkerComposable(
         {
             Icon(
                 painter = painterResource(id = R.drawable.list),
-                contentDescription = "Open selection table",
+                contentDescription = context.getString(R.string.open_selection_table),
                 tint = Color.Unspecified
             )
         }
@@ -2557,7 +2558,7 @@ fun fourSTLPositionMarkerComposable(
         ) {
             if (buttonsVisible)
                 Text(
-                    text = "Hide Menus",
+                    text = stringResource(R.string.hide_menus),
                     color = Color.Red,
                     fontSize = 27.sp,
                     textAlign = TextAlign.Center,
@@ -2566,7 +2567,7 @@ fun fourSTLPositionMarkerComposable(
                 )
             else
                 Text(
-                    text = "Show Menus",
+                    text = stringResource(R.string.show_menus),
                     color = Color(0xFF004D40),
                     fontSize = 27.sp,
                     textAlign = TextAlign.Center,
@@ -2591,7 +2592,7 @@ fun fourSTLPositionMarkerComposable(
             border = BorderStroke(1.dp, Color(0xFF99CCFF))
         ) {
             Text(
-                text = "Licenses",
+                text = stringResource(R.string.licenses),
                 color = Color.Blue,
                 fontSize = 27.sp,
                 textAlign = TextAlign.Center,
@@ -2613,12 +2614,12 @@ fun fourSTLPositionMarkerComposable(
                 topBar = {
                     Column {
                         TopAppBar(
-                            title = { Text("Licenses and Info") },
+                            title = { Text(stringResource(R.string.licenses_and_info)) },
                             navigationIcon = {
                                 IconButton(onClick = { showLicenses = false }) {
                                     Icon(
                                         imageVector = Icons.Default.ArrowBack,
-                                        contentDescription = "Back"
+                                        contentDescription = stringResource(R.string.back)
                                     )
                                 }
                             }
@@ -2667,13 +2668,13 @@ fun fourSTLPositionMarkerComposable(
         if (showSaveDialog) {
             AlertDialog(
                 onDismissRequest = { showSaveDialog = false },
-                title = { Text("Save GPS Track", fontFamily = MyCustomFont) },
+                title = { Text(stringResource(R.string.save_gps_track), fontFamily = MyCustomFont) },
                 text = {
                     Column {
                         TextField(
                             value = fileName,
                             onValueChange = { fileName = it },
-                            label = { Text("File name") },
+                            label = { Text(stringResource(R.string.file_name)) },
                             singleLine = true
                         )
 
@@ -2698,7 +2699,7 @@ fun fourSTLPositionMarkerComposable(
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        "Track width: ${width}m",
+                                        stringResource(R.string.track_width_meters)+ ": ${width}",
                                         fontSize = 14.sp,
                                         fontFamily = MyCustomFont,
                                         fontWeight = FontWeight.Bold
@@ -2723,12 +2724,12 @@ fun fourSTLPositionMarkerComposable(
                             showSaveDialog = false
                         }
                     ) {
-                        Text("Save", fontFamily = MyCustomFont)
+                        Text(stringResource(R.string.save), fontFamily = MyCustomFont)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showSaveDialog = false }) {
-                        Text("Cancel", fontFamily = MyCustomFont)
+                        Text(stringResource(R.string.cancel), fontFamily = MyCustomFont)
                     }
                 }
             )
@@ -2737,7 +2738,7 @@ fun fourSTLPositionMarkerComposable(
 
         // Openstreetmap attribution
         Text(
-            text = "© OpenStreetMap contributors",
+            text = stringResource(R.string.osm_attribution),
             color = Color.Black,
             fontSize = 9.sp,
             fontFamily = MyCustomFont,
@@ -2770,7 +2771,7 @@ fun fourSTLPositionMarkerComposable(
             border = BorderStroke(1.dp, Color(0xFF99CCFF))
         ) {
             Text(
-                text = "Close App",
+                text = stringResource(R.string.close_app),
                 color = Color.Red,
                 fontSize = 27.sp,
                 textAlign = TextAlign.Center,
@@ -2784,7 +2785,7 @@ fun fourSTLPositionMarkerComposable(
         // Advisor GPX loaded
         if (loadedGpxTrack.isNotEmpty()) {
             Text(
-                text = "Loaded GPX: $loadedGpxFileName",
+                text = stringResource(R.string.loaded_gpx) +": $loadedGpxFileName",
                 color = Color.Blue,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -2804,7 +2805,7 @@ fun fourSTLPositionMarkerComposable(
         // GPS tracking advisor
         if (realTimeTrackPoints.isNotEmpty()) {
             Text(
-                text = "GPS track recording ON",
+                text = stringResource(R.string.gps_track_recording),
                 color = Color.Red,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -2868,8 +2869,8 @@ fun fourSTLPositionMarkerComposable(
         if (showExitDialog) {
             AlertDialog(
                 onDismissRequest = { showExitDialog = false },
-                title = { Text("Close app") },
-                text = { Text("Do you really want to close the app?") },
+                title = { Text(stringResource(R.string.close_app)) },
+                text = { Text(stringResource(R.string.do_you_want_to_close)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -2877,12 +2878,12 @@ fun fourSTLPositionMarkerComposable(
                             (context as? Activity)?.finishAffinity()
                         }
                     ) {
-                        Text("Ok")
+                        Text(stringResource(R.string.ok))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showExitDialog = false }) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -2901,7 +2902,7 @@ fun fourSTLPositionMarkerComposable(
                 },
                 confirmButton = {
                     TextButton(onClick = { showGpsDialog = false }) {
-                        Text("OK")
+                        Text(stringResource(R.string.ok))
                     }
                 }
             )

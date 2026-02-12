@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ========== APP NAME ========== -->
+    <string name="app_name">Position Marker</string>
+
+    <!-- ========== GENERAL BUTTONS ========== -->
+    <string name="confirm">Bestätigen</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="ok">OK</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nein</string>
+    <string name="save">Speichern</string>
+    <string name="close">Schließen</string>
+    <string name="delete">Löschen</string>
+    <string name="overwrite">Überschreiben</string>
+    <string name="back">Zurück</string>
+    <string name="erase_search">Suche löschen</string>
+    <string name="search">Suchen</string>
+    <string name="search_image_on_web">Bild im Web suchen</string>
+    <string name="add_personal_category">Persönliche Kategorie hinzufügen</string>
+    <string name="search_with_at_least_two_characters">Mit mindestens 2 Zeichen suchen</string>
+    <string name="category_found">Kategorie gefunden</string>
+    <string name="notation_a">Notation A</string>
+    <string name="notation_b">Notation B</string>
+    <string name="delete_point">Punkt löschen</string>
+    <string name="new_start_point_saved">Neuer Startpunkt gespeichert</string>
+    <string name="datas_json_deleted">JSON-Daten gelöscht</string>
+    <string name="start_point_already_saved">Startpunkt bereits gespeichert, zum Ersetzen löschen</string>
+    <string name="cannot_open_file">Datei kann nicht geöffnet werden</string>
+    <string name="file_is_empty">Datei ist leer</string>
+    <string name="invalid_json_format">Ungültiges JSON-Format</string>
+    <string name="error_reading_file">Fehler beim Lesen der Datei</string>
+    <string name="cannot_read_file">Datei kann nicht gelesen werden</string>
+    <string name="error_exporting_start_point_position_file">Fehler beim Exportieren der Startpunkt-Positionsdatei</string>
+    <string name="invalid_json_format_missing_coordinates">Ungültiges JSON-Format, Koordinaten fehlen</string>
+    <string name="no_json_file_found">Keine JSON-Datei gefunden</string>
+    <string name="start_point_deleted">Startpunkt gelöscht</string>
+    <string name="new_point_added_to_json">Neuer Punkt zum JSON hinzugefügt</string>
+    <string name="delete_saved_point">Gespeicherte Punkte löschen</string>
+    <string name="start_point_cleared">Startpunkt gelöscht</string>
+    <string name="recording_gps_track">GPS-Track wird aufgezeichnet</string>
+    <string name="no_tracking_data_availabe_yet">Noch keine Tracking-Daten verfügbar</string>
+    <string name="error_exporting_json_file">Fehler beim Exportieren der JSON-Datei</string>
+    <string name="no_start_point_saved">Kein Startpunkt gespeichert</string>
+    <string name="start_point_removed">Startpunkt entfernt</string>
+    <string name="start_point_report">Startpunkt-Bericht</string>
+    <string name="file_saved_in_download_folder_as">Datei im Download-Ordner gespeichert als</string>
+    <string name="error_reading_start_point">Fehler beim Lesen des Startpunkts</string>
+    <string name="points_imported_with_updated_IDs">Punkte mit aktualisierten IDs importiert</string>
+    <string name="error_importing_metadatas">Fehler beim Importieren der Metadaten</string>
+    <string name="the_saved_points_table_has_been_deleted">Die Tabelle der gespeicherten Punkte wurde gelöscht</string>
+    <string name="do_you_want_to_delete_the_saved_points_This_action_cannot_be_undone">Möchten Sie die gespeicherten Punkte wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="error">Fehler</string>
+    <string name="save_start_point">Startpunkt speichern</string>
+    <string name="start_point_reading_error">Fehler beim Lesen des Startpunkts</string>
+    <string name="do_you_want_to_close">Möchten Sie die App wirklich schließen?</string>
+
+    <!-- ========== MAIN MENU ========== -->
+    <string name="close_app">App schließen</string>
+    <string name="licenses">Lizenzen</string>
+    <string name="third_party_licenses">Lizenzen von Drittanbietern</string>
+
+    <!-- ========== CATEGORY MENUS ========== -->
+    <string name="metadatas_menu">METADATEN-MENÜ</string>
+    <string name="search_metadatas">Metadaten suchen</string>
+    <string name="select_metadatas">Metadaten auswählen</string>
+    <string name="gps_track_menu">GPS-TRACK-MENÜ</string>
+    <string name="start_menu">START-MENÜ</string>
+    <string name="personalized_metadatas">PERSONALISIERTE METADATEN</string>
+    <string name="gps_sharing">GPS-FREIGABE</string>
+    <string name="start_gps_tracking_service">GPS-Tracking-Dienst starten</string>
+    <string name="stop_gps_tracking_service">GPS-Tracking-Dienst stoppen</string>
+    <string name="select_metadatas_to_save">Metadaten zum Speichern auswählen</string>
+    <string name="save_gps_points_with_metadatas">GPS-Punkte mit Metadaten speichern</string>
+    <string name="show_saved_gps_points_with_metadatas">Gespeicherte GPS-Punkte mit Metadaten anzeigen</string>
+    <string name="reset_metadatas_selections">Metadaten-Auswahl zurücksetzen</string>
+    <string name="none_metadatas_selections">Keine Metadaten-Auswahl aktiv</string>
+    <string name="start_point_menu">STARTPUNKT-MENÜ</string>
+    <string name="import_metadatas_from_file">Metadaten aus Datei importieren</string>
+    <string name="personalized_metadatas_menu">PERSONALISIERTE METADATEN-MENÜ</string>
+    <string name="start_point_distance">Entfernung zum Startpunkt</string>
+    <string name="start_point_visible">Startpunkt sichtbar</string>
+    <string name="start_point_hided">Startpunkt verborgen</string>
+    <string name="open_selection_table">Auswahltabelle öffnen</string>
+    <string name="hide_menus">Menüs ausblenden</string>
+    <string name="show_menus">Menüs anzeigen</string>
+
+    <!-- ========== GPS SHARING ========== -->
+    <string name="create_session">Sitzung erstellen</string>
+    <string name="join_session">Beitreten</string>
+    <string name="leave_session">Sitzung verlassen</string>
+    <string name="export_gps_points_to_Json">GPS-Punkte nach JSON exportieren</string>
+    <string name="session_code">Sitzungscode</string>
+    <string name="host_name">Hostname</string>
+    <string name="guest_name">Gastname</string>
+    <string name="members_connected">Verbundene Mitglieder</string>
+    <string name="total">Gesamt</string>
+    <string name="you">Du</string>
+    <string name="host_indicator">👑</string>
+    <string name="guest_indicator">👤</string>
+    <string name="points">Punkte</string>
+    <string name="error_loading_gpx">Fehler beim Laden von GPX</string>
+
+    <!-- ========== GPS TRACK ========== -->
+    <string name="gps_track_recording">GPS-Track-Aufzeichnung AN</string>
+    <string name="start_recording">Aufzeichnung starten</string>
+    <string name="save_and_stop">Speichern und stoppen</string>
+    <string name="stop_without_saving">Ohne Speichern stoppen</string>
+    <string name="save_gps_track">GPS-Track speichern</string>
+    <string name="file_name">Dateiname</string>
+    <string name="file_name_placeholder">z.B. bergpfad</string>
+    <string name="track_width_meters">Breite (Meter)</string>
+    <string name="track_width_placeholder">z.B. 10.0</string>
+    <string name="recording_started">Aufzeichnung gestartet</string>
+    <string name="meters_unit">m</string>
+    <string name="width">Breite</string>
+    <string name="import_start_point">Startpunkt importieren</string>
+    <string name="hide_start_point">Startpunkt ausblenden</string>
+    <string name="show_start_point">Startpunkt anzeigen</string>
+    <string name="start_point">Startpunkt</string>
+    <string name="export_start_point">Startpunkt exportieren</string>
+
+    <!-- ========== LOADED GPX ========== -->
+    <string name="loaded_gpx">GPX geladen</string>
+    <string name="loaded_gpx_with_name">GPX geladen: %1$s</string>
+    <string name="load_gpx_track">GPX-Track laden</string>
+    <string name="gpx_track_report">GPX-Track-Bericht</string>
+    <string name="hide_gpx_track_uploaded">Hochgeladenen GPX-Track ausblenden</string>
+    <string name="show_gpx_track_uploaded">Hochgeladenen GPX-Track anzeigen</string>
+    <string name="clear_loaded_gpx">Geladenen GPX-Track löschen</string>
+    <string name="track_cleared_from_map">Track von der Karte entfernt</string>
+
+    <!-- ========== POINTS AND METADATA ========== -->
+    <string name="selection">Auswahl</string>
+    <string name="selection_with_items">Auswahl: %1$s</string>
+    <string name="number">Nr</string>
+    <string name="saved_points">Gespeicherte Punkte</string>
+    <string name="open_in_google_maps">In Google Maps öffnen</string>
+    <string name="show_on_map">Auf der Karte anzeigen</string>
+    <string name="show_all_with_same_idsp">Alle mit derselben IDSP anzeigen</string>
+
+    <!-- ========== CONFIRMATION DIALOGS ========== -->
+    <!-- Confirm points deletion -->
+    <string name="confirm_deletion_title">Löschen von Punkten bestätigen</string>
+    <string name="confirm_deletion_message">Möchten Sie die gespeicherten Punkte wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="deletion_completed_title">Datenlöschung abgeschlossen</string>
+    <string name="deletion_completed_message">Die Tabelle der gespeicherten Punkte wurde gelöscht.</string>
+
+    <!-- Confirm start point deletion -->
+    <string name="confirm_start_deletion_title">Löschen des Startpunkts bestätigen</string>
+    <string name="confirm_start_deletion_message">Möchten Sie den gespeicherten Startpunkt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="start_deletion_completed_title">Löschen des Startpunkts abgeschlossen</string>
+    <string name="start_deletion_completed_message">Der Startpunkt wurde gelöscht.</string>
+    <string name="no_point_saved">Kein Punkt gespeichert</string>
+    <string name="save_a_point_before_to_show_here">Speichern Sie einen Punkt, bevor Sie ihn hier anzeigen</string>
+    <string name="no_start_point_file_found">Keine Startpunkt-Datei gefunden</string>
+    <string name="search_by_italian_or_latin_name">Nach italienischem oder lateinischem Namen suchen</string>
+    <string name="start_point_imported_succesfully">Startpunkt erfolgreich importiert</string>
+    <string name="remove_start_point">Startpunkt entfernen</string>
+
+    <!-- Confirm app close -->
+    <string name="close_app_title">App schließen</string>
+    <string name="close_app_message">Möchten Sie die App wirklich schließen?</string>
+
+    <!-- Confirm overwrite start point -->
+    <string name="overwrite_start_point_title">Startpunkt überschreiben</string>
+    <string name="overwrite_start_point_message">Ein Startpunkt existiert bereits. Möchten Sie ihn überschreiben?</string>
+
+    <!-- Confirm stop recording -->
+    <string name="stop_recording_title">Aufzeichnung stoppen</string>
+    <string name="stop_recording_message">Möchten Sie den Track speichern, bevor Sie die Aufzeichnung stoppen?</string>
+
+    <!-- ========== GPS AND PERMISSIONS ========== -->
+    <string name="gps_disabled_title">GPS-Signal nicht gefunden</string>
+    <string name="gps_disabled_message">Um die App zu nutzen, aktivieren Sie bitte GPS in Ihren Geräteeinstellungen.</string>
+    <string name="enable_gps">GPS aktivieren</string>
+    <string name="gps_permission_required">GPS-Berechtigung erforderlich</string>
+    <string name="gps_permission_message">Die App benötigt Zugriff auf den GPS-Standort, um zu funktionieren.</string>
+
+    <!-- ========== FIREBASE ERRORS ========== -->
+    <string name="error_session_not_found">Sitzung nicht gefunden</string>
+    <string name="error_session_full">Sitzung ist voll (max. %1$d Gäste)</string>
+    <string name="error_session_inactive">Sitzung ist nicht aktiv</string>
+    <string name="error_no_active_session">Keine aktive Sitzung</string>
+    <string name="error_invalid_role">Ungültige Rolle</string>
+    <string name="error_create_session_failed">Fehler beim Erstellen der Sitzung: %1$s</string>
+    <string name="error_join_session_failed">Fehler beim Beitreten zur Sitzung: %1$s</string>
+    <string name="error_leave_session_failed">Fehler beim Verlassen der Sitzung: %1$s</string>
+    <string name="error_update_location_failed">Fehler beim Aktualisieren des Standorts: %1$s</string>
+
+    <!-- ========== FIREBASE SUCCESS ========== -->
+    <string name="session_created">Sitzung erstellt: %1$s</string>
+    <string name="session_created_with_code">Sitzung mit Code erstellt: %1$s</string>
+    <string name="session_joined">Sitzung beigetreten: %1$s</string>
+    <string name="session_left">Sitzung verlassen</string>
+    <string name="location_updated">Standort aktualisiert</string>
+
+    <!-- ========== LICENSES AND INFO ========== -->
+    <string name="licenses_and_info">Lizenzen und Informationen</string>
+    <string name="osm_attribution">© OpenStreetMap-Mitwirkende</string>
+
+    <!-- ========== GENERIC ERRORS ========== -->
+    <string name="error_map_file_not_found">Kartendatei nicht gefunden: %1$s</string>
+    <string name="error_generic">Ein Fehler ist aufgetreten</string>
+    <string name="error_no_gps_location">GPS-Standort kann nicht ermittelt werden</string>
+    <string name="error_opening_google_maps">Fehler beim Öffnen von Google Maps</string>
+    <string name="google_maps_app_not_installed_opening_in_browser">Google Maps-App nicht installiert, wird im Browser geöffnet</string>
+    <string name="unknown_error">Unbekannter Fehler</string>
+
+    <!-- ========== DATA FORMAT ========== -->
+    <string name="date_format">dd.MM.yyyy</string>
+    <string name="time_format">HH:mm:ss</string>
+
+    <!-- ========== UNITS OF MEASUREMENT ========== -->
+    <string name="kilometers">km</string>
+    <string name="meters">m</string>
+    <string name="hours">Std</string>
+    <string name="minutes">Min</string>
+    <string name="seconds">Sek</string>
+
+    <!-- ========== PLACEHOLDER AND HINT ========== -->
+    <string name="enter_session_code">Sitzungscode eingeben</string>
+    <string name="enter_name">Name eingeben</string>
+    <string name="enter_file_name">Dateiname eingeben</string>
+    <string name="enter_number">Nummer eingeben</string>
+
+</resources>
