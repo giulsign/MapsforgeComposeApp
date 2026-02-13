@@ -5,6 +5,11 @@
 
     <!-- ========== BOTTONI GENERALI ========== -->
     <string name="confirm">Conferma</string>
+    <string name="date">Data</string>
+    <string name="hour">Ora</string>
+    <string name="latitude">Latitudine</string>
+    <string name="longitude">Longitudine</string>
+    <string name="distance">Distanza</string>
     <string name="cancel">Annulla</string>
     <string name="ok">OK</string>
     <string name="yes">Sì</string>
@@ -58,7 +63,10 @@
     <string name="show_menus">Mostra Menu</string>
     <string name="hide_menus">Nascondi Menu</string>
     <string name="licenses">Licenze</string>
+    <string name="dependencies">Dipendenze</string>
+    <string name="app_license">Licenza App</string>
     <string name="third_party_licenses">Licenze terze parti</string>
+    <string name="readme">Leggimi</string>
 
     <!-- ========== MENU CATEGORIE ========== -->
     <string name="metadatas_menu">MENU METADATI</string>
@@ -73,9 +81,20 @@
     <string name="start_menu">MENU PARTENZA</string>
     <string name="personalized_metadatas">METADATI PERSONALIZZATI</string>
     <string name="gps_sharing">CONDIVISIONE GPS</string>
-    <string name="start_gps_tracking_service">Avvia servizio GPS</string>
-    <string name="stop_gps_tracking_service">CONDIVISIONE GPS</string>
-    <string name="start_point_menu">MENU START POINT</string>
+    <string name="start_gps_tracking_service">Avvia servizio tracciatura GPS</string>
+    <string name="stop_gps_tracking_service">Ferma servizio tracciatura GPS</string>
+    <string name="start_point_menu">MENU PUNTO PARTENZA</string>
+    <string name="start_point_report_a">REPORT PUNTO PARTENZA</string>
+    <string name="start_point_data">DATI PUNTO PARTENZA</string>
+    <string name="current_point_report">REPORT PUNTO CORRENTE</string>
+    <string name="track">Traccia</string>
+    <string name="invalid_value">Valore non valido</string>
+    <string name="set_track_width">Imposta larghezza traccia per censimento</string>
+    <string name="track_width_info">Informazioni larghezza traccia</string>
+    <string name="forest_census">Censimento forestale</string>
+    <string name="trail_mapping">Mappatura sentieri</string>
+    <string name="survey_strip">Striscia sorveglianza</string>
+    <string name="track_width">Larghezza traccia</string>
 
     <!-- ========== CONDIVISIONE GPS ========== -->
     <string name="create_session">Crea Sessione</string>
@@ -94,7 +113,10 @@
 
     <!-- ========== TRACCIA GPS ========== -->
     <string name="gps_track_recording">Registrazione traccia GPS attiva</string>
+    <string name="recording_status">Stato registrazione</string>
+    <string name="status_recoding">Stato: registrazione in corso</string>
     <string name="start_recording">Avvia Registrazione</string>
+    <string name="current_data">Dati attuali</string>
     <string name="save_and_stop">Salva e Ferma</string>
     <string name="stop_without_saving">Ferma senza salvare</string>
     <string name="save_gps_track">Salva Traccia GPS</string>
@@ -107,12 +129,20 @@
     <string name="recording_started">Registrazione avviata</string>
     <string name="width">Larghezza</string>
     <string name="error_loading_gpx">Errore caricamento GPX</string>
+    <string name="error_loading_data">Errore caricamento dati</string>
+    <string name="error_loading_report">Errore caricamento report</string>
 
     <!-- ========== GPX CARICATO ========== -->
     <string name="loaded_gpx">GPX Caricato</string>
+    <string name="start_data">Dati iniziali</string>
+    <string name="end_data">Dati finali</string>
+    <string name="track_stat">Statistiche traccia</string>
+    <string name="real_time_track_report">Report traccia in tempo reale</string>
     <string name="load_gpx_track">Carica traccia GPX</string>
     <string name="loaded_gpx_with_name">GPX Caricato: %1$s</string>
     <string name="gpx_track_report">Report traccia GPX</string>
+    <string name="real_gpx_track_report">Traccia GPX in tempo reale</string>
+    <string name="track_file">File traccia</string>
     <string name="hide_gpx_track_uploaded">Nascondi traccia GPX caricata</string>
     <string name="show_gpx_track_uploaded">Mostra traccia GPX caricata</string>
     <string name="clear_loaded_gpx">Pulisci traccia GPX caricata</string>
@@ -157,6 +187,8 @@
     <string name="remove_start_point">Rimuovi punto di partenza</string>
     <string name="hide_start_point">Nascondi punto di partenza</string>
     <string name="show_start_point">Mostra punto di partenza</string>
+    <string name="standard_track">Traccia larghezza standard</string>
+    <string name="quick_preset">Preset rapido</string>
     <string name="personalized_metadatas_menu">MENU METADATI PERSONALIZZATI</string>
 
     <!-- Conferma chiusura app -->
@@ -166,6 +198,7 @@
     <!-- Conferma sovrascrivi punto partenza -->
     <string name="overwrite_start_point_title">Sovrascrivi punto di partenza</string>
     <string name="overwrite_start_point_message">Esiste già un punto di partenza salvato. Vuoi sovrascriverlo?</string>
+    <string name="overwrite_succesful">Punto di partenza sovrascritto con successo</string>
 
     <!-- Conferma stop registrazione -->
     <string name="stop_recording_title">Ferma registrazione</string>
@@ -206,6 +239,7 @@
     <string name="error_generic">Si è verificato un errore</string>
     <string name="error_no_gps_location">Impossibile ottenere la posizione GPS</string>
     <string name="error_opening_google_maps">Errore apertura Google Maps</string>
+    <string name="file_load_error">Errore caricamento file</string>
     <string name="google_maps_app_not_installed_opening_in_browser">Google Maps app non installato, apertura in browser</string>
     <string name="unknown_error">Errore sconosciuto</string>
 
@@ -225,6 +259,27 @@
     <string name="enter_name">Inserisci nome</string>
     <string name="enter_file_name">Inserisci nome file</string>
     <string name="enter_number">Inserisci numero</string>
+    <string name="do_you_want_save_gps_track_before">Vuoi salvare la traccia gps prima di chiudere la registrazione?</string>
+
+    <!-- ========== FINESTRA GROUP SHARING ========== -->
+    <string name="how_it_works">Come funziona</string>
+    <string name="host_creates_group">L\'ospitante crea il gruppo e condivide il codice</string>
+    <string name="guest_enter_code">L\'ospite inserisce il codice e entra nel gruppo</string>
+    <string name="all_guest">Tutti i partecipanti si vedono sulla mappa</string>
+    <string name="max_5">Numero massimo di partecipanti: 5</string>
+    <string name="connection_persist">La connessione persiste quando si rientra nella mappa</string>
+    <string name="enter_code">Inserisci il codice a 6 cifre</string>
+    <string name="guest">Ospite</string>
+    <string name="host">Ospitante</string>
+    <string name="session_closed">Sessione chiusa</string>
+    <string name="role">Ruolo</string>
+    <string name="share_this">Condividi questo codice con gli ospiti</string>
+    <string name="session_active">Sessione attiva</string>
+    <string name="device_name">Nome dispositivo</string>
+    <string name="your_device">Il tuo dispositivo</string>
+    <string name="group_gps_sharing">Gruppo condivisione GPS</string>
+
+
 
 
 </resources>

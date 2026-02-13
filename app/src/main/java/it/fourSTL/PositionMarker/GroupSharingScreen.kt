@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
 import it.fourSTL.PositionMarker.firebase.*
 import it.fourSTL.PositionMarker.ui.theme.MyCustomFont
 import kotlinx.coroutines.launch
@@ -47,7 +48,7 @@ fun GroupSharingScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Group GPS Sharing", fontFamily = MyCustomFont) },
+                title = { Text(stringResource(R.string.group_gps_sharing), fontFamily = MyCustomFont) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
@@ -72,7 +73,7 @@ fun GroupSharingScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            "📱 Your Device",
+                            "📱"+stringResource(R.string.your_device),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             fontFamily = MyCustomFont
@@ -83,7 +84,7 @@ fun GroupSharingScreen(
                         OutlinedTextField(
                             value = deviceName,
                             onValueChange = { deviceName = it },
-                            label = { Text("Device Name") },
+                            label = { Text(stringResource(R.string.device_name)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -95,7 +96,7 @@ fun GroupSharingScreen(
                 Card {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            "🎯 Create Session (Host)",
+                            "🎯"+ stringResource(R.string.create_session) + "(" + stringResource(R.string.host) + ")",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             fontFamily = MyCustomFont
@@ -109,14 +110,14 @@ fun GroupSharingScreen(
                                 )
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text("✅ Session Active", fontWeight = FontWeight.Bold)
-                                    Text("Code: $sessionCode", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text("Share this code with guests", fontSize = 12.sp, color = Color.Gray)
+                                    Text("✅"+ stringResource(R.string.session_active)+" :", fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.session_code)+": $sessionCode", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.share_this)+": $deviceName", fontSize = 12.sp, color = Color.Gray)
 
                                     // DEBUG INFO
                                     Spacer(Modifier.height(8.dp))
                                     Text(
-                                        "Role: $currentRole",
+                                        stringResource(R.string.role)+": $currentRole",
                                         fontSize = 11.sp,
                                         color = Color.Gray,
                                         fontFamily = MyCustomFont
@@ -130,7 +131,7 @@ fun GroupSharingScreen(
                                         locationService.leaveSession()
                                         sessionCode = ""
                                         currentRole = SessionRole.NONE
-                                        Toast.makeText(context, "Session closed", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.session_closed), Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
@@ -138,7 +139,7 @@ fun GroupSharingScreen(
                             ) {
                                 Icon(Icons.Default.Close, null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Close Session")
+                                Text(stringResource(R.string.leave_session))
                             }
                         } else {
                             Button(
@@ -149,10 +150,10 @@ fun GroupSharingScreen(
                                             is FirebaseResult.Success -> {
                                                 sessionCode = result.data
                                                 currentRole = SessionRole.HOST
-                                                Toast.makeText(context, "Session created! Code: $sessionCode", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, context.getString(R.string.session_created_with_code)+" : $sessionCode", Toast.LENGTH_LONG).show()
                                             }
                                             is FirebaseResult.Error -> {
-                                                Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, context.getString(R.string.error)+": ${result.message}", Toast.LENGTH_LONG).show()
                                             }
                                             else -> {}
                                         }
@@ -164,7 +165,7 @@ fun GroupSharingScreen(
                             ) {
                                 Icon(Icons.Default.Add, null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Create Session")
+                                Text(stringResource(R.string.create_session))
                             }
                         }
                     }
@@ -176,7 +177,7 @@ fun GroupSharingScreen(
                 Card {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            "🔗 Join Session (Guest)",
+                            "🔗"+ stringResource(R.string.join_session) + "(" + stringResource(R.string.guest) + ")",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             fontFamily = MyCustomFont
@@ -186,8 +187,8 @@ fun GroupSharingScreen(
                         OutlinedTextField(
                             value = joinCode,
                             onValueChange = { joinCode = it },
-                            label = { Text("Session Code") },
-                            placeholder = { Text("Enter 6-digit code") },
+                            label = { Text(stringResource(R.string.session_code)) },
+                            placeholder = { Text(stringResource(R.string.enter_code)) },
                             modifier = Modifier.fillMaxWidth()
                         )
 
@@ -201,10 +202,10 @@ fun GroupSharingScreen(
                                         is FirebaseResult.Success -> {
                                             sessionCode = joinCode
                                             currentRole = SessionRole.GUEST
-                                            Toast.makeText(context, "Joined session $joinCode!", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.join_session)+" $joinCode!", Toast.LENGTH_SHORT).show()
                                         }
                                         is FirebaseResult.Error -> {
-                                            Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_LONG).show()
+                                            Toast.makeText(context, context.getString(R.string.error)+": ${result.message}", Toast.LENGTH_LONG).show()
                                         }
                                         else -> {}
                                     }
@@ -216,7 +217,7 @@ fun GroupSharingScreen(
                         ) {
                             Icon(Icons.Default.Person, null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Join as Guest")
+                            Text(stringResource(R.string.join_session))
                         }
                     }
                 }
@@ -230,14 +231,14 @@ fun GroupSharingScreen(
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("ℹ️ How it works", fontWeight = FontWeight.Bold)
+                        Text("ℹ️"+ stringResource(R.string.how_it_works), fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "• Host creates a session and shares the code\n" +
-                                    "• Guests enter the code to join\n" +
-                                    "• All participants see each other on the map\n" +
-                                    "• Max 5 guests per session\n" +
-                                    "• Connection persists when you return to the map",
+                            "•"+ stringResource(R.string.host_creates_group)+"\n" +
+                                    "•"+ stringResource(R.string.guest_enter_code)+"\n" +
+                                    "•"+ stringResource(R.string.all_guest)+"\n" +
+                                    "•"+ stringResource(R.string.max_5)+"\n" +
+                                    "•"+ stringResource(R.string.connection_persist)+"\n",
                             fontSize = 12.sp
                         )
                     }

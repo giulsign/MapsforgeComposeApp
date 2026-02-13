@@ -86,7 +86,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.window.Dialog
 import it.fourSTL.PositionMarker.ui.theme.Purple40
 import android.util.Log
-import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -94,7 +93,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.material3.Switch
 import kotlin.math.cos
 import kotlin.math.pow
-import org.mapsforge.core.util.MercatorProjection
 import androidx.compose.material3.Divider
 import androidx.compose.material3.TextField
 import androidx.compose.material3.OutlinedTextField
@@ -102,17 +100,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.material3.Switch
-import kotlin.math.abs
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import it.fourSTL.PositionMarker.firebase.SharedLocation
 
@@ -1274,9 +1267,9 @@ fun fourSTLPositionMarkerComposable(
                         Text(stringResource(R.string.cancel))
                     }
                 },
-                title = { Text("Confirm start point deletion") },
+                title = {stringResource(R.string.confirm_deletion_title) },
                 text = {
-                    Text("Do you really want to delete the saved start point? This action cannot be undone.")
+                    stringResource(R.string.confirm_deletion_message)
                 }
             )
         }
@@ -2605,7 +2598,7 @@ fun fourSTLPositionMarkerComposable(
         // licensees page
         if (showLicenses) {
             var tabIndex by remember { mutableStateOf(0) }
-            val tabs = listOf("Dependencies", "App License", "Third Party License", "Readme")
+            val tabs = listOf(stringResource(R.string.dependencies), stringResource(R.string.app_license), stringResource(R.string.third_party_licenses), stringResource(R.string.readme))
 
             Scaffold(
                 modifier = Modifier
@@ -2911,7 +2904,20 @@ fun fourSTLPositionMarkerComposable(
         // Dialog show start point report
         if (showStartPointReport) {
             val file = File(context.filesDir, "auto_locations.json")
-            var reportText = "Error loading data"
+
+            val errorLoadingData = stringResource(R.string.error_loading_data)
+            val startPointReportTitle = stringResource(R.string.start_point_report)
+            val startPointDataTitle = stringResource(R.string.start_point_data)
+            val currentPointReportTitle = stringResource(R.string.current_point_report)
+            val errorLoadingReport = stringResource(R.string.error_loading_report)
+            val dateText = stringResource(R.string.date)
+            val hourText = stringResource(R.string.hour)
+            val latitudeText = stringResource((R.string.latitude))
+            val longitudeText = stringResource(R.string.longitude)
+            val distanceT = stringResource(R.string.distance)
+
+
+            var reportText = errorLoadingData
 
             if (file.exists() && file.length() > 0) {
                 try {
@@ -2946,31 +2952,30 @@ fun fourSTLPositionMarkerComposable(
                         } ?: "N/A"
 
                         reportText = """
-                    📍 START POINT REPORT
+                    $startPointReportTitle
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                    $startPointDataTitle
+                    ━━━━━━━━━━━━━━━━━━━━━━
+                    📅 $dateText: $startDate
+                    🕐 $hourText: $startHour
+                    🌐 $latitudeText: ${String.format(Locale.getDefault(), "%.6f", startLat)}
+                    🌐 $longitudeText: ${String.format(Locale.getDefault(), "%.6f", startLon)}
                     
                     ━━━━━━━━━━━━━━━━━━━━━━
-                    START POINT DATA
+                    $currentPointReportTitle
                     ━━━━━━━━━━━━━━━━━━━━━━
-                    📅 Date: $startDate
-                    🕐 Time: $startHour
-                    🌐 Latitude: ${String.format(Locale.getDefault(), "%.6f", startLat)}
-                    🌐 Longitude: ${String.format(Locale.getDefault(), "%.6f", startLon)}
+                    📅 $dateText: $currentDate
+                    🕐 $hourText: $currentHour
+                    🌐 $latitudeText: $currentLatText
+                    🌐 $longitudeText: $currentLonText
                     
                     ━━━━━━━━━━━━━━━━━━━━━━
-                    CURRENT POSITION DATA
-                    ━━━━━━━━━━━━━━━━━━━━━━
-                    📅 Date: $currentDate
-                    🕐 Time: $currentHour
-                    🌐 Latitude: $currentLatText
-                    🌐 Longitude: $currentLonText
-                    
-                    ━━━━━━━━━━━━━━━━━━━━━━
-                    📏 Distance: $distanceText
+                    📏 $distanceT: $distanceText
                     ━━━━━━━━━━━━━━━━━━━━━━
                 """.trimIndent()
                     }
                 } catch (e: Exception) {
-                    reportText = "❌ Error loading report:\n${e.message}"
+                    reportText = "$errorLoadingReport\n${e.message}"
                 }
             }
 
@@ -2979,7 +2984,7 @@ fun fourSTLPositionMarkerComposable(
                 shape = RectangleShape,
                 title = {
                     Text(
-                        "Start Point Report",
+                        stringResource(R.string.start_point_report),
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Bold
                     )
@@ -2998,7 +3003,7 @@ fun fourSTLPositionMarkerComposable(
                 },
                 confirmButton = {
                     TextButton(onClick = { showStartPointReport = false }) {
-                        Text("OK", fontFamily = MyCustomFont)
+                        Text(stringResource(R.string.ok), fontFamily = MyCustomFont)
                     }
                 }
             )
@@ -3014,14 +3019,14 @@ fun fourSTLPositionMarkerComposable(
                 shape = RectangleShape,
                 title = {
                     Text(
-                        "Overwrite existing start point?",
+                        stringResource(R.string.overwrite_start_point_title),
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 text = {
                     Text(
-                        "A start point is already saved. Do you want to overwrite it with the imported file?",
+                        stringResource(R.string.overwrite_start_point_message),
                         fontFamily = MyCustomFont
                     )
                 },
@@ -3035,14 +3040,14 @@ fun fourSTLPositionMarkerComposable(
                                     onSuccess = {
                                         Toast.makeText(
                                             context,
-                                            "✅ Start point overwritten successfully",
+                                            context.getString(R.string.overwrite_succesful),
                                             Toast.LENGTH_LONG
                                         ).show()
                                     },
                                     onError = { error ->
                                         Toast.makeText(
                                             context,
-                                            "❌ Error: $error",
+                                            context.getString(R.string.error) + "$error",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     }
@@ -3052,7 +3057,7 @@ fun fourSTLPositionMarkerComposable(
                             pendingImportUri = null
                         }
                     ) {
-                        Text("Overwrite", fontFamily = MyCustomFont)
+                        Text(context.getString(R.string.overwrite), fontFamily = MyCustomFont)
                     }
                 },
                 dismissButton = {
@@ -3062,7 +3067,7 @@ fun fourSTLPositionMarkerComposable(
                             pendingImportUri = null
                         }
                     ) {
-                        Text("Cancel", fontFamily = MyCustomFont)
+                        Text(context.getString(R.string.cancel), fontFamily = MyCustomFont)
                     }
                 }
             )
@@ -3073,35 +3078,46 @@ fun fourSTLPositionMarkerComposable(
         if (showGpxReport && gpxStats != null) {
             val stats = gpxStats!!
 
+            val gpxReportText = stringResource(R.string.gpx_track_report)
+            val trackFileText = stringResource(R.string.track_file)
+            val startDataT = stringResource(R.string.start_data)
+            val endDataT = stringResource(R.string.end_data)
+            val trackStatT = stringResource(R.string.track_stat)
+            val dateText = stringResource(R.string.date)
+            val hourText = stringResource(R.string.hour)
+            val latitudeText = stringResource((R.string.latitude))
+            val longitudeText = stringResource(R.string.longitude)
+            val distanceT = stringResource(R.string.distance)
+
             val reportText = """
-        📊 GPX TRACK REPORT
+        📊 $gpxReportText
         
         ━━━━━━━━━━━━━━━━━━━━━━
-        TRACK FILE
+        $trackFileText
         ━━━━━━━━━━━━━━━━━━━━━━
         📁 File: $loadedGpxFileName
         📍 Points: ${loadedGpxTrack.size}
         
         ━━━━━━━━━━━━━━━━━━━━━━
-        START DATA
+        $startDataT
         ━━━━━━━━━━━━━━━━━━━━━━
-        📅 Date: ${stats.startDate}
-        🕐 Time: ${stats.startTime}
-        🌐 Latitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.first().latitude)}
-        🌐 Longitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.first().longitude)}
+        📅 $dateText: ${stats.startDate}
+        🕐 $hourText: ${stats.startTime}
+        🌐 $latitudeText: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.first().latitude)}
+        🌐 $longitudeText: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.first().longitude)}
         
         ━━━━━━━━━━━━━━━━━━━━━━
-        END DATA
+        $endDataT
         ━━━━━━━━━━━━━━━━━━━━━━
-        📅 Date: ${stats.endDate}
-        🕐 Time: ${stats.endTime}
-        🌐 Latitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.last().latitude)}
-        🌐 Longitude: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.last().longitude)}
+        📅 $dateText: ${stats.endDate}
+        🕐 $hourText: ${stats.endTime}
+        🌐 $latitudeText: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.last().latitude)}
+        🌐 $longitudeText: ${String.format(Locale.getDefault(), "%.6f", loadedGpxTrack.last().longitude)}
         
         ━━━━━━━━━━━━━━━━━━━━━━
-        TRACK STATISTICS
+        $trackStatT
         ━━━━━━━━━━━━━━━━━━━━━━
-        📏 Total Distance: ${String.format(Locale.getDefault(), "%.2f km", stats.totalDistance)}
+        📏 $distanceT: ${String.format(Locale.getDefault(), "%.2f km", stats.totalDistance)}
         ━━━━━━━━━━━━━━━━━━━━━━
         """.trimIndent()
 
@@ -3110,7 +3126,7 @@ fun fourSTLPositionMarkerComposable(
                 shape = RectangleShape,
                 title = {
                     Text(
-                        "GPX Track Report",
+                        stringResource(R.string.gpx_track_report),
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Bold
                     )
@@ -3129,7 +3145,7 @@ fun fourSTLPositionMarkerComposable(
                 },
                 confirmButton = {
                     TextButton(onClick = { showGpxReport = false }) {
-                        Text("OK", fontFamily = MyCustomFont)
+                        Text(stringResource(R.string.ok), fontFamily = MyCustomFont)
                     }
                 }
             )
@@ -3140,28 +3156,43 @@ fun fourSTLPositionMarkerComposable(
         if (showGpxReportRealTime && gpxStatsRealTime != null) {
             val stats = gpxStatsRealTime!!
 
+            val realGpxReportText = stringResource(R.string.gpx_track_report)
+            val recordingStatusText = stringResource(R.string.recording_status)
+            val startDataT = stringResource(R.string.start_data)
+            val currentDataT= stringResource(R.string.current_data)
+            val trackStatT = stringResource(R.string.track_stat)
+            val statusRecordingText = stringResource(R.string.recording_status)
+            val dateText = stringResource(R.string.date)
+            val hourText = stringResource(R.string.hour)
+            val latitudeText = stringResource((R.string.latitude))
+            val longitudeText = stringResource(R.string.longitude)
+            val distanceT = stringResource(R.string.distance)
+            val pointsText = stringResource(R.string.points)
+
+
+
             val reportText = """
-        📊 REAL-TIME GPS TRACK REPORT
+        📊 $realGpxReportText
         
         ┌────────────────────────
-        RECORDING STATUS
+        $recordingStatusText
         ┌────────────────────────
-        🔴 Status: RECORDING
-        📍 Points: ${realTimeTrackPoints.size}
+        🔴 $statusRecordingText
+        📍 $pointsText: ${realTimeTrackPoints.size}
         
         ┌────────────────────────
-        START DATA
+        $startDataT
         ┌────────────────────────
-        📅 Date: ${stats.startDate}
-        🕐 Time: ${stats.startTime}
-        🌍 Latitude: ${
+        📅 $dateText: ${stats.startDate}
+        🕐 $hourText: ${stats.startTime}
+        🌍 $latitudeText: ${
                 String.format(
                     Locale.getDefault(),
                     "%.6f",
                     realTimeTrackPoints.firstOrNull()?.latitude ?: 0.0
                 )
             }
-        🌍 Longitude: ${
+        🌍 $longitudeText: ${
                 String.format(
                     Locale.getDefault(),
                     "%.6f",
@@ -3170,18 +3201,18 @@ fun fourSTLPositionMarkerComposable(
             }
         
         ┌────────────────────────
-        CURRENT DATA
+        $currentDataT
         ┌────────────────────────
-        📅 Date: ${stats.endDate}
-        🕐 Time: ${stats.endTime}
-        🌍 Latitude: ${
+        📅 $dateText: ${stats.endDate}
+        🕐 $hourText: ${stats.endTime}
+        🌍 $latitudeText: ${
                 String.format(
                     Locale.getDefault(),
                     "%.6f",
                     realTimeTrackPoints.lastOrNull()?.latitude ?: 0.0
                 )
             }
-        🌍 Longitude: ${
+        🌍 $longitudeText: ${
                 String.format(
                     Locale.getDefault(),
                     "%.6f",
@@ -3190,9 +3221,9 @@ fun fourSTLPositionMarkerComposable(
             }
         
         ┌────────────────────────
-        TRACK STATISTICS
+        $trackStatT
         ┌────────────────────────
-        📏 Total Distance: ${String.format(Locale.getDefault(), "%.2f km", stats.totalDistance)}
+        📏 $distanceT: ${String.format(Locale.getDefault(), "%.2f km", stats.totalDistance)}
         ┌────────────────────────
         """.trimIndent()
 
@@ -3201,7 +3232,7 @@ fun fourSTLPositionMarkerComposable(
                 shape = RectangleShape,
                 title = {
                     Text(
-                        "Real-Time Track Report",
+                        stringResource(R.string.real_time_track_report),
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Bold,
                         color = Color.Red
@@ -3221,7 +3252,7 @@ fun fourSTLPositionMarkerComposable(
                 },
                 confirmButton = {
                     TextButton(onClick = { showGpxReportRealTime = false }) {
-                        Text("OK", fontFamily = MyCustomFont)
+                        Text(stringResource(R.string.ok), fontFamily = MyCustomFont)
                     }
                 }
             )
@@ -3230,19 +3261,20 @@ fun fourSTLPositionMarkerComposable(
 
         // Dialog stop tracking with confirm
         if (showStopTrackingDialog) {
+            val trackTxt = stringResource(R.string.track)
             AlertDialog(
                 onDismissRequest = { showStopTrackingDialog = false },
                 shape = RectangleShape,
                 title = {
                     Text(
-                        "Stop GPS Tracking",
+                        stringResource(R.string.stop_gps_tracking_service),
                         fontFamily = MyCustomFont,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 text = {
                     Text(
-                        "Do you want to save the GPS track before stopping the recording?",
+                        stringResource(R.string.do_you_want_save_gps_track_before),
                         fontFamily = MyCustomFont
                     )
                 },
@@ -3253,7 +3285,7 @@ fun fourSTLPositionMarkerComposable(
                                 "yyyyMMdd_HHmmss",
                                 Locale.getDefault()
                             ).format(Date())
-                            val generatedFileName = "track_$timestamp"
+                            val generatedFileName = "$trackTxt _ $timestamp"
 
                             val intent = Intent(context, GpsTrackingService::class.java).apply {
                                 action = GpsTrackingService.ACTION_SAVE_AND_STOP
@@ -3269,7 +3301,7 @@ fun fourSTLPositionMarkerComposable(
                             showStopTrackingDialog = false
                         }
                     ) {
-                        Text("Save and Stop", fontFamily = MyCustomFont)
+                        Text(stringResource(R.string.save_and_stop), fontFamily = MyCustomFont)
                     }
                 },
                 dismissButton = {
@@ -3287,17 +3319,17 @@ fun fourSTLPositionMarkerComposable(
 
                                 Toast.makeText(
                                     context,
-                                    "Tracking stopped without saving",
+                                    context.getString(R.string.stop_without_saving),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
                         ) {
-                            Text("Stop without saving", fontFamily = MyCustomFont)
+                            Text(stringResource(R.string.stop_without_saving), fontFamily = MyCustomFont)
                         }
                         TextButton(
                             onClick = { showStopTrackingDialog = false }
                         ) {
-                            Text("Cancel", fontFamily = MyCustomFont)
+                            Text(stringResource(R.string.cancel), fontFamily = MyCustomFont)
                         }
                     }
                 }
@@ -3315,13 +3347,16 @@ fun TrackWidthDialog(
     var widthInput by remember { mutableStateOf("10.0") } // Default 10m
     var useCustomWidth by remember { mutableStateOf(true) }
     var showError by remember { mutableStateOf(false) }
+    val widthTxt = stringResource(R.string.width) + "m"
+    val invalidValueTxt = stringResource(R.string.invalid_value)
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RectangleShape,
         title = {
             Text(
-                "Start GPS Tracking",
+                stringResource(R.string.start_gps_tracking_service),
                 fontFamily = MyCustomFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp
@@ -3333,7 +3368,7 @@ fun TrackWidthDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    "Set track width for census/survey",
+                    stringResource(R.string.set_track_width),
                     fontFamily = MyCustomFont,
                     fontSize = 14.sp
                 )
@@ -3346,7 +3381,7 @@ fun TrackWidthDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Custom track width",
+                        stringResource(R.string.track_width),
                         fontFamily = MyCustomFont,
                         fontSize = 16.sp
                     )
@@ -3365,7 +3400,7 @@ fun TrackWidthDialog(
                                 widthInput = it
                                 showError = false
                             },
-                            label = { Text("Width (meters)", fontFamily = MyCustomFont) },
+                            label = { Text("$widthTxt", fontFamily = MyCustomFont) },
                             placeholder = { Text("e.g., 10.0") },
                             suffix = { Text("m", color = Color.Gray) },
                             keyboardOptions = KeyboardOptions(
@@ -3378,7 +3413,7 @@ fun TrackWidthDialog(
 
                         if (showError) {
                             Text(
-                                "⚠️ Invalid value (use 0.1 - 1000)",
+                                    "⚠️ $invalidValueTxt (e.g 0.1 - 1000)",
                                 color = MaterialTheme.colorScheme.error,
                                 fontSize = 12.sp,
                                 fontFamily = MyCustomFont
@@ -3387,7 +3422,7 @@ fun TrackWidthDialog(
 
                         // Preset buttons
                         Text(
-                            "Quick presets:",
+                            stringResource(R.string.quick_preset)+":",
                             fontSize = 12.sp,
                             color = Color.Gray,
                             fontFamily = MyCustomFont
@@ -3418,16 +3453,16 @@ fun TrackWidthDialog(
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    "💡 Track Width Info",
+                                    "💡"+ stringResource(R.string.track_width_info),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     fontFamily = MyCustomFont
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    "• Forest census: 10-20m\n" +
-                                            "• Trail mapping: 2-5m\n" +
-                                            "• Survey strips: custom",
+                                    "•" + stringResource(R.string.forest_census) + ": 10-20m\n" +
+                                            "•" + stringResource(R.string.trail_mapping) + ": 2-5m\n" +
+                                            "•" + stringResource(R.string.survey_strip) + ": custom",
                                     fontSize = 11.sp,
                                     fontFamily = MyCustomFont,
                                     lineHeight = 14.sp
@@ -3446,7 +3481,7 @@ fun TrackWidthDialog(
                         shape = RectangleShape
                     ) {
                         Text(
-                            "ℹ️ Standard track (no custom width)",
+                            "ℹ️" + stringResource(R.string.standard_track),
                             modifier = Modifier.padding(12.dp),
                             fontSize = 12.sp,
                             fontFamily = MyCustomFont
@@ -3476,12 +3511,12 @@ fun TrackWidthDialog(
             ) {
                 Icon(Icons.Default.PlayArrow, null, tint = Color.White)
                 Spacer(Modifier.width(4.dp))
-                Text("Start Recording", fontFamily = MyCustomFont)
+                Text(stringResource(R.string.start_gps_tracking_service), fontFamily = MyCustomFont)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", fontFamily = MyCustomFont)
+                Text(stringResource(R.string.cancel), fontFamily = MyCustomFont)
             }
         }
     )
@@ -3497,7 +3532,7 @@ private fun AssetTextView(assetFileName: String, modifier: Modifier = Modifier) 
         try {
             context.assets.open(assetFileName).bufferedReader().use { it.readText() }
         } catch (e: Exception) {
-            "File load error: ${e.message}"
+            context.getString(R.string.file_load_error)+": ${e.message}"
         }
     }
 
