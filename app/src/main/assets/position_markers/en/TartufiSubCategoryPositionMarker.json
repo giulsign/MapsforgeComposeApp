@@ -1,0 +1,11 @@
+[
+{"id": 1,"idsp": "TART1","nome_italiano": "White truffle (Alba truffle)","nome_latino": "Tuber magnatum Pico"},
+{"id": 2,"idsp": "TART2","nome_italiano": "Black truffle (Norcia / Spoleto truffle)","nome_latino": "Tuber melanosporum Vittad."},
+{"id": 3,"idsp": "TART3","nome_italiano": "Summer truffle (Scorzone / Summer)","nome_latino": "Tuber aestivum Vittad."},
+{"id": 4,"idsp": "TART4","nome_italiano": "Hooked truffle (Burgundy / Uncinatum)","nome_latino": "Tuber uncinatum Chatin"},
+{"id": 5,"idsp": "TART5","nome_italiano": "Whitish truffle / Spring truffle","nome_latino": "Tuber borchii Vittad. (Tuber albidum / T. borchii)"},
+{"id": 6,"idsp": "TART6","nome_italiano": "Winter black truffle / Muscat (variety)","nome_latino": "Tuber brumale Vittad. (incl. var. moschatum De Ferry)"},
+{"id": 7,"idsp": "TART7","nome_italiano": "Smooth black truffle (Black truffle 'macrosporum')","nome_latino": "Tuber macrosporum Vittad."},
+{"id": 8,"idsp": "TART8","nome_italiano": "Ordinary black truffle (Bagnoli truffle)","nome_latino": "Tuber mesentericum Vittad."},
+{"id": 9,"idsp": "TART9","nome_italiano": "Muscat truffle (distinctive variety often listed separately)","nome_latino": "Tuber brumale var. moschatum De Ferry"}
+]

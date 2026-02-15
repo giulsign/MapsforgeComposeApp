@@ -1,0 +1,10 @@
+[
+{"id": 1, "idsp": "FACN1", "nome italiano": "Medusa luminiscente", "nome latino": "Pelagia noctiluca"},
+{"id": 2, "idsp": "FACN2", "nome italiano": "Medusa común / Aurelia", "nome latino": "Aurelia aurita"},
+{"id": 3, "idsp": "FACN3", "nome italiano": "Acalefo azul", "nome latino": "Rhizostoma pulmo"},
+{"id": 4, "idsp": "FACN4", "nome italiano": "Medusa huevo frito", "nome latino": "Cotylorhiza tuberculata"},
+{"id": 5, "idsp": "FACN5", "nome italiano": "Olindias phosphorica", "nome latino": "Olindias phosphorica"},
+{"id": 6, "idsp": "FACN6", "nome italiano": "Medusa compás", "nome latino": "Chrysaora hysoscella"},
+{"id": 7, "idsp": "FACN7", "nome italiano": "Velella / Barquito de San Pedro", "nome latino": "Velella velella"},
+{"id": 8, "idsp": "FACN8", "nome italiano": "Mnemiopsis (no autóctona)", "nome latino": "Mnemiopsis leidyi"}
+]

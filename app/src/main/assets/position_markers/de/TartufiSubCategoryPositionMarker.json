@@ -1,0 +1,11 @@
+[
+{"id": 1,"idsp": "TART1","nome_italiano": "Weißer Trüffel (Alba-Trüffel)","nome_latino": "Tuber magnatum Pico"},
+{"id": 2,"idsp": "TART2","nome_italiano": "Schwarzer Trüffel (Norcia / Spoleto Trüffel)","nome_latino": "Tuber melanosporum Vittad."},
+{"id": 3,"idsp": "TART3","nome_italiano": "Sommertrüffel (Scorzone / Sommer)","nome_latino": "Tuber aestivum Vittad."},
+{"id": 4,"idsp": "TART4","nome_italiano": "Burgundertrüffel (Burgundy / Uncinatum)","nome_latino": "Tuber uncinatum Chatin"},
+{"id": 5,"idsp": "TART5","nome_italiano": "Weißlicher Trüffel / Märztrüffel","nome_latino": "Tuber borchii Vittad. (Tuber albidum / T. borchii)"},
+{"id": 6,"idsp": "TART6","nome_italiano": "Wintertrüffel / Muskattrüffel (Varietät)","nome_latino": "Tuber brumale Vittad. (incl. var. moschatum De Ferry)"},
+{"id": 7,"idsp": "TART7","nome_italiano": "Glatter schwarzer Trüffel (Schwarzer Trüffel 'macrosporum')","nome_latino": "Tuber macrosporum Vittad."},
+{"id": 8,"idsp": "TART8","nome_italiano": "Gewöhnlicher schwarzer Trüffel (Bagnoli-Trüffel)","nome_latino": "Tuber mesentericum Vittad."},
+{"id": 9,"idsp": "TART9","nome_italiano": "Muskattrüffel (eigenständige Varietät oft separat aufgeführt)","nome_latino": "Tuber brumale var. moschatum De Ferry"}
+]

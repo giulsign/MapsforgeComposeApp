@@ -1,0 +1,14 @@
+[
+{"id": 1, "idsp": "FAAE1", "nome italiano": "Gemeiner Regenwurm", "nome latino": "Lumbricus terrestris"},
+{"id": 2, "idsp": "FAAE2", "nome italiano": "Roter Regenwurm", "nome latino": "Lumbricus rubellus"},
+{"id": 3, "idsp": "FAAE3", "nome italiano": "Kompostwurm", "nome latino": "Eisenia fetida"},
+{"id": 4, "idsp": "FAAE4", "nome italiano": "Weiden-Regenwurm", "nome latino": "Aporrectodea caliginosa"},
+{"id": 5, "idsp": "FAAE5", "nome italiano": "Grüner Regenwurm", "nome latino": "Allolobophora chlorotica"},
+{"id": 6, "idsp": "FAAE6", "nome italiano": "Garten-Regenwurm", "nome latino": "Dendrobaena veneta"},
+{"id": 7, "idsp": "FAAE7", "nome italiano": "Medizinischer Blutegel", "nome latino": "Hirudo medicinalis"},
+{"id": 8, "idsp": "FAAE8", "nome italiano": "Verbana-Blutegel", "nome latino": "Hirudo verbana"},
+{"id": 9, "idsp": "FAAE9", "nome italiano": "Teich-Egel", "nome latino": "Helobdella stagnalis"},
+{"id": 10, "idsp": "FAAE10", "nome italiano": "Mittelmeer-Spiralröhrenwurm", "nome latino": "Sabella spallanzanii"},
+{"id": 11, "idsp": "FAAE11", "nome italiano": "Mercierella", "nome latino": "Ficopomatus enigmaticus"},
+{"id": 12, "idsp": "FAAE12", "nome italiano": "Seeringelwurm", "nome latino": "Nereis succinea"}
+]

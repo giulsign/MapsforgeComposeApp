@@ -1,0 +1,9 @@
+[
+  {"id": 1, "idM": "M1", "title": "Flora", "ref": "FloraSubCategoryPositionMarker.json"},
+  {"id": 2, "idM": "M2", "title": "Fauna", "ref": "FaunaSubCategoryPositionMarker.json"},
+  {"id": 3, "idM": "M3", "title": "Hongos", "ref": "FunghiSubCategoryPositionMarker.json"},
+  {"id": 4, "idM": "M4", "title": "Trufas", "ref": "TartufiSubCategoryPositionMarker.json"},
+  {"id": 5, "idM": "M5", "title": "Fósiles", "ref": "FossiliSubCategoryPositionMarker.json"},
+  {"id": 6, "idM": "M6", "title": "Residuos/Basuras", "ref": "RifiutiSubCategoryPositionMarker.json"},
+  {"id": 7, "idM": "M7", "title": "Personal", "ref": "personale.json"}
+]

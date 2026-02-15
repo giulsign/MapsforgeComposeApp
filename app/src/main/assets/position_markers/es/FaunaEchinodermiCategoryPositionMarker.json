@@ -1,0 +1,12 @@
+[
+{"id": 1, "idsp": "FAEC1", "nome italiano": "Erizo de mar negro", "nome latino": "Arbacia lixula"},
+{"id": 2, "idsp": "FAEC2", "nome italiano": "Erizo de mar común", "nome latino": "Paracentrotus lividus"},
+{"id": 3, "idsp": "FAEC3", "nome italiano": "Estrella de mar roja", "nome latino": "Echinaster sepositus"},
+{"id": 4, "idsp": "FAEC4", "nome italiano": "Estrella espinosa", "nome latino": "Marthasterias glacialis"},
+{"id": 5, "idsp": "FAEC5", "nome italiano": "Ofiura frágil", "nome latino": "Ophiothrix fragilis"},
+{"id": 6, "idsp": "FAEC6", "nome italiano": "Ofiura común", "nome latino": "Ophioderma longicaudum"},
+{"id": 7, "idsp": "FAEC7", "nome italiano": "Pepino de mar negro", "nome latino": "Holothuria forskali"},
+{"id": 8, "idsp": "FAEC8", "nome italiano": "Pepino de mar tubular", "nome latino": "Holothuria tubulosa"},
+{"id": 9, "idsp": "FAEC9", "nome italiano": "Erizo corazón", "nome latino": "Echinocardium cordatum"},
+{"id": 10, "idsp": "FAEC10", "nome italiano": "Estrella amarilla mediterránea", "nome latino": "Astropecten aranciacus"}
+]

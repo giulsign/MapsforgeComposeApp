@@ -1,0 +1,14 @@
+[
+{"id":"1","idsp":"GARB1","label":"Kunststoffe (Verpackungen, Flaschen, Folien)","CER_code":"15 01 02"},
+{"id":"2","idsp":"GARB2","label":"Papier und Karton","CER_code":"15 01 01"},
+{"id":"3","idsp":"GARB3","label":"Glas","CER_code":"15 01 07"},
+{"id":"4","idsp":"GARB4","label":"Metalle (Eisen / Nichteisenmetalle)","CER_code":"15 01 04"},
+{"id":"5","idsp":"GARB5","label":"Elektroschrott / Elektronikabfall","CER_code":"20 01 36"},
+{"id":"6","idsp":"GARB6","label":"Organische Abfälle / Lebensmittelabfälle","CER_code":"20 01 08"},
+{"id":"7","idsp":"GARB7","label":"Sperrmüll (Möbel, Matratzen)","CER_code":"20 03 07"},
+{"id":"8","idsp":"GARB8","label":"Bau- und Abbruchabfälle (Schutt, Erde)","CER_code":"17 09 04"},
+{"id":"9","idsp":"GARB9","label":"Gefährliche Abfälle (Chemikalien, Lösungsmittel, Batterien)","CER_code":"20 01 27*"},
+{"id":"10","idsp":"GARB10","label":"Medizinische / biogefährliche Abfälle","CER_code":"18 01 03*"},
+{"id":"11","idsp":"GARB11","label":"Altreifen","CER_code":"16 01 03"},
+{"id":"12","idsp":"GARB12","label":"Sonstige / nicht klassifizierte Abfälle","CER_code":"20 03 99"}
+]

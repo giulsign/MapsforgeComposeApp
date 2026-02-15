@@ -1,0 +1,12 @@
+[
+{"id": 1, "idsp": "FAEC1", "nome italiano": "Black sea urchin", "nome latino": "Arbacia lixula"},
+{"id": 2, "idsp": "FAEC2", "nome italiano": "Purple sea urchin", "nome latino": "Paracentrotus lividus"},
+{"id": 3, "idsp": "FAEC3", "nome italiano": "Red starfish", "nome latino": "Echinaster sepositus"},
+{"id": 4, "idsp": "FAEC4", "nome italiano": "Spiny starfish", "nome latino": "Marthasterias glacialis"},
+{"id": 5, "idsp": "FAEC5", "nome italiano": "Common brittlestar", "nome latino": "Ophiothrix fragilis"},
+{"id": 6, "idsp": "FAEC6", "nome italiano": "Long-armed brittlestar", "nome latino": "Ophioderma longicaudum"},
+{"id": 7, "idsp": "FAEC7", "nome italiano": "Black sea cucumber", "nome latino": "Holothuria forskali"},
+{"id": 8, "idsp": "FAEC8", "nome italiano": "Tubular sea cucumber", "nome latino": "Holothuria tubulosa"},
+{"id": 9, "idsp": "FAEC9", "nome italiano": "Heart urchin", "nome latino": "Echinocardium cordatum"},
+{"id": 10, "idsp": "FAEC10", "nome italiano": "Mediterranean orange starfish", "nome latino": "Astropecten aranciacus"}
+]

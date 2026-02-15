@@ -1,0 +1,14 @@
+[
+{"id": 1, "idsp": "FACR1", "nome italiano": "Cangrejo de río italiano", "nome latino": "Austropotamobius pallipes"},
+{"id": 2, "idsp": "FACR2", "nome italiano": "Cangrejo de río", "nome latino": "Potamon fluviatile"},
+{"id": 3, "idsp": "FACR3", "nome italiano": "Cangrejo ermitaño común", "nome latino": "Pagurus bernhardus"},
+{"id": 4, "idsp": "FACR4", "nome italiano": "Cangrejo verde mediterráneo", "nome latino": "Carcinus aestuarii"},
+{"id": 5, "idsp": "FACR5", "nome italiano": "Camarón elegante", "nome latino": "Palaemon elegans"},
+{"id": 6, "idsp": "FACR6", "nome italiano": "Camarón común", "nome latino": "Palaemon serratus"},
+{"id": 7, "idsp": "FACR7", "nome italiano": "Cigala / Langostino", "nome latino": "Nephrops norvegicus"},
+{"id": 8, "idsp": "FACR8", "nome italiano": "Cangrejo corredor", "nome latino": "Pachygrapsus marmoratus"},
+{"id": 9, "idsp": "FACR9", "nome italiano": "Cangrejo violinista adriático", "nome latino": "Uca tangeri"},
+{"id": 10, "idsp": "FACR10", "nome italiano": "Galera / Mantis", "nome latino": "Squilla mantis"},
+{"id": 11, "idsp": "FACR11", "nome italiano": "Cangrejo ermitaño de arena", "nome latino": "Diogenes pugilator"},
+{"id": 12, "idsp": "FACR12", "nome italiano": "Camarón gris común", "nome latino": "Crangon crangon"}
+]

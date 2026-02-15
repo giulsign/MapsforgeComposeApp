@@ -1,0 +1,6 @@
+[
+{"id": 1, "idFL": "FLAL", "title": "Bäume (einzelner Stamm)", "Ref": "FloraAlberiCategoryPositionMarker.json"},
+{"id": 2, "idFL": "FLAR", "title": "Sträucher (mehrstämmige Sträucher)", "Ref": "FloraArbustiCategoryPositionMarker.json"},
+{"id": 3, "idFL": "FLER", "title": "Krautige Vegetation (Blumen, Kräuter, Gemüse, Wasserarten)", "Ref": "FloraErbaceeCategoryPositionMarker.json"},
+{"id": 4, "idFL": "FLSU", "title": "Sukkulenten", "Ref": "FloraSucculenteCategoryPositionMarker.json"}
+]

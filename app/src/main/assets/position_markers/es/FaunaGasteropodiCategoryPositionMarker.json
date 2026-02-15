@@ -1,0 +1,17 @@
+[
+{"id": 1, "idsp": "FAGA1", "nome italiano": "Caracol común de jardín", "nome latino": "Helix aspersa"},
+{"id": 2, "idsp": "FAGA2", "nome italiano": "Caracol de Borgoña", "nome latino": "Helix pomatia"},
+{"id": 3, "idsp": "FAGA3", "nome italiano": "Babosa roja de jardín", "nome latino": "Arion rufus"},
+{"id": 4, "idsp": "FAGA4", "nome italiano": "Caracol de los bosques", "nome latino": "Cepaea nemoralis"},
+{"id": 5, "idsp": "FAGA5", "nome italiano": "Babosa negra", "nome latino": "Limax cinereoniger"},
+{"id": 6, "idsp": "FAGA6", "nome italiano": "Caracol de estanque", "nome latino": "Lymnaea stagnalis"},
+{"id": 7, "idsp": "FAGA7", "nome italiano": "Gran planorbis", "nome latino": "Planorbarius corneus"},
+{"id": 8, "idsp": "FAGA8", "nome italiano": "Caracol de agua dulce pequeño", "nome latino": "Physa acuta"},
+{"id": 9, "idsp": "FAGA9", "nome italiano": "Lapa mediterránea", "nome latino": "Patella caerulea"},
+{"id": 10, "idsp": "FAGA10", "nome italiano": "Nassarius variable", "nome latino": "Nassarius mutabilis"},
+{"id": 11, "idsp": "FAGA11", "nome italiano": "Múrice espinoso", "nome latino": "Bolinus brandaris"},
+{"id": 12, "idsp": "FAGA12", "nome italiano": "Buccino común", "nome latino": "Buccinum undatum"},
+{"id": 13, "idsp": "FAGA13", "nome italiano": "Oreja de mar", "nome latino": "Haliotis tuberculata"},
+{"id": 14, "idsp": "FAGA14", "nome italiano": "Liebre de mar", "nome latino": "Aplysia depilans"},
+{"id": 15, "idsp": "FAGA15", "nome italiano": "Colombela rústica", "nome latino": "Columbella rustica"}
+]

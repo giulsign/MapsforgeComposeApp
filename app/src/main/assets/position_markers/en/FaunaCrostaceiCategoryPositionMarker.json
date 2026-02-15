@@ -1,0 +1,14 @@
+[
+{"id": 1, "idsp": "FACR1", "nome italiano": "White-clawed crayfish", "nome latino": "Austropotamobius pallipes"},
+{"id": 2, "idsp": "FACR2", "nome italiano": "Freshwater crab", "nome latino": "Potamon fluviatile"},
+{"id": 3, "idsp": "FACR3", "nome italiano": "Common hermit crab", "nome latino": "Pagurus bernhardus"},
+{"id": 4, "idsp": "FACR4", "nome italiano": "Mediterranean green crab", "nome latino": "Carcinus aestuarii"},
+{"id": 5, "idsp": "FACR5", "nome italiano": "Elegant prawn", "nome latino": "Palaemon elegans"},
+{"id": 6, "idsp": "FACR6", "nome italiano": "Common prawn", "nome latino": "Palaemon serratus"},
+{"id": 7, "idsp": "FACR7", "nome italiano": "Norway lobster / Scampi", "nome latino": "Nephrops norvegicus"},
+{"id": 8, "idsp": "FACR8", "nome italiano": "Marbled rock crab", "nome latino": "Pachygrapsus marmoratus"},
+{"id": 9, "idsp": "FACR9", "nome italiano": "Adriatic fiddler crab", "nome latino": "Uca tangeri"},
+{"id": 10, "idsp": "FACR10", "nome italiano": "Mantis shrimp", "nome latino": "Squilla mantis"},
+{"id": 11, "idsp": "FACR11", "nome italiano": "Small hermit crab", "nome latino": "Diogenes pugilator"},
+{"id": 12, "idsp": "FACR12", "nome italiano": "Common shrimp", "nome latino": "Crangon crangon"}
+]

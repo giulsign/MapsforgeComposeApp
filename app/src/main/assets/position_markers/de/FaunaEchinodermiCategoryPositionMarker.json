@@ -1,0 +1,12 @@
+[
+{"id": 1, "idsp": "FAEC1", "nome italiano": "Schwarzer Seeigel", "nome latino": "Arbacia lixula"},
+{"id": 2, "idsp": "FAEC2", "nome italiano": "Gemeiner Seeigel", "nome latino": "Paracentrotus lividus"},
+{"id": 3, "idsp": "FAEC3", "nome italiano": "Roter Seestern", "nome latino": "Echinaster sepositus"},
+{"id": 4, "idsp": "FAEC4", "nome italiano": "Stacheliger Seestern", "nome latino": "Marthasterias glacialis"},
+{"id": 5, "idsp": "FAEC5", "nome italiano": "Gemeiner Schlangenstern", "nome latino": "Ophiothrix fragilis"},
+{"id": 6, "idsp": "FAEC6", "nome italiano": "Langarmiger Schlangenstern", "nome latino": "Ophioderma longicaudum"},
+{"id": 7, "idsp": "FAEC7", "nome italiano": "Schwarze Seegurke", "nome latino": "Holothuria forskali"},
+{"id": 8, "idsp": "FAEC8", "nome italiano": "Röhren-Seegurke", "nome latino": "Holothuria tubulosa"},
+{"id": 9, "idsp": "FAEC9", "nome italiano": "Herzseeigel", "nome latino": "Echinocardium cordatum"},
+{"id": 10, "idsp": "FAEC10", "nome italiano": "Mittelmeer-Kammstern", "nome latino": "Astropecten aranciacus"}
+]

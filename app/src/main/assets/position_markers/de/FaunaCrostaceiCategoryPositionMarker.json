@@ -1,0 +1,14 @@
+[
+{"id": 1, "idsp": "FACR1", "nome italiano": "Dohlenkrebs", "nome latino": "Austropotamobius pallipes"},
+{"id": 2, "idsp": "FACR2", "nome italiano": "Süßwasserkrabbe", "nome latino": "Potamon fluviatile"},
+{"id": 3, "idsp": "FACR3", "nome italiano": "Gemeiner Einsiedlerkrebs", "nome latino": "Pagurus bernhardus"},
+{"id": 4, "idsp": "FACR4", "nome italiano": "Mittelmeer-Strandkrabbe", "nome latino": "Carcinus aestuarii"},
+{"id": 5, "idsp": "FACR5", "nome italiano": "Elegante Felsengarnele", "nome latino": "Palaemon elegans"},
+{"id": 6, "idsp": "FACR6", "nome italiano": "Säge-Felsengarnele", "nome latino": "Palaemon serratus"},
+{"id": 7, "idsp": "FACR7", "nome italiano": "Kaisergranat / Norwegischer Hummer", "nome latino": "Nephrops norvegicus"},
+{"id": 8, "idsp": "FACR8", "nome italiano": "Marmorierte Felsenkrabbe", "nome latino": "Pachygrapsus marmoratus"},
+{"id": 9, "idsp": "FACR9", "nome italiano": "Adriatische Winkerkrabbe", "nome latino": "Uca tangeri"},
+{"id": 10, "idsp": "FACR10", "nome italiano": "Fangschreckenkrebs / Heuschreckenkrabbe", "nome latino": "Squilla mantis"},
+{"id": 11, "idsp": "FACR11", "nome italiano": "Kleiner Einsiedlerkrebs", "nome latino": "Diogenes pugilator"},
+{"id": 12, "idsp": "FACR12", "nome italiano": "Nordseegarnele", "nome latino": "Crangon crangon"}
+]

@@ -1,0 +1,6 @@
+[
+{"id": 1, "idFL": "FLAL", "title": "Árboles (tronco único)", "Ref": "FloraAlberiCategoryPositionMarker.json"},
+{"id": 2, "idFL": "FLAR", "title": "Arbustos (arbustos de tallos múltiples)", "Ref": "FloraArbustiCategoryPositionMarker.json"},
+{"id": 3, "idFL": "FLER", "title": "Vegetación herbácea (flores, hierbas, verduras, especies acuáticas)", "Ref": "FloraErbaceeCategoryPositionMarker.json"},
+{"id": 4, "idFL": "FLSU", "title": "Suculentas", "Ref": "FloraSucculenteCategoryPositionMarker.json"}
+]

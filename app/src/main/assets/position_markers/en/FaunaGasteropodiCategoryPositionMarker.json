@@ -1,0 +1,17 @@
+[
+{"id": 1, "idsp": "FAGA1", "nome italiano": "Common garden snail", "nome latino": "Helix aspersa"},
+{"id": 2, "idsp": "FAGA2", "nome italiano": "Roman snail", "nome latino": "Helix pomatia"},
+{"id": 3, "idsp": "FAGA3", "nome italiano": "Red garden slug", "nome latino": "Arion rufus"},
+{"id": 4, "idsp": "FAGA4", "nome italiano": "Grove snail", "nome latino": "Cepaea nemoralis"},
+{"id": 5, "idsp": "FAGA5", "nome italiano": "Ash-black slug", "nome latino": "Limax cinereoniger"},
+{"id": 6, "idsp": "FAGA6", "nome italiano": "Great pond snail", "nome latino": "Lymnaea stagnalis"},
+{"id": 7, "idsp": "FAGA7", "nome italiano": "Great ramshorn snail", "nome latino": "Planorbarius corneus"},
+{"id": 8, "idsp": "FAGA8", "nome italiano": "Acute bladder snail", "nome latino": "Physa acuta"},
+{"id": 9, "idsp": "FAGA9", "nome italiano": "Mediterranean limpet", "nome latino": "Patella caerulea"},
+{"id": 10, "idsp": "FAGA10", "nome italiano": "Variable nassa", "nome latino": "Nassarius mutabilis"},
+{"id": 11, "idsp": "FAGA11", "nome italiano": "Purple dye murex", "nome latino": "Bolinus brandaris"},
+{"id": 12, "idsp": "FAGA12", "nome italiano": "Common whelk", "nome latino": "Buccinum undatum"},
+{"id": 13, "idsp": "FAGA13", "nome italiano": "Green ormer / Abalone", "nome latino": "Haliotis tuberculata"},
+{"id": 14, "idsp": "FAGA14", "nome italiano": "Sea hare", "nome latino": "Aplysia depilans"},
+{"id": 15, "idsp": "FAGA15", "nome italiano": "Rustic dove shell", "nome latino": "Columbella rustica"}
+]

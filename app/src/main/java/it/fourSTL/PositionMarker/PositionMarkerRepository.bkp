@@ -6,7 +6,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.util.Locale
 
 
 class PositionMarkerRepository(
@@ -31,7 +30,7 @@ class PositionMarkerRepository(
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
 
-                // 🔑 ID: IDSP HAS PRIORITY OVER ID
+                // 🔑 ID: IDSO PRIORITY OVER ID
                 val id = when {
                     obj.has("idsp") -> obj.getString("idsp")
                     obj.has("id") -> obj.optString("id", obj.optInt("id").toString())
@@ -109,9 +108,7 @@ class PositionMarkerRepository(
         return ""
     }
 
-
     private fun readFileText(filename: String): String? {
-
         if (filename == "personale.json") {
             return try {
                 val file = File(context.filesDir, "personale.json")
@@ -124,46 +121,13 @@ class PositionMarkerRepository(
                 e.printStackTrace()
                 null
             }
-        }
-
-        val languageCode = getCurrentLanguageCode()
-
-        val localizedPath = "${basePath}${languageCode}/$filename"
-        val content = tryReadAsset(localizedPath)
-        if (content != null) {
-            return content
-        }
-
-        if (languageCode != "en") {
-            val englishPath = "${basePath}en/$filename"
-            val englishContent = tryReadAsset(englishPath)
-            if (englishContent != null) {
-                return englishContent
+        } else {
+            return try {
+                context.assets.open(basePath + filename).bufferedReader().use { it.readText() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             }
-        }
-
-        return tryReadAsset(basePath + filename)
-    }
-
-    private fun tryReadAsset(path: String): String? {
-        return try {
-            context.assets.open(path).bufferedReader().use { it.readText() }
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun getCurrentLanguageCode(): String {
-        val locale = Locale.getDefault()
-        val language = locale.language.lowercase()
-
-
-        return when (language) {
-            "it" -> "it"
-            "en" -> "en"
-            "de" -> "de"
-            "es" -> "es"
-            else -> "en"
         }
     }
 }

@@ -1,0 +1,17 @@
+[
+{"id": 1, "idsp": "FAGA1", "nome italiano": "Gefleckte Weinbergschnecke", "nome latino": "Helix aspersa"},
+{"id": 2, "idsp": "FAGA2", "nome italiano": "Weinbergschnecke", "nome latino": "Helix pomatia"},
+{"id": 3, "idsp": "FAGA3", "nome italiano": "Rote Wegschnecke", "nome latino": "Arion rufus"},
+{"id": 4, "idsp": "FAGA4", "nome italiano": "Hain-Bänderschnecke", "nome latino": "Cepaea nemoralis"},
+{"id": 5, "idsp": "FAGA5", "nome italiano": "Schwarzer Schnegel", "nome latino": "Limax cinereoniger"},
+{"id": 6, "idsp": "FAGA6", "nome italiano": "Spitzhorn-Schlammschnecke", "nome latino": "Lymnaea stagnalis"},
+{"id": 7, "idsp": "FAGA7", "nome italiano": "Posthornschnecke", "nome latino": "Planorbarius corneus"},
+{"id": 8, "idsp": "FAGA8", "nome italiano": "Spitze Blasenschnecke", "nome latino": "Physa acuta"},
+{"id": 9, "idsp": "FAGA9", "nome italiano": "Mittelmeer-Napfschnecke", "nome latino": "Patella caerulea"},
+{"id": 10, "idsp": "FAGA10", "nome italiano": "Veränderliche Netzreusenschnecke", "nome latino": "Nassarius mutabilis"},
+{"id": 11, "idsp": "FAGA11", "nome italiano": "Stachelige Purpurschnecke", "nome latino": "Bolinus brandaris"},
+{"id": 12, "idsp": "FAGA12", "nome italiano": "Wellhornschnecke", "nome latino": "Buccinum undatum"},
+{"id": 13, "idsp": "FAGA13", "nome italiano": "Seeohr", "nome latino": "Haliotis tuberculata"},
+{"id": 14, "idsp": "FAGA14", "nome italiano": "Seehase", "nome latino": "Aplysia depilans"},
+{"id": 15, "idsp": "FAGA15", "nome italiano": "Rustikale Täubchenschnecke", "nome latino": "Columbella rustica"}
+]

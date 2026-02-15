@@ -1,0 +1,10 @@
+[
+{"id": 1, "idsp": "FACN1", "nome italiano": "Leuchtqualle", "nome latino": "Pelagia noctiluca"},
+{"id": 2, "idsp": "FACN2", "nome italiano": "Ohrenqualle", "nome latino": "Aurelia aurita"},
+{"id": 3, "idsp": "FACN3", "nome italiano": "Lungenqualle", "nome latino": "Rhizostoma pulmo"},
+{"id": 4, "idsp": "FACN4", "nome italiano": "Spiegelei-Qualle", "nome latino": "Cotylorhiza tuberculata"},
+{"id": 5, "idsp": "FACN5", "nome italiano": "Olindias phosphorica", "nome latino": "Olindias phosphorica"},
+{"id": 6, "idsp": "FACN6", "nome italiano": "Kompassqualle", "nome latino": "Chrysaora hysoscella"},
+{"id": 7, "idsp": "FACN7", "nome italiano": "Segelqualle / Schiffchen des heiligen Petrus", "nome latino": "Velella velella"},
+{"id": 8, "idsp": "FACN8", "nome italiano": "Rippenqualle Mnemiopsis (nicht einheimisch)", "nome latino": "Mnemiopsis leidyi"}
+]

@@ -1,0 +1,6 @@
+[
+  { "id": 1, "idFL": "FLAL", "title": "Alberi (tronco singolo)", "Ref": "FloraAlberiCategoryPositionMarker.json" },
+  { "id": 2, "idFL": "FLAR", "title": "Arbusti (“tronco ramificato alla base”)", "Ref": "FloraArbustiCategoryPositionMarker.json" },
+  { "id": 3, "idFL": "FLER", "title": "Erbacee (fiori, erbe, verdure, specie acquatiche)", "Ref": "FloraErbaceeCategoryPositionMarker.json" },
+  { "id": 4, "idFL": "FLSU", "title": "Succulente", "Ref": "FloraSucculenteCategoryPositionMarker.json" }
+]

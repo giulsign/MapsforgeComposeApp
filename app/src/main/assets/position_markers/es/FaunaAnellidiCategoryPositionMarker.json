@@ -1,0 +1,14 @@
+[
+{"id": 1, "idsp": "FAAE1", "nome italiano": "Lombriz común", "nome latino": "Lumbricus terrestris"},
+{"id": 2, "idsp": "FAAE2", "nome italiano": "Lombriz roja", "nome latino": "Lumbricus rubellus"},
+{"id": 3, "idsp": "FAAE3", "nome italiano": "Lombriz de compost", "nome latino": "Eisenia fetida"},
+{"id": 4, "idsp": "FAAE4", "nome italiano": "Lombriz de pasto", "nome latino": "Aporrectodea caliginosa"},
+{"id": 5, "idsp": "FAAE5", "nome italiano": "Lombriz verde", "nome latino": "Allolobophora chlorotica"},
+{"id": 6, "idsp": "FAAE6", "nome italiano": "Lombriz de jardín", "nome latino": "Dendrobaena veneta"},
+{"id": 7, "idsp": "FAAE7", "nome italiano": "Sanguijuela medicinal", "nome latino": "Hirudo medicinalis"},
+{"id": 8, "idsp": "FAAE8", "nome italiano": "Sanguijuela verbana", "nome latino": "Hirudo verbana"},
+{"id": 9, "idsp": "FAAE9", "nome italiano": "Sanguijuela de estanque", "nome latino": "Helobdella stagnalis"},
+{"id": 10, "idsp": "FAAE10", "nome italiano": "Gusano plumero mediterráneo", "nome latino": "Sabella spallanzanii"},
+{"id": 11, "idsp": "FAAE11", "nome italiano": "Mercierella", "nome latino": "Ficopomatus enigmaticus"},
+{"id": 12, "idsp": "FAAE12", "nome italiano": "Nereida", "nome latino": "Nereis succinea"}
+]

@@ -1,0 +1,11 @@
+[
+{"id": 1,"idsp": "TART1","nome_italiano": "Trufa blanca (Trufa de Alba)","nome_latino": "Tuber magnatum Pico"},
+{"id": 2,"idsp": "TART2","nome_italiano": "Trufa negra (Trufa de Norcia / de Spoleto)","nome_latino": "Tuber melanosporum Vittad."},
+{"id": 3,"idsp": "TART3","nome_italiano": "Trufa de verano (Scorzone / estival)","nome_latino": "Tuber aestivum Vittad."},
+{"id": 4,"idsp": "TART4","nome_italiano": "Trufa uncinada (Burgundy / Uncinatum)","nome_latino": "Tuber uncinatum Chatin"},
+{"id": 5,"idsp": "TART5","nome_italiano": "Trufa blanquecina / Trufa de marzo","nome_latino": "Tuber borchii Vittad. (Tuber albidum / T. borchii)"},
+{"id": 6,"idsp": "TART6","nome_italiano": "Trufa negra de invierno / moscatel (variedad)","nome_latino": "Tuber brumale Vittad. (incl. var. moschatum De Ferry)"},
+{"id": 7,"idsp": "TART7","nome_italiano": "Trufa negra lisa (Trufa negra 'macrosporum')","nome_latino": "Tuber macrosporum Vittad."},
+{"id": 8,"idsp": "TART8","nome_italiano": "Trufa negra ordinaria (Trufa de Bagnoli)","nome_latino": "Tuber mesentericum Vittad."},
+{"id": 9,"idsp": "TART9","nome_italiano": "Trufa moscatel (variedad distintiva a menudo listada separadamente)","nome_latino": "Tuber brumale var. moschatum De Ferry"}
+]
