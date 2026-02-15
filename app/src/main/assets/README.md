@@ -1,8 +1,8 @@
-# fourSTL Position Marker
+# 4STL Point Marker Census
 
 ## Description
 
-fourSTL Position Marker is an Android application designed to allow users to save and manage their geographic coordinates (waypoints) on an offline map. The app is ideal for hikers, travelers, and anyone who needs to keep track of specific locations without an internet connection.
+4STL Point Marker Census is an Android application designed to allow users to save and manage their geographic coordinates (waypoints) on an offline map. The app is ideal for hikers, travelers, and anyone who needs to keep track of specific locations without an internet connection.
 
 The application is developed in Kotlin and uses Jetpack Compose for a modern and responsive user interface. Offline maps are handled by the MapsForge library, with data provided by OpenStreetMap.
 
@@ -44,6 +44,6 @@ For more details on third-party licenses, see the [THIRD_PARTY_LICENSES.md](THIR
 ## Contacts
 
 - **Developer**: Giuliano Signorelli
-- **Website**: [www.4stl.it](http://www.4stl.it)
-- **Email**: [postmaster@4stl.it](mailto:postmaster@4stl.it)
+- **Website**: [www.PointMarker.it](http://www.4stl.it)
+- **Email**: [postmaster@pointmarker.it](mailto:postmaster@4stl.it)
 - **License:** GPLv3 with Proprietary Branding Notice

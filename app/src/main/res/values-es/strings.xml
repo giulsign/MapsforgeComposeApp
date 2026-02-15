@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- ========== APP NAME ========== -->
-    <string name="app_name">Position Marker</string>
+    <string name="app_name">Point Marker Census</string>
 
     <!-- ========== GENERAL BUTTONS ========== -->
     <string name="confirm">Confirmar</string>

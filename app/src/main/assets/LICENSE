@@ -3,8 +3,8 @@ DUAL LICENSE: GPLv3 + PROPRIETARY NOTICE
 
 Copyright (c) 2024–2025 Giuliano Signorelli  
 All rights reserved.  
-Email: postmaster@4stl.it  
-Website: https://www.4stl.it
+Email: postmaster@pointmarker.it
+Website: https://www.PointMarker.it
 
 ---
 
@@ -32,7 +32,7 @@ https://www.gnu.org/licenses/gpl-3.0.html
 Certain elements of this application are proprietary and not covered by the GPLv3 license.  
 These include, but are not limited to:
 
- - the application name, logo, and branding (“4STL”);
+ - the application name, logo, and branding (“4STL Point Marker Census”);
  - visual design, UI layouts, icons, and artistic assets created by the author;
  - all non-code media (images, logos, sounds, documentation texts);
  - any other original creative work by the author not derived from GPL components.
@@ -63,4 +63,4 @@ The author is not responsible for any damage or loss arising from the use or ina
 5. CONTACT AND CONTRIBUTIONS
 
 For inquiries, source code access, or contributions, contact:
-Giuliano Signorelli – postmaster@4stl.it
+Giuliano Signorelli – postmaster@pointmarker.it
