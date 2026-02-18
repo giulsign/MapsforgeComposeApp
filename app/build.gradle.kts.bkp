@@ -15,7 +15,7 @@ android {
         applicationId = "it.fourSTL.PositionMarker"
         minSdk = 27 //  Min API level for Google Maps SDK
         targetSdk = 34
-        versionCode = 10000
+        versionCode = 1
         versionName = "1.0.0"
     }
 
@@ -23,6 +23,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    //kotlinOptions {
+    //    jvmTarget = "17"
+    //}
 
     kotlinOptions {
         jvmTarget = "17"
@@ -38,27 +42,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/versions/9/previous-compilation-data.bin"
 
-        }
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = file("C:/keystore/DistributionKeyMapsforgeComposeApp/4STLPointMarkerCensus.jks")
-            storePassword = "Patagonia1439h403t50@!00"
-            keyAlias = "4STLPointMarkerCensus"
-            keyPassword = "Patagonia1439h403t50@!00"
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
