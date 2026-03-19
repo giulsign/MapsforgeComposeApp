@@ -505,8 +505,8 @@ fun VerticalCategoryButton(
             .fillMaxWidth(0.5f)
             //.fillMaxHeight(0.2f)
             .height(70.dp)
-            .background(Color(0xB3E0E0E0), shape = RectangleShape)
-            .border((1.dp), Color(0xFF99CCFF))
+            .background(Color(0xB32D2929), shape = RectangleShape)
+            .border((3.dp), Color(0xFFFD8300))
             .clickable(onClick = onClick)
             .padding(8.dp),
         contentAlignment = Alignment.Center
@@ -517,7 +517,7 @@ fun VerticalCategoryButton(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             fontFamily = MyCustomFont,
             fontSize = 20.sp,
-            color = (Purple40),
+            color = Color(0xFFFD8300),
             fontWeight = FontWeight.Bold
         )
     }
@@ -536,12 +536,12 @@ fun CategoryMenu(
     Dialog(
         onDismissRequest = onDismiss) {
         Surface(shape = RectangleShape,
-            color = Color.White, //Color(0xB3E0E0E0),
+            color = Color(0xB32D2929), //Color(0xB3E0E0E0),
             //tonalElevation = 0.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .border((1.dp), Color(0xFF99CCFF))
+                .border((3.dp), Color(0xFFFD8300))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -554,7 +554,7 @@ fun CategoryMenu(
                     fontWeight = FontWeight.Bold,
                     fontSize = 25.sp,
                     textAlign = titleAlignment,
-                    color = Color.DarkGray,
+                    color = Color(0xFFFD8300),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
@@ -567,13 +567,13 @@ fun CategoryMenu(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border((1.dp), Color(0xFF99CCFF))
+                            .border((3.dp), Color(0xFFFD8300))
                     ) {
                         Text(
                             text = itemText,
                             fontFamily = customFont,
                             fontSize = 20.sp,
-                            color = Color.Blue,
+                            color = Color(0xFFFFFFFF),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -2544,15 +2544,15 @@ fun fourSTLPositionMarkerComposable(
                 .height(70.dp)
                 .zIndex(2f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xB3E0E0E0)
+                containerColor = Color(0xB32D2929)
             ),
             shape = RectangleShape,
-            border = BorderStroke(1.dp, Color(0xFF99CCFF))
+            border = BorderStroke(3.dp, Color(0xFFFD8300))
         ) {
             if (buttonsVisible)
                 Text(
                     text = stringResource(R.string.hide_menus),
-                    color = Color.Red,
+                    color = Color(0xFFFFFFFF),
                     fontSize = 27.sp,
                     textAlign = TextAlign.Center,
                     fontFamily = MyCustomFont,
@@ -2561,7 +2561,7 @@ fun fourSTLPositionMarkerComposable(
             else
                 Text(
                     text = stringResource(R.string.show_menus),
-                    color = Color(0xFF004D40),
+                    color = Color(0xFF00FFD4),
                     fontSize = 27.sp,
                     textAlign = TextAlign.Center,
                     fontFamily = MyCustomFont,
@@ -2579,14 +2579,14 @@ fun fourSTLPositionMarkerComposable(
                 .height(70.dp)
                 .zIndex(2f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xB3E0E0E0)
+                containerColor = Color(0xB32D2929)
             ),
             shape = RectangleShape,
-            border = BorderStroke(1.dp, Color(0xFF99CCFF))
+            border = BorderStroke(3.dp, Color(0xFFFD8300))
         ) {
             Text(
                 text = stringResource(R.string.licenses),
-                color = Color.Blue,
+                color = Color(0xFFFD8300),
                 fontSize = 27.sp,
                 textAlign = TextAlign.Center,
                 fontFamily = MyCustomFont,
@@ -2758,14 +2758,14 @@ fun fourSTLPositionMarkerComposable(
                 .height(70.dp)
                 .zIndex(2f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xB3E0E0E0)
+                containerColor = Color(0xB32D2929)
             ),
             shape = RectangleShape,
-            border = BorderStroke(1.dp, Color(0xFF99CCFF))
+            border = BorderStroke(3.dp, Color(0xFFFD8300))
         ) {
             Text(
                 text = stringResource(R.string.close_app),
-                color = Color.Red,
+                color = Color(0xFFFD8300),
                 fontSize = 27.sp,
                 textAlign = TextAlign.Center,
                 fontFamily = MyCustomFont,
