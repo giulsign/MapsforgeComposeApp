@@ -8,13 +8,9 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // START FIREBASE
-        FirebaseConfig.initialize(this)
-
         // START LOCATION SERVICE
-        // Initialize the singleton FirebaseLocationService
-        FirebaseLocationService.getInstance(this)
+        PollingLocationService.getInstance(this)
 
-        Log.d("MyApplication", "✅ Firebase services initialized")
+        Log.d("MyApplication", "✅ Location service initialized")
     }
 }

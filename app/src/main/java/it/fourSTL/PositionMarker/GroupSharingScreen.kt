@@ -28,7 +28,7 @@ fun GroupSharingScreen(
     val scope = rememberCoroutineScope()
 
     // USE SINGLETON
-    val locationService = remember { FirebaseLocationService.getInstance(context) }
+    val locationService = remember { PollingLocationService.getInstance(context) }
 
     var currentRole by remember { mutableStateOf(SessionRole.NONE) }
     var sessionCode by remember { mutableStateOf("") }

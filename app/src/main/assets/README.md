@@ -1,4 +1,4 @@
-# Point Marker Census V.1.0.1
+# Point Marker Census V.1.0.2
 
 ## Description
 
@@ -40,6 +40,13 @@ Third-party libraries and resources used in this project are subject to their re
 - **MapsForge**: For the map rendering library.
 
 For more details on third-party licenses, see the [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) file.
+
+## Modification
+
+Modifications by version
+
+- Version 1.0.2
+  - Changed Polling service for gps sharing service from Firebase to PointMarker.it php service. Shared positions are saved on server by the activation time.
 
 ## Contacts
 

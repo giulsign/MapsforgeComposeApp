@@ -66,7 +66,7 @@ class GpsTrackingService : Service() {
                     trackPoints.add(location)
                     _trackPointsFlow.value = ArrayList(trackPoints)
 
-                    val firebaseService = FirebaseLocationService.getInstance(applicationContext)
+                    val firebaseService = PollingLocationService.getInstance(applicationContext)
                     if (firebaseService.isInSession()) {
                         serviceScope.launch {
                             firebaseService.updateLocation(location)

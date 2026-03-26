@@ -720,8 +720,8 @@ fun fourSTLPositionMarkerComposable(
     var zoomLevel by remember { mutableStateOf<Byte>(15) }
 
     // add singleton service
-    val firebaseLocationService = remember {
-        FirebaseLocationService.getInstance(context)
+    val PollingLocationService = remember {
+        PollingLocationService.getInstance(context)
     }
 
     // add shareing position service
@@ -729,14 +729,14 @@ fun fourSTLPositionMarkerComposable(
     var sharedMarkers by remember { mutableStateOf<List<Marker>>(emptyList()) }
 
     // observe session
-    LaunchedEffect(firebaseLocationService.getCurrentSessionId()) {
-        val sessionId = firebaseLocationService.getCurrentSessionId()
+    LaunchedEffect(PollingLocationService.getCurrentSessionId()) {
+        val sessionId = PollingLocationService.getCurrentSessionId()
 
-        if (sessionId != null && firebaseLocationService.isInSession()) {
+        if (sessionId != null && PollingLocationService.isInSession()) {
             Log.d("MapComposable", "🔄 Observing session: $sessionId")
 
             // observe session position
-            firebaseLocationService.observeSession(sessionId).collect { locations ->
+            PollingLocationService.observeSession(sessionId).collect { locations ->
                 Log.d("MapComposable", "📍 Received ${locations.size} locations:")
                 locations.forEach { (key, loc) ->
                     Log.d("MapComposable", "  - $key: ${loc.deviceName} at ${loc.latitude}, ${loc.longitude}")
@@ -757,7 +757,7 @@ fun fourSTLPositionMarkerComposable(
                 mapView.layerManager.layers.remove(marker)
             }
 
-            val currentDeviceId = firebaseLocationService.getDeviceId()
+            val currentDeviceId = PollingLocationService.getDeviceId()
 
             Log.d("MapComposable", "🎨 Creating markers:")
             Log.d("MapComposable", "  - Current device: ${currentDeviceId.take(8)}...")
@@ -797,12 +797,12 @@ fun fourSTLPositionMarkerComposable(
     }
 
     // add devcie position
-    LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
+    LaunchedEffect(userLocation, PollingLocationService.isInSession()) {
         userLocation?.let { location ->
-            if (firebaseLocationService.isInSession()) {
-                val role = firebaseLocationService.getCurrentRole()
-                val sessionId = firebaseLocationService.getCurrentSessionId()
-                val deviceId = firebaseLocationService.getDeviceId()
+            if (PollingLocationService.isInSession()) {
+                val role = PollingLocationService.getCurrentRole()
+                val sessionId = PollingLocationService.getCurrentSessionId()
+                val deviceId = PollingLocationService.getDeviceId()
 
                 Log.d("MapComposable", "📤 Sending location:")
                 Log.d("MapComposable", "  - Role: $role")
@@ -810,7 +810,7 @@ fun fourSTLPositionMarkerComposable(
                 Log.d("MapComposable", "  - Device: ${deviceId.take(8)}...")
                 Log.d("MapComposable", "  - Coords: ${location.latitude}, ${location.longitude}")
 
-                firebaseLocationService.updateLocation(location)
+                PollingLocationService.updateLocation(location)
             }
         }
     }
@@ -1742,10 +1742,10 @@ fun fourSTLPositionMarkerComposable(
         }
 
         // Update position
-        LaunchedEffect(userLocation, firebaseLocationService.isInSession()) {
+        LaunchedEffect(userLocation, PollingLocationService.isInSession()) {
             userLocation?.let { location ->
-                if (firebaseLocationService.isInSession()) {
-                    firebaseLocationService.updateLocation(location)
+                if (PollingLocationService.isInSession()) {
+                    PollingLocationService.updateLocation(location)
                 }
             }
         }
@@ -1775,7 +1775,7 @@ fun fourSTLPositionMarkerComposable(
                     Spacer(Modifier.height(8.dp))
 
                     sharedLocations.forEach { (key, location) ->
-                        val isCurrentDevice = location.deviceId == firebaseLocationService.getDeviceId()
+                        val isCurrentDevice = location.deviceId == PollingLocationService.getDeviceId()
                         val label = if (isCurrentDevice) "${location.deviceName}" + stringResource(R.string.you) else location.deviceName
 
                         Row(
